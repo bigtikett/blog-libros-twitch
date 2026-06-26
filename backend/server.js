@@ -4,6 +4,10 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import * as mm from 'music-metadata';
 import cors from 'cors';
+import { Pool } from 'pg';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -28,6 +32,439 @@ const RUTA_PERSONAJES = path.join(DATA_DIR, 'personajes.json');
 const RUTA_ENTREVISTAS = path.join(DATA_DIR, 'entrevistas.json');
 const RUTA_JUEGOS = path.join(DATA_DIR, 'juegos.json');
 const RUTA_REDES = path.join(DATA_DIR, 'redes.json');
+const DATABASE_URL = process.env.DATABASE_URL || '';
+const DATABASE_SSL = (process.env.DATABASE_SSL || 'true').toLowerCase() === 'true';
+const AUDIO_PUBLIC_BASE_URL = (process.env.AUDIO_PUBLIC_BASE_URL || '').trim().replace(/\/+$/, '');
+
+const dbPool = DATABASE_URL
+  ? new Pool({
+      connectionString: DATABASE_URL,
+      ssl: DATABASE_SSL ? { rejectUnauthorized: false } : false
+    })
+  : null;
+
+let musicDbReady = false;
+
+function slugifySegment(value, fallback = 'item') {
+  const normalized = String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+  return normalized || fallback;
+}
+
+function formatDisplayName(value) {
+  return String(value || '').replace(/_/g, ' ').toUpperCase();
+}
+
+function normalizeTrackTitle(fileName) {
+  return formatDisplayName(path.parse(fileName).name);
+}
+
+function isMediaFile(fileName) {
+  const lower = fileName.toLowerCase();
+  return lower.endsWith('.mp3') || lower.endsWith('.mp4');
+}
+
+function buildAudioPublicUrl(srcPath) {
+  if (!srcPath) {
+    return srcPath;
+  }
+
+  if (/^https?:\/\//i.test(srcPath)) {
+    return srcPath;
+  }
+
+  const normalizedPath = srcPath.startsWith('/') ? srcPath : `/${srcPath}`;
+
+  if (!AUDIO_PUBLIC_BASE_URL || !normalizedPath.startsWith('/audio/')) {
+    return normalizedPath;
+  }
+
+  return `${AUDIO_PUBLIC_BASE_URL}${normalizedPath.replace(/^\/audio/, '')}`;
+}
+
+function normalizeBaseUrl(value) {
+  return String(value || '').trim().replace(/\/+$/, '');
+}
+
+function toRebasedAudioUrl(sourceUrl, nextBaseUrl) {
+  if (!sourceUrl) {
+    return sourceUrl;
+  }
+
+  const baseUrl = normalizeBaseUrl(nextBaseUrl);
+  if (!baseUrl) {
+    return sourceUrl;
+  }
+
+  if (sourceUrl.startsWith('/audio/')) {
+    return `${baseUrl}${sourceUrl.replace(/^\/audio/, '')}`;
+  }
+
+  if (sourceUrl.startsWith(`${baseUrl}/`)) {
+    return sourceUrl;
+  }
+
+  return sourceUrl;
+}
+
+function getArtistColor(index) {
+  return index === 0 ? '#a072ff' : '#ff007f';
+}
+
+function getArtistIcon(index) {
+  return index === 0 ? 'bi-book-half' : 'bi-fire';
+}
+
+async function initMusicDatabase() {
+  if (!dbPool) {
+    return;
+  }
+
+  await dbPool.query(`
+    CREATE TABLE IF NOT EXISTS artists (
+      id BIGSERIAL PRIMARY KEY,
+      name TEXT NOT NULL UNIQUE,
+      cover_url TEXT,
+      sort_order INT NOT NULL DEFAULT 0,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  await dbPool.query(`
+    CREATE TABLE IF NOT EXISTS albums (
+      id BIGSERIAL PRIMARY KEY,
+      artist_id BIGINT NOT NULL REFERENCES artists(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      cover_url TEXT,
+      sort_order INT NOT NULL DEFAULT 0,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      UNIQUE (artist_id, name)
+    );
+  `);
+
+  await dbPool.query(`
+    CREATE TABLE IF NOT EXISTS tracks (
+      id BIGSERIAL PRIMARY KEY,
+      artist_id BIGINT NOT NULL REFERENCES artists(id) ON DELETE CASCADE,
+      album_id BIGINT REFERENCES albums(id) ON DELETE SET NULL,
+      title TEXT NOT NULL,
+      src_url TEXT NOT NULL,
+      media_type TEXT NOT NULL CHECK (media_type IN ('audio', 'video')),
+      track_no INT,
+      sort_order INT NOT NULL DEFAULT 0,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+}
+
+function getPlaylistFromFilesystem() {
+  const audioDir = AUDIO_DIR;
+
+  if (!fs.existsSync(audioDir)) {
+    const error = new Error('Falta carpeta audio.');
+    error.status = 404;
+    throw error;
+  }
+
+  const artistas = fs
+    .readdirSync(audioDir)
+    .filter(file => fs.statSync(path.join(audioDir, file)).isDirectory());
+
+  return artistas.map((artistaName, index) => {
+    const artistaPath = path.join(audioDir, artistaName);
+    const elementosContenidos = fs.readdirSync(artistaPath, { withFileTypes: true });
+
+    const discos = [];
+    const tracksSueltos = [];
+
+    elementosContenidos.forEach((elemento) => {
+      const rutaElemento = path.join(artistaPath, elemento.name);
+      const urlRelativaElemento = `/audio/${artistaName}/${elemento.name}`;
+
+      if (elemento.isDirectory()) {
+        const cancionesDisco = fs.readdirSync(rutaElemento).filter(isMediaFile);
+
+        const tracksDelDisco = cancionesDisco.map((songFile, songIndex) => {
+          const isVideo = songFile.toLowerCase().endsWith('.mp4');
+          return {
+            title: normalizeTrackTitle(songFile),
+            status: isVideo ? 'PLAYING VIDEO' : `STREAMING ${formatDisplayName(elemento.name)}`,
+            side: `TRACK ${(songIndex + 1).toString().padStart(2, '0')}`,
+            color: getArtistColor(index),
+            src: buildAudioPublicUrl(`${urlRelativaElemento}/${songFile}`),
+            type: isVideo ? 'video' : 'audio'
+          };
+        });
+
+        const discoCover = buscarCaratulaEnCarpeta(rutaElemento, urlRelativaElemento);
+
+        discos.push({
+          id: `disco-${slugifySegment(elemento.name, String(discos.length + 1))}`,
+          title: formatDisplayName(elemento.name),
+          cover: discoCover,
+          tracks: tracksDelDisco
+        });
+      } else if (elemento.isFile() && isMediaFile(elemento.name)) {
+        const isVideo = elemento.name.toLowerCase().endsWith('.mp4');
+        tracksSueltos.push({
+          title: normalizeTrackTitle(elemento.name),
+          status: isVideo ? 'PLAYING VIDEO' : 'STREAMING ROOT_BEATS',
+          side: `TRACK ${(tracksSueltos.length + 1).toString().padStart(2, '0')}`,
+          color: getArtistColor(index),
+          src: buildAudioPublicUrl(urlRelativaElemento),
+          type: isVideo ? 'video' : 'audio'
+        });
+      }
+    });
+
+    const artistaCover = buscarCaratulaEnCarpeta(artistaPath, `/audio/${artistaName}`);
+
+    return {
+      id: `artista-${slugifySegment(artistaName, String(index + 1))}`,
+      title: formatDisplayName(artistaName),
+      description: `Discografía de ${artistaName.replace(/_/g, ' ')}`,
+      color: getArtistColor(index),
+      icon: getArtistIcon(index),
+      cover: buildAudioPublicUrl(artistaCover),
+      discos,
+      tracksSueltos
+    };
+  });
+}
+
+async function syncMusicDbFromFilesystem() {
+  if (!dbPool) {
+    throw new Error('DATABASE_URL no configurado.');
+  }
+
+  if (!fs.existsSync(AUDIO_DIR)) {
+    return { artists: 0, albums: 0, tracks: 0 };
+  }
+
+  const artistas = fs
+    .readdirSync(AUDIO_DIR, { withFileTypes: true })
+    .filter(entry => entry.isDirectory())
+    .map(entry => entry.name);
+
+  const client = await dbPool.connect();
+  let insertedArtists = 0;
+  let insertedAlbums = 0;
+  let insertedTracks = 0;
+
+  try {
+    await client.query('BEGIN');
+    await client.query('TRUNCATE TABLE tracks, albums, artists RESTART IDENTITY CASCADE');
+
+    for (let artistIndex = 0; artistIndex < artistas.length; artistIndex += 1) {
+      const artistaName = artistas[artistIndex];
+      const artistaPath = path.join(AUDIO_DIR, artistaName);
+      const artistaCover = buildAudioPublicUrl(buscarCaratulaEnCarpeta(artistaPath, `/audio/${artistaName}`));
+
+      const artistInsert = await client.query(
+        `
+          INSERT INTO artists (name, cover_url, sort_order)
+          VALUES ($1, $2, $3)
+          RETURNING id
+        `,
+        [artistaName, artistaCover, artistIndex]
+      );
+
+      const artistId = artistInsert.rows[0].id;
+      insertedArtists += 1;
+
+      const elementosContenidos = fs.readdirSync(artistaPath, { withFileTypes: true });
+      let rootTrackOrder = 0;
+      let albumOrder = 0;
+
+      for (const elemento of elementosContenidos) {
+        const rutaElemento = path.join(artistaPath, elemento.name);
+
+        if (elemento.isDirectory()) {
+          const urlRelativaElemento = `/audio/${artistaName}/${elemento.name}`;
+          const coverAlbum = buildAudioPublicUrl(buscarCaratulaEnCarpeta(rutaElemento, urlRelativaElemento));
+
+          const albumInsert = await client.query(
+            `
+              INSERT INTO albums (artist_id, name, cover_url, sort_order)
+              VALUES ($1, $2, $3, $4)
+              RETURNING id
+            `,
+            [artistId, elemento.name, coverAlbum, albumOrder]
+          );
+
+          const albumId = albumInsert.rows[0].id;
+          albumOrder += 1;
+          insertedAlbums += 1;
+
+          const cancionesDisco = fs.readdirSync(rutaElemento).filter(isMediaFile);
+
+          for (let songIndex = 0; songIndex < cancionesDisco.length; songIndex += 1) {
+            const songFile = cancionesDisco[songIndex];
+            const isVideo = songFile.toLowerCase().endsWith('.mp4');
+
+            await client.query(
+              `
+                INSERT INTO tracks (artist_id, album_id, title, src_url, media_type, track_no, sort_order)
+                VALUES ($1, $2, $3, $4, $5, $6, $7)
+              `,
+              [
+                artistId,
+                albumId,
+                normalizeTrackTitle(songFile),
+                buildAudioPublicUrl(`${urlRelativaElemento}/${songFile}`),
+                isVideo ? 'video' : 'audio',
+                songIndex + 1,
+                songIndex
+              ]
+            );
+
+            insertedTracks += 1;
+          }
+        } else if (elemento.isFile() && isMediaFile(elemento.name)) {
+          const isVideo = elemento.name.toLowerCase().endsWith('.mp4');
+          await client.query(
+            `
+              INSERT INTO tracks (artist_id, album_id, title, src_url, media_type, track_no, sort_order)
+              VALUES ($1, NULL, $2, $3, $4, $5, $6)
+            `,
+            [
+              artistId,
+              normalizeTrackTitle(elemento.name),
+              buildAudioPublicUrl(`/audio/${artistaName}/${elemento.name}`),
+              isVideo ? 'video' : 'audio',
+              rootTrackOrder + 1,
+              rootTrackOrder
+            ]
+          );
+
+          rootTrackOrder += 1;
+          insertedTracks += 1;
+        }
+      }
+    }
+
+    await client.query('COMMIT');
+    musicDbReady = true;
+    return { artists: insertedArtists, albums: insertedAlbums, tracks: insertedTracks };
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+async function getPlaylistFromDatabase() {
+  if (!dbPool) {
+    return [];
+  }
+
+  const [artistsResult, albumsResult, tracksResult] = await Promise.all([
+    dbPool.query('SELECT id, name, cover_url, sort_order FROM artists ORDER BY sort_order ASC, id ASC'),
+    dbPool.query('SELECT id, artist_id, name, cover_url, sort_order FROM albums ORDER BY sort_order ASC, id ASC'),
+    dbPool.query(`
+      SELECT id, artist_id, album_id, title, src_url, media_type, track_no, sort_order
+      FROM tracks
+      ORDER BY sort_order ASC, id ASC
+    `)
+  ]);
+
+  const artists = artistsResult.rows;
+  const albums = albumsResult.rows;
+  const tracks = tracksResult.rows;
+
+  const albumsByArtist = new Map();
+  const tracksByAlbum = new Map();
+  const rootTracksByArtist = new Map();
+
+  albums.forEach((album) => {
+    if (!albumsByArtist.has(album.artist_id)) {
+      albumsByArtist.set(album.artist_id, []);
+    }
+    albumsByArtist.get(album.artist_id).push(album);
+  });
+
+  tracks.forEach((track) => {
+    if (track.album_id) {
+      if (!tracksByAlbum.has(track.album_id)) {
+        tracksByAlbum.set(track.album_id, []);
+      }
+      tracksByAlbum.get(track.album_id).push(track);
+    } else {
+      if (!rootTracksByArtist.has(track.artist_id)) {
+        rootTracksByArtist.set(track.artist_id, []);
+      }
+      rootTracksByArtist.get(track.artist_id).push(track);
+    }
+  });
+
+  return artists.map((artist, index) => {
+    const color = getArtistColor(index);
+    const discosRaw = albumsByArtist.get(artist.id) || [];
+    const tracksSueltosRaw = rootTracksByArtist.get(artist.id) || [];
+
+    const discos = discosRaw.map((album, albumIndex) => {
+      const tracksDelDisco = (tracksByAlbum.get(album.id) || []).map((track, trackIndex) => ({
+        title: track.title,
+        status: track.media_type === 'video' ? 'PLAYING VIDEO' : `STREAMING ${formatDisplayName(album.name)}`,
+        side: `TRACK ${String(track.track_no || trackIndex + 1).padStart(2, '0')}`,
+        color,
+        src: track.src_url,
+        type: track.media_type
+      }));
+
+      return {
+        id: `disco-${slugifySegment(album.name, String(albumIndex + 1))}-${album.id}`,
+        title: formatDisplayName(album.name),
+        cover: album.cover_url,
+        tracks: tracksDelDisco
+      };
+    });
+
+    const tracksSueltos = tracksSueltosRaw.map((track, trackIndex) => ({
+      title: track.title,
+      status: track.media_type === 'video' ? 'PLAYING VIDEO' : 'STREAMING ROOT_BEATS',
+      side: `TRACK ${String(track.track_no || trackIndex + 1).padStart(2, '0')}`,
+      color,
+      src: track.src_url,
+      type: track.media_type
+    }));
+
+    return {
+      id: `artista-${slugifySegment(artist.name, String(index + 1))}-${artist.id}`,
+      title: formatDisplayName(artist.name),
+      description: `Discografía de ${artist.name.replace(/_/g, ' ')}`,
+      color,
+      icon: getArtistIcon(index),
+      cover: artist.cover_url,
+      discos,
+      tracksSueltos
+    };
+  });
+}
+
+async function ensureMusicDbReady() {
+  if (!dbPool) {
+    return false;
+  }
+
+  if (musicDbReady) {
+    return true;
+  }
+
+  await initMusicDatabase();
+
+  const countResult = await dbPool.query('SELECT COUNT(*)::int AS total FROM artists');
+  const totalArtists = countResult.rows[0]?.total || 0;
+
+  if (totalArtists === 0 && fs.existsSync(AUDIO_DIR)) {
+    await syncMusicDbFromFilesystem();
+  }
+
+  musicDbReady = true;
+  return true;
+}
 
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
   .split(',')
@@ -282,85 +719,112 @@ function buscarCaratulaEnCarpeta(rutaCarpeta, urlRelativaBase) {
 // ========================================================
 // 🎛️ ENDPOINT MEJORADO: GENERA SUB-BLOQUES DE DISCOS REALES
 // ========================================================
-app.get('/api/playlist', (req, res) => {
-  const audioDir = AUDIO_DIR;
-  if (!fs.existsSync(audioDir)) return res.status(404).json({ error: 'Falta carpeta audio.' });
-
+app.get('/api/playlist', async (req, res) => {
   try {
-    const artistas = fs.readdirSync(audioDir).filter(file => fs.statSync(path.join(audioDir, file)).isDirectory());
+    if (await ensureMusicDbReady()) {
+      const playlistDesdeDb = await getPlaylistFromDatabase();
+      if (playlistDesdeDb.length > 0) {
+        return res.json(playlistDesdeDb);
+      }
+    }
 
-    const playlist = artistas.map((artistaName, index) => {
-      const artistaPath = path.join(audioDir, artistaName);
-      const elementosContenidos = fs.readdirSync(artistaPath, { withFileTypes: true });
-
-      let discos = [];
-      let tracksSueltos = [];
-
-      // Analizamos qué hay dentro de la carpeta del artista
-      elementosContenidos.forEach(elemento => {
-        const rutaElemento = path.join(artistaPath, elemento.name);
-        const urlRelativaElemento = `/audio/${artistaName}/${elemento.name}`;
-
-        if (elemento.isDirectory()) {
-          // 💿 ES UN DISCO (SUB-CARPETA): Escaneamos sus canciones e imagen interna
-          const cancionesDisco = fs.readdirSync(rutaElemento)
-            .filter(file => file.endsWith('.mp3') || file.endsWith('.mp4'));
-
-          const tracksDelDisco = cancionesDisco.map((songFile, songIndex) => {
-            const isVideo = songFile.endsWith('.mp4');
-            return {
-              title: songFile.replace('.mp3', '').replace('.mp4', '').replace(/_/g, ' ').toUpperCase(),
-              status: isVideo ? `PLAYING VIDEO` : `STREAMING ${elemento.name.toUpperCase()}`,
-              side: `TRACK ${(songIndex + 1).toString().padStart(2, '0')}`,
-              color: index === 0 ? '#a072ff' : '#ff007f',
-              src: `${urlRelativaElemento}/${songFile}`,
-              type: isVideo ? 'video' : 'audio'
-            };
-          });
-
-          // Buscamos la carátula específica de ESTE disco dentro de su propia subcarpeta
-          const discoCover = buscarCaratulaEnCarpeta(rutaElemento, urlRelativaElemento);
-
-          discos.push({
-            id: `disco-${elemento.name.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
-            title: elemento.name.replace(/_/g, ' ').toUpperCase(),
-            cover: discoCover, // 👈 Portada real del disco
-            tracks: tracksDelDisco
-          });
-
-        } else if (elemento.isFile() && (elemento.name.endsWith('.mp3') || elemento.name.endsWith('.mp4'))) {
-          // 🎵 CANCIÓN SUELTA (En la raíz del artista)
-          const isVideo = elemento.name.endsWith('.mp4');
-          tracksSueltos.push({
-            title: elemento.name.replace('.mp3', '').replace('.mp4', '').replace(/_/g, ' ').toUpperCase(),
-            status: isVideo ? `PLAYING VIDEO` : `STREAMING ROOT_BEATS`,
-            side: `TRACK ${(tracksSueltos.length + 1).toString().padStart(2, '0')}`,
-            color: index === 0 ? '#a072ff' : '#ff007f',
-            src: urlRelativaElemento,
-            type: isVideo ? 'video' : 'audio'
-          });
-        }
-      });
-
-      // Carátula por defecto del artista (si la hay en su raíz)
-      const artistaCover = buscarCaratulaEnCarpeta(artistaPath, `/audio/${artistaName}`);
-
-      return {
-        id: `artista-${artistaName.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
-        title: artistaName.replace(/_/g, ' ').toUpperCase(),
-        description: `Discografía de ${artistaName.replace(/_/g, ' ')}`,
-        color: index === 0 ? '#a072ff' : '#ff007f',
-        icon: index === 0 ? 'bi-book-half' : 'bi-fire',
-        cover: artistaCover, 
-        discos: discos,        // 👈 Enviamos la estructura de discos separada
-        tracksSueltos: tracksSueltos // Canciones fuera de carpetas
-      };
-    });
-
-    res.json(playlist);
+    const playlistDesdeFs = getPlaylistFromFilesystem();
+    return res.json(playlistDesdeFs);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Error procesando la música.' });
+    const status = error.status || 500;
+    return res.status(status).json({ error: status === 404 ? 'Falta carpeta audio.' : 'Error procesando la música.' });
+  }
+});
+
+app.post('/api/playlist/sync', async (req, res) => {
+  try {
+    const { password } = req.body || {};
+    if (password !== BIBLIOTECA_PASSWORD) {
+      return res.status(401).json({ error: 'Código de acceso incorrecto. Interrupción del sector.' });
+    }
+
+    if (!dbPool) {
+      return res.status(400).json({ error: 'DATABASE_URL no configurado. El modo DB no está activo.' });
+    }
+
+    await initMusicDatabase();
+    const result = await syncMusicDbFromFilesystem();
+
+    return res.json({
+      success: true,
+      message: 'Playlist sincronizada desde carpetas a PostgreSQL.',
+      synced: result
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Error sincronizando playlist con PostgreSQL.' });
+  }
+});
+
+app.post('/api/playlist/rebase-urls', async (req, res) => {
+  try {
+    const { password, baseUrl } = req.body || {};
+    if (password !== BIBLIOTECA_PASSWORD) {
+      return res.status(401).json({ error: 'Código de acceso incorrecto. Interrupción del sector.' });
+    }
+
+    if (!dbPool) {
+      return res.status(400).json({ error: 'DATABASE_URL no configurado. El modo DB no está activo.' });
+    }
+
+    const targetBaseUrl = normalizeBaseUrl(baseUrl || AUDIO_PUBLIC_BASE_URL);
+    if (!targetBaseUrl) {
+      return res.status(400).json({ error: 'Debes enviar baseUrl o definir AUDIO_PUBLIC_BASE_URL.' });
+    }
+
+    const [tracksResult, artistsResult, albumsResult] = await Promise.all([
+      dbPool.query('SELECT id, src_url FROM tracks'),
+      dbPool.query('SELECT id, cover_url FROM artists'),
+      dbPool.query('SELECT id, cover_url FROM albums')
+    ]);
+
+    let updatedTracks = 0;
+    let updatedArtists = 0;
+    let updatedAlbums = 0;
+
+    for (const track of tracksResult.rows) {
+      const rebased = toRebasedAudioUrl(track.src_url, targetBaseUrl);
+      if (rebased !== track.src_url) {
+        await dbPool.query('UPDATE tracks SET src_url = $1 WHERE id = $2', [rebased, track.id]);
+        updatedTracks += 1;
+      }
+    }
+
+    for (const artist of artistsResult.rows) {
+      const rebased = toRebasedAudioUrl(artist.cover_url, targetBaseUrl);
+      if (rebased !== artist.cover_url) {
+        await dbPool.query('UPDATE artists SET cover_url = $1 WHERE id = $2', [rebased, artist.id]);
+        updatedArtists += 1;
+      }
+    }
+
+    for (const album of albumsResult.rows) {
+      const rebased = toRebasedAudioUrl(album.cover_url, targetBaseUrl);
+      if (rebased !== album.cover_url) {
+        await dbPool.query('UPDATE albums SET cover_url = $1 WHERE id = $2', [rebased, album.id]);
+        updatedAlbums += 1;
+      }
+    }
+
+    return res.json({
+      success: true,
+      message: 'Rutas de audio rebased correctamente.',
+      baseUrl: targetBaseUrl,
+      updated: {
+        tracks: updatedTracks,
+        artists: updatedArtists,
+        albums: updatedAlbums
+      }
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Error rebasing URLs de audio.' });
   }
 });
 

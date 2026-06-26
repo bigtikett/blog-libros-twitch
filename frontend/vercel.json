@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://blog-libros-twitch.onrender.com"
+    },
+    {
+      "source": "/img/biblioteca/:path*",
+      "destination": "https://blog-libros-twitch.onrender.com"
+    },
+    {
+      "source": "/img/favoritos/:path*",
+      "destination": "https://blog-libros-twitch.onrender.com"
+    }
+  ]
+}
