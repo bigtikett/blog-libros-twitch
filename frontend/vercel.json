@@ -2,15 +2,15 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://blog-libros-twitch.onrender.com"
+      "destination": "https://blog-libros-twitch.onrender.com/api/:path*"
     },
     {
       "source": "/img/biblioteca/:path*",
-      "destination": "https://blog-libros-twitch.onrender.com"
+      "destination": "https://blog-libros-twitch.onrender.com/img/biblioteca/:path*"
     },
     {
       "source": "/img/favoritos/:path*",
-      "destination": "https://blog-libros-twitch.onrender.com"
+      "destination": "https://blog-libros-twitch.onrender.com/img/favoritos/:path*"
     }
   ]
 }
