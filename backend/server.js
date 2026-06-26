@@ -6,7 +6,9 @@ import * as mm from 'music-metadata';
 import cors from 'cors';
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
+import dns from 'dns';
 
+dns.setDefaultResultOrder('ipv4first');
 dotenv.config();
 
 const app = express();
