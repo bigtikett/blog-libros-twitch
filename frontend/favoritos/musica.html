@@ -13,6 +13,16 @@
       href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
     />
     <link rel="stylesheet" href="../style.min.css" />
+    <style>
+      /* 🚀 Optimización GPU para el Ecualizador */
+      .cyber-bar {
+        height: 100% !important;
+        transform: scaleY(0.1);
+        transform-origin: bottom;
+        will-change: transform;
+        transition: none !important;
+      }
+    </style>
   </head>
   <body class="body-terminal-cyber min-vh-100 py-5">
     <div class="container text-white">
@@ -403,7 +413,7 @@
         
         if (i < arrayBarras.length) {
           const barra = arrayBarras[i];
-          barra.style.height = `${Math.max(porcentajeAltura, 6)}%`;
+          barra.style.transform = `scaleY(${Math.max(porcentajeAltura / 100, 0.06)})`;
 
           if (valorFrecuencia > 180) {
             barra.style.background = "linear-gradient(to top, #ff007f, #00f0ff)";

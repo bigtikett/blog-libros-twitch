@@ -477,6 +477,8 @@
   z-index: 4;
   pointer-events: none;
   animation: crt-roll 7s linear infinite;
+  top: 0;
+  will-change: transform;
 }
 
 /* Brillo interior y curva de la pantalla de fósforo */
@@ -488,6 +490,7 @@
   background: radial-gradient(circle at center, rgba(0, 240, 255, 0.06) 0%, rgba(0, 0, 0, 0) 75%);
   /* Animación de parpadeo de frecuencia desajustada */
   animation: crt-flicker 0.25s infinite;
+  will-change: opacity;
 }
 
 .screen-content {
@@ -645,10 +648,10 @@
 /* Barra que desciende en bucle por el roll del CRT */
 @keyframes crt-roll {
   0% {
-    top: -20px;
+    transform: translateY(-20px);
   }
   100% {
-    top: 300px;
+    transform: translateY(300px);
   }
 }
 /* Salto de frecuencia horizontal intermitente */

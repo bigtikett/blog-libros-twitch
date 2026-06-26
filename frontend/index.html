@@ -1124,8 +1124,17 @@
       const frame = document.getElementById('twitch-player-frame');
       if (!frame) return;
 
-      const parentHost = window.location.hostname || 'localhost';
-      frame.src = `https://player.twitch.tv/?channel=yai_booksttv&parent=${encodeURIComponent(parentHost)}`;
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const parentHost = window.location.hostname || 'localhost';
+            frame.src = `https://player.twitch.tv/?channel=yai_booksttv&parent=${encodeURIComponent(parentHost)}`;
+            observer.disconnect(); // Deja de observar una vez cargado
+          }
+        });
+      }, { rootMargin: '200px' }); // Empieza a cargar 200px antes de llegar
+
+      observer.observe(frame);
     })();
   </script>
   <script src="/terminal-loader.js"></script>
