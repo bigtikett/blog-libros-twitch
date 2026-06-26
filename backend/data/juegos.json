@@ -1,0 +1,41 @@
+[
+  {
+    "id": "juego-1",
+    "titulo": "Cyberpunk 2077",
+    "descripcion": "Inundada en los neones de Night City. Una de mis mayores obsesiones visuales y narrativas fuera de los libros.",
+    "imagen": "/assets/images/cyberpunk.jpg",
+    "badgeTexto": "FAV ⭐️",
+    "badgeColor": "cyan",
+    "tituloColor": "magenta",
+    "vicio": 100,
+    "progressColor": "magenta",
+    "plataforma": "PC / Steam",
+    "horas": "+200h"
+  },
+  {
+    "id": "juego-2",
+    "titulo": "Stardew Valley",
+    "descripcion": "Mi lugar seguro. No hay nada que unas horas gestionando cultivos y saludando aldeanos no puedan curar.",
+    "imagen": "/assets/images/stardew.jpg",
+    "badgeTexto": "COZY ☕",
+    "badgeColor": "magenta",
+    "tituloColor": "cyan",
+    "vicio": 85,
+    "progressColor": "cyan",
+    "plataforma": "Nintendo Switch",
+    "horas": "+150h"
+  },
+  {
+    "id": "juego-3",
+    "titulo": "Expedition 33",
+    "descripcion": "Donde sale mi vena competitiva. Risas en squad, algún que otro enfado y muchos clics a la cabeza.",
+    "imagen": "/assets/images/expedition.webp",
+    "badgeTexto": "TRYHARD 🎯",
+    "badgeColor": "warning",
+    "tituloColor": "warning",
+    "vicio": 60,
+    "progressColor": "warning",
+    "plataforma": "PC",
+    "horas": "+150h"
+  }
+]

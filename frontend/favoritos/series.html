@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Búnker Archive // Series</title>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Iconos de Bootstrap -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <!-- Archivo de estilos personalizados -->
+  <link rel="stylesheet" href="../style.min.css">
+</head>
+<body class="section-favorites min-vh-100 py-5">
+
+  <div class="container text-white">
+    
+    <div class="mb-5">
+      <a href="/index.html#favoritos-footer" class="btn btn-twitch-neon rounded-0 btn-sm text-uppercase fw-black px-3">
+        <i class="bi bi-arrow-left-short"></i> Volver al Búnker
+      </a>
+    </div>
+
+    <div class="border-bottom border-purple-gaming pb-3 mb-5">
+      <span class="text-neon-magenta fw-bold tracking-widest text-uppercase small">[ DATABASE // TV_SERIES_DECRYPTED ]</span>
+      <h1 class="display-3 text-neon-cyan text-uppercase tracking-tight text-glow-purple m-0">📺 SERIES FAVORITAS</h1>
+    </div>
+
+    <!-- 💡 ESTILOS INYECTADOS DINÁMICAMENTE PARA LAS SERIES -->
+    <style>
+      /* --- 📺 SERIES CUSTOM PREMIUM EFFECTS --- */
+      
+      .series-cyber-card {
+        background: rgba(13, 9, 24, 0.75) !important;
+        border: 1px solid rgba(255, 255, 255, 0.05) !important;
+        border-radius: 6px !important;
+        transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        overflow: hidden;
+        position: relative;
+      }
+      .series-cyber-card:hover {
+        transform: translateY(-5px);
+        background: rgba(22, 15, 38, 0.85) !important;
+      }
+      
+      /* Bordes de acento neón interactivos */
+      .series-accent-cyan { border-left: 4px solid #00f0ff !important; }
+      .series-accent-cyan:hover { border-color: #00f0ff !important; box-shadow: 0 0 20px rgba(0, 240, 255, 0.15); }
+      
+      .series-accent-magenta { border-left: 4px solid #ff007f !important; }
+      .series-accent-magenta:hover { border-color: #ff007f !important; box-shadow: 0 0 20px rgba(255, 0, 127, 0.15); }
+
+      .series-accent-green { border-left: 4px solid #3afc13 !important; }
+      .series-accent-green:hover { border-color: #3afc13 !important; box-shadow: 0 0 20px rgba(58, 252, 19, 0.15); }
+
+      .series-accent-yellow { border-left: 4px solid #ffee00 !important; }
+      .series-accent-yellow:hover { border-color: #ffee00 !important; box-shadow: 0 0 20px rgba(255, 238, 0, 0.15); }
+
+      .series-accent-purple { border-left: 4px solid #a072ff !important; }
+      .series-accent-purple:hover { border-color: #a072ff !important; box-shadow: 0 0 20px rgba(160, 114, 255, 0.15); }
+
+      .series-accent-orange { border-left: 4px solid #ff8c00 !important; }
+      .series-accent-orange:hover { border-color: #ff8c00 !important; box-shadow: 0 0 20px rgba(255, 140, 0, 0.15); }
+
+      /* Badges bg-dark con colores dinámicos */
+      .bg-dark-cyan { background-color: rgba(0, 240, 255, 0.15) !important; color: #00f0ff !important; }
+      .bg-dark-magenta { background-color: rgba(255, 0, 127, 0.15) !important; color: #ff007f !important; }
+      .bg-dark-green { background-color: rgba(58, 252, 19, 0.15) !important; color: #3afc13 !important; }
+      .bg-dark-yellow { background-color: rgba(255, 238, 0, 0.15) !important; color: #ffee00 !important; }
+      .bg-dark-purple { background-color: rgba(160, 114, 255, 0.15) !important; color: #a072ff !important; }
+      .bg-dark-orange { background-color: rgba(255, 140, 0, 0.15) !important; color: #ff8c00 !important; }
+      
+      /* Contenedor más grande para pósteres verticales */
+      .series-poster-container {
+        width: 100%;
+        max-width: 180px; /* Poster de mayor tamaño */
+        aspect-ratio: 2 / 3;
+        background: #000;
+        border-radius: 4px;
+        overflow: hidden;
+        position: relative;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      
+      @media (max-width: 575px) {
+        .series-poster-container {
+          max-width: 140px; /* Tamaño optimizado en móviles */
+          margin-bottom: 5px;
+        }
+      }
+ 
+      .series-poster-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+      }
+      .series-cyber-card:hover .series-poster-img {
+        transform: scale(1.05);
+      }
+ 
+      /* Decrypted monitor overlay */
+      .series-poster-container::before {
+        content: '[ FEED_ONLINE ]';
+        position: absolute;
+        bottom: 6px;
+        left: 6px;
+        font-family: monospace;
+        font-size: 8px;
+        color: #39ff14;
+        text-shadow: 0 0 3px #39ff14;
+        background: rgba(0, 0, 0, 0.75);
+        padding: 2px 5px;
+        border-radius: 2px;
+        z-index: 5;
+        letter-spacing: 0.5px;
+      }
+      
+      /* Línea de escaneo láser en hover */
+      .series-poster-container::after {
+        content: '';
+        position: absolute;
+        top: -100%;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: rgba(0, 240, 255, 0.4);
+        box-shadow: 0 0 10px rgba(0, 240, 255, 0.6);
+        opacity: 0.35;
+        pointer-events: none;
+        z-index: 4;
+      }
+      .series-accent-cyan .series-poster-container::after {
+        background: rgba(0, 240, 255, 0.4);
+        box-shadow: 0 0 10px rgba(0, 240, 255, 0.6);
+      }
+      .series-accent-magenta .series-poster-container::after {
+        background: rgba(255, 0, 127, 0.4);
+        box-shadow: 0 0 10px rgba(255, 0, 127, 0.6);
+      }
+      .series-accent-green .series-poster-container::after {
+        background: rgba(58, 252, 19, 0.4);
+        box-shadow: 0 0 10px rgba(58, 252, 19, 0.6);
+      }
+      .series-accent-yellow .series-poster-container::after {
+        background: rgba(255, 238, 0, 0.4);
+        box-shadow: 0 0 10px rgba(255, 238, 0, 0.6);
+      }
+      .series-accent-purple .series-poster-container::after {
+        background: rgba(160, 114, 255, 0.4);
+        box-shadow: 0 0 10px rgba(160, 114, 255, 0.6);
+      }
+      .series-accent-orange .series-poster-container::after {
+        background: rgba(255, 140, 0, 0.4);
+        box-shadow: 0 0 10px rgba(255, 140, 0, 0.6);
+      }
+      
+      .series-cyber-card:hover .series-poster-container::after {
+        animation: series-scan 2s linear infinite;
+      }
+      
+      @keyframes series-scan {
+        0% { top: -10%; }
+        100% { top: 110%; }
+      }
+    </style>
+
+    <div id="detalle-favorito">
+      <div class="row g-4" id="contenedor-series">
+        <!-- Cargado dinámicamente mediante JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Secreto de Inyección de Series (Se abre con Ctrl + Shift + B) -->
+  <div class="modal fade" id="modal-nueva-serie" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content bg-dark border border-secondary border-opacity-50 text-white font-monospace">
+        <div class="modal-header border-bottom border-secondary border-opacity-25 bg-black-25">
+          <h5 class="modal-title text-neon-cyan font-orbitron">[ INJECT_SERIES_RECORD ]</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="px-4 pt-3 pb-2 border-bottom border-secondary border-opacity-10 bg-black-25">
+          <label class="form-label text-neon-magenta small">&gt; CÓDIGO_SISTEMA (PASSWORD)</label>
+          <input type="password" id="modal-password" class="form-control form-control-sm bg-black border-secondary text-white" placeholder="••••••••" required>
+        </div>
+        <div class="modal-body" style="max-height: 65vh; overflow-y: auto;">
+          <form id="form-nueva-serie" class="p-2">
+            <div class="mb-3">
+              <label class="form-label text-neon-magenta small">&gt; TÍTULO_DE_LA_SERIE</label>
+              <input type="text" id="serie-titulo" class="form-control form-control-sm bg-black border-secondary text-white text-uppercase" placeholder="ARCANE" required>
+            </div>
+            <div class="row mb-3">
+              <div class="col-8">
+                <label class="form-label text-neon-magenta small">&gt; COLOR_TÍTULO</label>
+                <select id="serie-color-titulo" class="form-select form-select-sm bg-black border-secondary text-white">
+                  <option value="white">WHITE (STANDARD)</option>
+                  <option value="cyan">CYAN (NEÓN)</option>
+                  <option value="magenta">MAGENTA (NEÓN)</option>
+                  <option value="green">GREEN (NEÓN)</option>
+                  <option value="yellow">YELLOW (NEÓN)</option>
+                  <option value="purple">PURPLE (NEÓN)</option>
+                  <option value="orange">ORANGE (NEÓN)</option>
+                </select>
+              </div>
+              <div class="col-4 d-flex align-items-end">
+                <div id="preview-serie-color-titulo" class="w-100 text-center py-1 rounded" style="border:1px solid rgba(255,255,255,0.3); font-size:0.7rem; font-weight:700; color:#fff;">PREVIEW</div>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label text-neon-magenta small">&gt; PUNTUACIÓN (e.g. 10/10 o 9.5/10)</label>
+              <input type="text" id="serie-puntuacion" class="form-control form-control-sm bg-black border-secondary text-white" placeholder="10/10" required>
+            </div>
+            <div class="row mb-3">
+              <div class="col-8">
+                <label class="form-label text-neon-magenta small">&gt; COLOR_PUNTUACIÓN</label>
+                <select id="serie-color-puntuacion" class="form-select form-select-sm bg-black border-secondary text-white">
+                  <option value="cyan">CYAN (NEÓN)</option>
+                  <option value="magenta">MAGENTA (NEÓN)</option>
+                  <option value="green">GREEN (NEÓN)</option>
+                  <option value="yellow">YELLOW (NEÓN)</option>
+                  <option value="purple">PURPLE (NEÓN)</option>
+                  <option value="orange">ORANGE (NEÓN)</option>
+                </select>
+              </div>
+              <div class="col-4 d-flex align-items-end">
+                <div id="preview-serie-color-puntuacion" class="w-100 text-center py-1 rounded" style="border:1px solid rgba(0,240,255,0.3); font-size:0.7rem; font-weight:700;">PREVIEW</div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label text-neon-magenta small">&gt; GÉNERO / TEMÁTICA</label>
+              <input type="text" id="serie-genero" class="form-control form-control-sm bg-black border-secondary text-white text-uppercase" placeholder="ANIMACIÓN / CYBERPUNK" required>
+            </div>
+            <div class="row mb-3">
+              <div class="col-8">
+                <label class="form-label text-neon-magenta small">&gt; COLOR_GÉNERO</label>
+                <select id="serie-color-genero" class="form-select form-select-sm bg-black border-secondary text-white">
+                  <option value="cyan">CYAN (NEÓN)</option>
+                  <option value="magenta">MAGENTA (NEÓN)</option>
+                  <option value="green">GREEN (NEÓN)</option>
+                  <option value="yellow">YELLOW (NEÓN)</option>
+                  <option value="purple">PURPLE (NEÓN)</option>
+                  <option value="orange">ORANGE (NEÓN)</option>
+                </select>
+              </div>
+              <div class="col-4 d-flex align-items-end">
+                <div id="preview-serie-color-genero" class="w-100 text-center py-1 rounded" style="border:1px solid rgba(0,240,255,0.3); font-size:0.7rem; font-weight:700;">PREVIEW</div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label text-neon-magenta small">&gt; RESEÑA / VALORACIÓN</label>
+              <textarea id="serie-resena" class="form-control form-control-sm bg-black border-secondary text-white" rows="3" placeholder="Una obra maestra absoluta de la animación..." required></textarea>
+            </div>
+            <div class="row mb-3">
+              <div class="col-8">
+                <label class="form-label text-neon-magenta small">&gt; COLOR_RESEÑA</label>
+                <select id="serie-color-resena" class="form-select form-select-sm bg-black border-secondary text-white">
+                  <option value="white">WHITE (STANDARD)</option>
+                  <option value="cyan">CYAN (NEÓN)</option>
+                  <option value="magenta">MAGENTA (NEÓN)</option>
+                  <option value="green">GREEN (NEÓN)</option>
+                  <option value="yellow">YELLOW (NEÓN)</option>
+                  <option value="purple">PURPLE (NEÓN)</option>
+                  <option value="orange">ORANGE (NEÓN)</option>
+                </select>
+              </div>
+              <div class="col-4 d-flex align-items-end">
+                <div id="preview-serie-color-resena" class="w-100 text-center py-1 rounded" style="border:1px solid rgba(255,255,255,0.3); font-size:0.7rem; font-weight:700; color:#fff;">PREVIEW</div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label text-neon-magenta small">&gt; PERSONAJES_TOP (Separados por comas)</label>
+              <input type="text" id="serie-personajes-top" class="form-control form-control-sm bg-black border-secondary text-white" placeholder="Jinx, Vi, Silco" required>
+            </div>
+            <div class="row mb-3">
+              <div class="col-8">
+                <label class="form-label text-neon-magenta small">&gt; COLOR_PERSONAJES</label>
+                <select id="serie-color-personajes" class="form-select form-select-sm bg-black border-secondary text-white">
+                  <option value="yellow">YELLOW (NEÓN)</option>
+                  <option value="cyan">CYAN (NEÓN)</option>
+                  <option value="magenta">MAGENTA (NEÓN)</option>
+                  <option value="green">GREEN (NEÓN)</option>
+                  <option value="purple">PURPLE (NEÓN)</option>
+                  <option value="orange">ORANGE (NEÓN)</option>
+                </select>
+              </div>
+              <div class="col-4 d-flex align-items-end">
+                <div id="preview-serie-color-personajes" class="w-100 text-center py-1 rounded" style="border:1px solid rgba(255,238,0,0.3); font-size:0.7rem; font-weight:700; color:#ffee00;">PREVIEW</div>
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-8">
+                <label class="form-label text-neon-magenta small">&gt; COLOR_ACENTO (BORDE/ESCANEO)</label>
+                <select id="serie-color" class="form-select form-select-sm bg-black border-secondary text-white">
+                  <option value="cyan">CYAN (NEÓN)</option>
+                  <option value="magenta">MAGENTA (NEÓN)</option>
+                  <option value="green">GREEN (NEÓN)</option>
+                  <option value="yellow">YELLOW (NEÓN)</option>
+                  <option value="purple">PURPLE (NEÓN)</option>
+                  <option value="orange">ORANGE (NEÓN)</option>
+                </select>
+              </div>
+              <div class="col-4 d-flex align-items-end">
+                <div id="preview-serie-color" class="w-100 text-center py-1 rounded" style="border:1px solid rgba(0,240,255,0.3); font-size:0.7rem; font-weight:700;">PREVIEW</div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label text-neon-magenta small">&gt; SUBIR_PÓSTER_LOCAL (IMG)</label>
+              <input type="file" id="serie-cover-file" class="form-control form-control-sm bg-black border-secondary text-white" accept="image/*">
+              <div class="form-text text-white small mt-1">// Opcional: selecciona un archivo de imagen local</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label text-neon-magenta small">&gt; PATH_PÓSTER_IMG (MANUAL)</label>
+              <input type="text" id="serie-cover" class="form-control form-control-sm bg-black border-secondary text-white" value="/assets/images/arkane.jpeg">
+            </div>
+
+            <button type="submit" class="btn btn-outline-info btn-sm w-100 mt-2 font-orbitron">[ INJECT_SERIES_RECORD ]</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const container = document.getElementById("contenedor-series");
+      const ADMIN_SESSION_KEY = "bunker_admin_authenticated";
+      let isAdmin = sessionStorage.getItem(ADMIN_SESSION_KEY) === "1";
+
+      function activarModoAdmin() {
+        sessionStorage.setItem(ADMIN_SESSION_KEY, "1");
+        isAdmin = true;
+      }
+
+      // 1. Cargar series desde el backend
+      async function cargarSeries() {
+        try {
+          const response = await fetch("/api/series");
+          if (!response.ok) throw new Error("Error al obtener series");
+          const series = await response.json();
+          renderSeries(series);
+        } catch (error) {
+          console.error("Error cargando las series:", error);
+        }
+      }
+
+      function renderSeries(seriesList) {
+        if (!container) return;
+        container.innerHTML = "";
+
+        if (seriesList.length === 0) {
+          container.innerHTML = `
+            <div class="col-12 text-center font-monospace py-5 text-white-50">
+              [ NO_SERIES_RECORDS_FOUND ]
+            </div>`;
+          return;
+        }
+
+        seriesList.forEach((serie) => {
+          const accentColor = (serie.color || "cyan").toLowerCase();
+          const accentClass = `series-accent-${accentColor}`;
+          const badgeClass = `bg-dark-${accentColor}`;
+
+          const colorTitulo = serie.colorTitulo || 'white';
+          const titleClass = colorTitulo === 'white' ? 'text-white' : `text-neon-${colorTitulo}`;
+
+          const colorPuntuacion = serie.colorPuntuacion || 'cyan';
+          const scoreClass = `text-neon-${colorPuntuacion}`;
+
+          const colorGenero = serie.colorGenero || 'cyan';
+          const generoClass = `text-neon-${colorGenero}`;
+
+          const colorResena = serie.colorResena || 'white';
+          const resenaClass = colorResena === 'white' ? 'text-light-subtle' : `text-neon-${colorResena}`;
+
+          const colorPersonajes = serie.colorPersonajes || 'yellow';
+          const personajesClass = `text-neon-${colorPersonajes}`;
+
+          const cardHTML = `
+            <div class="col-lg-6">
+              <div class="series-cyber-card ${accentClass} p-4 h-100 d-flex flex-sm-row flex-column gap-4 align-items-center">
+                <div class="flex-shrink-0 series-poster-container">
+                  <img src="${serie.cover || '/assets/images/arkane.jpeg'}" class="series-poster-img" alt="${serie.titulo} Poster">
+                </div>
+                <div class="w-100 d-flex flex-column justify-content-between h-100">
+                  <div>
+                    <div class="d-flex justify-content-between align-items-start">
+                      <h3 class="h4 fw-black text-uppercase ${titleClass} m-0 titulo-favorito">${serie.titulo}</h3>
+                      <div class="d-flex align-items-center gap-2">
+                        <span class="badge ${badgeClass} text-xs font-monospace">⭐️ <span class="${scoreClass}">${serie.puntuacion || '10/10'}</span></span>
+                        ${isAdmin ? `<button type="button" class="btn btn-outline-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-serie" data-id="${serie.id}" style="font-size: 0.62rem; padding: 2px 6px;">[ ELIMINAR ]</button>` : ''}
+                      </div>
+                    </div>
+                    <span class="text-xs ${generoClass} d-block font-monospace mb-2 mt-1">GEN: ${serie.genero || 'ANIMACIÓN / CYBERPUNK'}</span>
+                    <p class="small ${resenaClass} mb-3" style="line-height: 1.5; font-size: 13px;">
+                      ${serie.resena || ''}
+                    </p>
+                  </div>
+                  <div class="border-top border-purple-gaming pt-2 mt-auto">
+                    <span class="text-xs ${personajesClass} font-monospace d-block">PERSONAJES TOP: <strong class="text-white">${serie.personajesTop || ''}</strong></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+          container.innerHTML += cardHTML;
+        });
+      }
+
+      // 2. Keyboard shortcut handler Ctrl + Shift + B
+      document.addEventListener("keydown", (e) => {
+        if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "b") {
+          e.preventDefault();
+          const code = prompt("INGRESE CÓDIGO DE ACCESO DE SEGURIDAD:");
+          if (code === "bunker2026") {
+            activarModoAdmin();
+            const modalEl = document.getElementById("modal-nueva-serie");
+            if (modalEl) {
+              const modalInst = bootstrap.Modal.getOrCreateInstance(modalEl);
+              modalInst.show();
+              const passInput = document.getElementById("modal-password");
+              if (passInput) passInput.value = code;
+            }
+            cargarSeries();
+          } else if (code !== null) {
+            alert("CÓDIGO DE ACCESO INCORRECTO. ACCESO DENEGADO.");
+          }
+        }
+      });
+
+      async function eliminarSerie(id, password) {
+        const response = await fetch('/api/series/eliminar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, password })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'FAIL_DELETION');
+        }
+
+        return response.json();
+      }
+
+      document.addEventListener('click', async (event) => {
+        const deleteBtn = event.target.closest('.btn-delete-serie');
+        if (!deleteBtn || !isAdmin) return;
+
+        const serieId = deleteBtn.getAttribute('data-id');
+        if (!serieId) return;
+
+        if (!confirm('¿Eliminar esta serie del registro?')) return;
+
+        const code = prompt('INGRESE CÓDIGO DE ACCESO DE SEGURIDAD PARA ELIMINAR LA SERIE:');
+        if (code !== 'bunker2026') {
+          if (code !== null) alert('CÓDIGO DE ACCESO INCORRECTO. ACCESO DENEGADO.');
+          return;
+        }
+
+        try {
+          await eliminarSerie(serieId, code);
+          cargarSeries();
+        } catch (error) {
+          alert(`ERROR AL ELIMINAR: ${error.message}`);
+        }
+      });
+
+      // 3. Form submit handler
+      const formNuevaSerie = document.getElementById("form-nueva-serie");
+      if (formNuevaSerie) {
+        formNuevaSerie.addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          const fileInput = document.getElementById("serie-cover-file");
+          const file = fileInput ? fileInput.files[0] : null;
+
+          const submitData = (coverData = null, fileName = null) => {
+            const datosSerie = {
+              titulo: document.getElementById("serie-titulo").value.toUpperCase(),
+              colorTitulo: document.getElementById("serie-color-titulo") ? document.getElementById("serie-color-titulo").value : "white",
+              puntuacion: document.getElementById("serie-puntuacion").value,
+              colorPuntuacion: document.getElementById("serie-color-puntuacion") ? document.getElementById("serie-color-puntuacion").value : "cyan",
+              genero: document.getElementById("serie-genero").value.toUpperCase(),
+              colorGenero: document.getElementById("serie-color-genero") ? document.getElementById("serie-color-genero").value : "cyan",
+              resena: document.getElementById("serie-resena").value,
+              colorResena: document.getElementById("serie-color-resena") ? document.getElementById("serie-color-resena").value : "white",
+              personajesTop: document.getElementById("serie-personajes-top").value,
+              colorPersonajes: document.getElementById("serie-color-personajes") ? document.getElementById("serie-color-personajes").value : "yellow",
+              color: document.getElementById("serie-color").value,
+              cover: document.getElementById("serie-cover").value || "/assets/images/arkane.jpeg",
+              password: document.getElementById("modal-password").value,
+              coverFileData: coverData,
+              coverFileName: fileName
+            };
+
+            fetch("/api/series/nuevo", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(datosSerie)
+            })
+              .then((res) => {
+                if (!res.ok) {
+                  return res.json().then(err => { throw new Error(err.error || "Http Error"); });
+                }
+                return res.json();
+              })
+              .then((data) => {
+                if (data.success) {
+                  console.log(`[SYS]: ${data.message}`);
+                  formNuevaSerie.reset();
+                  
+                  const modalEl = document.getElementById("modal-nueva-serie");
+                  if (modalEl) {
+                    const modalInst = bootstrap.Modal.getInstance(modalEl);
+                    if (modalInst) modalInst.hide();
+                  }
+
+                  cargarSeries();
+                }
+              })
+              .catch((err) => {
+                console.error("Error adding series:", err);
+                alert(`ERROR: ${err.message}`);
+              });
+          };
+
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = function (event) {
+              submitData(event.target.result, file.name);
+            };
+            reader.onerror = function (error) {
+              console.error("Error reading file:", error);
+              alert("Error leyendo el archivo de imagen.");
+            };
+            reader.readAsDataURL(file);
+          } else {
+            submitData();
+          }
+        });
+      }
+
+      // Color preview system for modal selectors
+      const colorMap = {
+        white: '#ffffff',
+        cyan: '#00f0ff',
+        magenta: '#ff007f',
+        green: '#3afc13',
+        yellow: '#ffee00',
+        purple: '#a072ff',
+        orange: '#ff8c00'
+      };
+
+      function setupColorPreview(selectId, previewId) {
+        const sel = document.getElementById(selectId);
+        const prev = document.getElementById(previewId);
+        if (!sel || !prev) return;
+        const update = () => {
+          const c = colorMap[sel.value] || '#fff';
+          prev.style.color = c;
+          prev.style.borderColor = c;
+          prev.style.textShadow = `0 0 8px ${c}`;
+        };
+        sel.addEventListener('change', update);
+        update();
+      }
+
+      setupColorPreview('serie-color-titulo', 'preview-serie-color-titulo');
+      setupColorPreview('serie-color-puntuacion', 'preview-serie-color-puntuacion');
+      setupColorPreview('serie-color-genero', 'preview-serie-color-genero');
+      setupColorPreview('serie-color-resena', 'preview-serie-color-resena');
+      setupColorPreview('serie-color-personajes', 'preview-serie-color-personajes');
+      setupColorPreview('serie-color', 'preview-serie-color');
+
+      // Cargar series al iniciar
+      cargarSeries();
+    });
+  </script>
+</body>
+</html>

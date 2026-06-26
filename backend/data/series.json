@@ -1,0 +1,52 @@
+[
+  {
+    "id": "serie-1",
+    "titulo": "ARCANE",
+    "puntuacion": "10/10",
+    "genero": "ANIMACIÓN / CYBERPUNK",
+    "resena": "Una obra maestra absoluta de la animación. La dirección de arte, la banda sonora y el desarrollo psicológico de personajes (especialmente Jinx y Silco) redefinieron los estándares de la televisión moderna.",
+    "personajesTop": "Jinx, Vi, Silco",
+    "cover": "/assets/images/arkane.jpeg",
+    "color": "cyan"
+  },
+  {
+    "id": "serie-2",
+    "titulo": "EDGERUNNERS",
+    "puntuacion": "9.5/10",
+    "genero": "ANIME / DISTÓPICO",
+    "resena": "Frenética, dolorosa y visualmente adictiva. Expandió el universo de Night City con un dinamismo brutal del estudio Trigger. El desenlace romántico y trágico me dejó completamente rota en el suelo del búnker.",
+    "personajesTop": "David, Lucy, Rebecca",
+    "cover": "/assets/images/edgerunners.jpg",
+    "color": "magenta"
+  },
+  {
+    "id": "serie-3",
+    "titulo": "S.O.N.S",
+    "puntuacion": "10/10",
+    "genero": "ACCIÓN / DRAMA",
+    "resena": "Una tragedia shakesperiana sobre ruedas. El descenso moral de Jax Teller dentro del club de moteros, la crudeza de la banda y las complejas relaciones de lealtad la vuelven una experiencia dramática inigualable.",
+    "personajesTop": "Opie, Jax, Tiggy",
+    "cover": "/assets/images/sons.jpg",
+    "color": "cyan"
+  },
+  {
+    "id": "serie-4",
+    "titulo": "STRANGER THINGS",
+    "puntuacion": "9.5/10",
+    "genero": "SCI-FI / MISTERIO",
+    "resena": "El homenaje definitivo a los clásicos de misterio y aventuras de los 80. Destaca por su increíble atmósfera nostálgica, su icónica banda sonora de sintetizadores y el desarrollo de Steve Harrington.",
+    "personajesTop": "Steve, Eleven, Dustin",
+    "cover": "/assets/images/stranger.png",
+    "color": "magenta"
+  },
+  {
+    "titulo": "ALTERED CARBON",
+    "puntuacion": "10/10",
+    "genero": "SCFI / CYBERPUNK",
+    "resena": "Una de las series mas fieles en cuanto a cyberpunk se refiere, ocupa toda la gama de colores en cuanto a ambientacion, tecnologias y argumento, es imposible no recomendarla si te gusta la ciencia ficción, la acción  y una buena trama.",
+    "personajesTop": "Kovacs, Ortega, Poe",
+    "color": "cyan",
+    "cover": "/img/favoritos/1782440855137-alteredcarbon_6.webp",
+    "id": "serie-1782440855139"
+  }
+]

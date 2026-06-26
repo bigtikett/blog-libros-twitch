@@ -1,0 +1,17 @@
+btn-cinema-flip
+character-block
+characters-hero
+char-poster
+char-poster-frame
+dynamic-bg
+flip-card
+flip-card-back
+flip-card-front
+flip-card-inner
+hover-neon-link
+shape
+shape-1
+shape-2
+shape-3
+shape-4
+swiper-pagination-bullet-active

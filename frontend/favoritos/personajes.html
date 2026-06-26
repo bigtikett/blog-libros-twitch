@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Búnker Archive // Personajes</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="../style.min.css">
+  <style>
+    .flip-card { perspective: 1000px; height: 540px !important; }
+    .flip-card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.8s ease; transform-style: preserve-3d; }
+    .flip-card.is-flipped .flip-card-inner { transform: rotateY(180deg); }
+    .flip-card-front, .flip-card-back { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 0.75rem; overflow: hidden; }
+    .flip-card-front { display: flex; flex-direction: column; height: 100%; }
+    .flip-card-back { transform: rotateY(180deg); background: rgba(8, 5, 18, 0.96); display: flex; flex-direction: column; justify-content: space-between; padding: 1.5rem; }
+    .flip-card-back h3, .flip-card-back h4 { text-shadow: 0 0 12px rgba(0, 240, 255, 0.35); }
+    .flip-card-back p { color: #ddd; line-height: 1.7; }
+    .flip-card .card-data-content { min-height: 220px; display: flex; flex-direction: column; justify-content: space-between; }
+  </style>
+</head>
+<body class="body-terminal-cyber min-vh-100 py-5">
+
+  <div class="container text-white py-4">
+  
+  <!-- CABECERA DE LA PÁGINA (ESTILO TERMINAL) -->
+  <div class="d-flex justify-content-between align-items-center border-bottom border-purple-gaming pb-3 mb-5">
+    <div>
+      <span class="text-neon-cyan fw-bold tracking-widest text-uppercase small">[ CLASSIFIED // CHARACTER_ARCHIVE ]</span>
+      <h1 class="display-4 fw-black text-uppercase tracking-tight text-glow-cyan m-0">PERSONAJES FAVORITOS</h1>
+      <p class="text-lg text-neon-magenta m-0 mt-1">Haz clic en la tarjeta o usa el botón para ver la ficha completa.</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="/index.html#favoritos-footer" class="btn btn-twitch-neon rounded-0 btn-sm text-uppercase fw-black px-3">
+        <i class="bi bi-arrow-left-short"></i> Volver
+      </a>
+    </div>
+  </div>
+
+  <!-- GRID DE SUJETOS -->
+  <div id="detalle-favorito">
+    <div class="row g-4 justify-content-center" id="personajes-row">
+      <!-- Fallback estático si la API tarda o no carga -->
+      <div class="col-md-4">
+        <div class="subject-profile-card flip-card h-100">
+          <div class="flip-card-inner">
+            <div class="flip-card-front">
+              <div class="position-relative overflow-hidden card-img-wrapper">
+                <div class="subject-hud-tag">[ SUBJECT_01 ]</div>
+                <img src="/assets/images/opie.jfif" class="img-fluid subject-photo" alt="Opie">
+                <div class="subject-scan-line"></div>
+              </div>
+              <div class="p-4 card-data-content text-center">
+                <h3 class="h4 fw-black text-uppercase tracking-wide text-white mb-1 titulo-favorito">Opie</h3>
+                <span class="text-xs text-neon-magenta font-monospace d-block mb-3">Sons of Anarchy — Co-Protagonista</span>
+                <button type="button" class="btn btn-subject-action text-uppercase fw-black w-100 rounded-0 btn-show-ficha">Ver Ficha</button>
+              </div>
+            </div>
+            <div class="flip-card-back">
+              <div>
+                <h3 class="h5 text-neon-cyan mb-3">FICHA</h3>
+                <p class="text-white mb-3">Ex líder del club, hermano hermético y protector feroz de la familia.</p>
+                <h4 class="text-neon-magenta mb-2">Datos curiosos</h4>
+                <p class="text-white mb-4">Casi se retira del club tras la muerte de su padre, pero regresó para mantener el legado vivo.</p>
+              </div>
+              <button type="button" class="btn btn-subject-action text-uppercase fw-black w-100 rounded-0 btn-close-ficha">Cerrar Ficha</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="subject-profile-card flip-card h-100">
+          <div class="flip-card-inner">
+            <div class="flip-card-front">
+              <div class="position-relative overflow-hidden card-img-wrapper">
+                <div class="subject-hud-tag">[ SUBJECT_02 ]</div>
+                <img src="/assets/images/tonymontana.jpg" class="img-fluid subject-photo" alt="Tony Montana">
+                <div class="subject-scan-line"></div>
+              </div>
+              <div class="p-4 card-data-content text-center">
+                <h3 class="h4 fw-black text-uppercase tracking-wide text-white mb-1 titulo-favorito">Tony Montana</h3>
+                <span class="text-xs text-neon-cyan font-monospace d-block mb-3">Scarface — Protagonista / Gángster</span>
+                <button type="button" class="btn btn-subject-action text-uppercase fw-black w-100 rounded-0 btn-show-ficha">Ver Ficha</button>
+              </div>
+            </div>
+            <div class="flip-card-back">
+              <div>
+                <h3 class="h5 text-neon-cyan mb-3">FICHA</h3>
+                <p class="text-white mb-3">Un outsider con hambre y una ambición imparable hasta la caída final.</p>
+                <h4 class="text-neon-magenta mb-2">Datos curiosos</h4>
+                <p class="text-white mb-4">Su frase más icónica es "Say hello to my little friend" y casi nunca perdona una traición.</p>
+              </div>
+              <button type="button" class="btn btn-subject-action text-uppercase fw-black w-100 rounded-0 btn-close-ficha">Cerrar Ficha</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="subject-profile-card flip-card h-100">
+          <div class="flip-card-inner">
+            <div class="flip-card-front">
+              <div class="position-relative overflow-hidden card-img-wrapper">
+                <div class="subject-hud-tag">[ SUBJECT_03 ]</div>
+                <img src="/assets/images/anakin.webp" class="img-fluid subject-photo" alt="Anakin Skywalker">
+                <div class="subject-scan-line"></div>
+              </div>
+              <div class="p-4 card-data-content text-center">
+                <h3 class="h4 fw-black text-uppercase tracking-wide text-white mb-1 titulo-favorito">Anakin Skywalker</h3>
+                <span class="text-xs text-warning font-monospace d-block mb-3">Star Wars — Lord Sith / Miedo</span>
+                <button type="button" class="btn btn-subject-action text-uppercase fw-black w-100 rounded-0 btn-show-ficha">Ver Ficha</button>
+              </div>
+            </div>
+            <div class="flip-card-back">
+              <div>
+                <h3 class="h5 text-neon-cyan mb-3">FICHA</h3>
+                <p class="text-white mb-3">Potencial Jedi convertido en un Sith atormentado por la traición y el amor prohibido.</p>
+                <h4 class="text-neon-magenta mb-2">Datos curiosos</h4>
+                <p class="text-white mb-4">Su miedo a perder a Padmé fue la fuerza que terminó convirtiéndolo en Darth Vader.</p>
+              </div>
+              <button type="button" class="btn btn-subject-action text-uppercase fw-black w-100 rounded-0 btn-close-ficha">Cerrar Ficha</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Secreto de Inyección de Personajes (Se abre con Ctrl + Shift + B) -->
+<div class="modal fade" id="modal-nuevo-personaje" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content bg-dark border border-secondary border-opacity-50 text-white font-monospace">
+      <div class="modal-header border-bottom border-secondary border-opacity-25 bg-black-25">
+        <h5 class="modal-title text-neon-cyan font-orbitron">[ INJECT_PERSONAJE_RECORD ]</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="px-4 pt-3 pb-2 border-bottom border-secondary border-opacity-10 bg-black-25">
+        <label class="form-label text-neon-magenta small">&gt; CÓDIGO_SISTEMA (PASSWORD)</label>
+        <input type="password" id="modal-password-personaje" class="form-control form-control-sm bg-black border-secondary text-white" placeholder="••••••••" required>
+      </div>
+      <div class="modal-body" style="max-height: 65vh; overflow-y: auto;">
+        <form id="form-nuevo-personaje" class="p-2">
+          <div class="mb-3">
+            <label class="form-label text-neon-magenta small">&gt; NOMBRE_DEL_PERSONAJE</label>
+            <input type="text" id="personaje-nombre" class="form-control form-control-sm bg-black border-secondary text-white text-uppercase" placeholder="TONY MONTANA" required>
+          </div>
+          <div class="row mb-3">
+            <div class="col-8">
+              <label class="form-label text-neon-magenta small">&gt; COLOR_NOMBRE</label>
+              <select id="personaje-color-nombre" class="form-select form-select-sm bg-black border-secondary text-white">
+                <option value="white">WHITE (STANDARD)</option>
+                <option value="cyan">CYAN (NEÓN)</option>
+                <option value="magenta">MAGENTA (NEÓN)</option>
+                <option value="green">GREEN (NEÓN)</option>
+                <option value="yellow">YELLOW (NEÓN)</option>
+                <option value="purple">PURPLE (NEÓN)</option>
+                <option value="orange">ORANGE (NEÓN)</option>
+              </select>
+            </div>
+            <div class="col-4 d-flex align-items-end">
+              <div id="preview-color-nombre" class="w-100 text-center py-1 rounded" style="border:1px solid rgba(255,255,255,0.3); font-size:0.7rem; font-weight:700; color:#fff;">PREVIEW</div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label text-neon-magenta small">&gt; ORIGEN / ROL</label>
+            <input type="text" id="personaje-origen" class="form-control form-control-sm bg-black border-secondary text-white text-uppercase" placeholder="SCARFACE / GÁNGSTER" required>
+          </div>
+          <div class="row mb-3">
+            <div class="col-8">
+              <label class="form-label text-neon-magenta small">&gt; COLOR_ORIGEN (SUBTÍTULO)</label>
+              <select id="personaje-color-origen" class="form-select form-select-sm bg-black border-secondary text-white">
+                <option value="cyan">CYAN (NEÓN)</option>
+                <option value="magenta">MAGENTA (NEÓN)</option>
+                <option value="green">GREEN (NEÓN)</option>
+                <option value="yellow">YELLOW (NEÓN)</option>
+                <option value="purple">PURPLE (NEÓN)</option>
+                <option value="orange">ORANGE (NEÓN)</option>
+              </select>
+            </div>
+            <div class="col-4 d-flex align-items-end">
+              <div id="preview-color-origen" class="w-100 text-center py-1 rounded" style="border:1px solid rgba(0,240,255,0.3); font-size:0.7rem; font-weight:700;">PREVIEW</div>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-8">
+              <label class="form-label text-neon-magenta small">&gt; COLOR_HUD_TAG (SUBJECT ID)</label>
+              <select id="personaje-color-subjectid" class="form-select form-select-sm bg-black border-secondary text-white">
+                <option value="cyan">CYAN (NEÓN)</option>
+                <option value="magenta">MAGENTA (NEÓN)</option>
+                <option value="green">GREEN (NEÓN)</option>
+                <option value="yellow">YELLOW (NEÓN)</option>
+                <option value="purple">PURPLE (NEÓN)</option>
+                <option value="orange">ORANGE (NEÓN)</option>
+              </select>
+            </div>
+            <div class="col-4 d-flex align-items-end">
+              <div id="preview-color-subjectid" class="w-100 text-center py-1 rounded" style="border:1px solid rgba(0,240,255,0.3); font-size:0.7rem; font-weight:700;">PREVIEW</div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label text-neon-magenta small">&gt; DESCRIPCIÓN</label>
+            <textarea id="personaje-descripcion" class="form-control form-control-sm bg-black border-secondary text-white" rows="2" placeholder="Descripción del personaje..." required></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label text-neon-magenta small">&gt; FICHA (resumen corto)</label>
+            <textarea id="personaje-ficha" class="form-control form-control-sm bg-black border-secondary text-white" rows="2" placeholder="Ficha breve del personaje..." required></textarea>
+          </div>
+          <div class="row mb-3">
+            <div class="col-8">
+              <label class="form-label text-neon-magenta small">&gt; COLOR_CABECERA_FICHA</label>
+              <select id="personaje-color-ficha" class="form-select form-select-sm bg-black border-secondary text-white">
+                <option value="cyan">CYAN (NEÓN)</option>
+                <option value="magenta">MAGENTA (NEÓN)</option>
+                <option value="green">GREEN (NEÓN)</option>
+                <option value="yellow">YELLOW (NEÓN)</option>
+                <option value="purple">PURPLE (NEÓN)</option>
+                <option value="orange">ORANGE (NEÓN)</option>
+              </select>
+            </div>
+            <div class="col-4 d-flex align-items-end">
+              <div id="preview-color-ficha" class="w-100 text-center py-1 rounded" style="border:1px solid rgba(0,240,255,0.3); font-size:0.7rem; font-weight:700;">PREVIEW</div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label text-neon-magenta small">&gt; DATOS_CURIOSOS</label>
+            <textarea id="personaje-curiosidades" class="form-control form-control-sm bg-black border-secondary text-white" rows="2" placeholder="Dato curioso, habilidad o secreto..."></textarea>
+          </div>
+          <div class="row mb-3">
+            <div class="col-8">
+              <label class="form-label text-neon-magenta small">&gt; COLOR_CABECERA_CURIOSIDADES</label>
+              <select id="personaje-color-curiosidades" class="form-select form-select-sm bg-black border-secondary text-white">
+                <option value="magenta">MAGENTA (NEÓN)</option>
+                <option value="cyan">CYAN (NEÓN)</option>
+                <option value="green">GREEN (NEÓN)</option>
+                <option value="yellow">YELLOW (NEÓN)</option>
+                <option value="purple">PURPLE (NEÓN)</option>
+                <option value="orange">ORANGE (NEÓN)</option>
+              </select>
+            </div>
+            <div class="col-4 d-flex align-items-end">
+              <div id="preview-color-curiosidades" class="w-100 text-center py-1 rounded" style="border:1px solid rgba(255,0,127,0.3); font-size:0.7rem; font-weight:700;">PREVIEW</div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label text-neon-magenta small">&gt; SUBIR_IMAGEN_LOCAL (IMG)</label>
+            <input type="file" id="personaje-imagen-file" class="form-control form-control-sm bg-black border-secondary text-white" accept="image/*">
+            <div class="form-text text-white small mt-1">// Opcional: selecciona un archivo de imagen local</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label text-neon-magenta small">&gt; PATH_IMAGEN (MANUAL)</label>
+            <input type="text" id="personaje-imagen" class="form-control form-control-sm bg-black border-secondary text-white" value="/assets/images/default.jpg">
+          </div>
+          <button type="submit" class="btn btn-outline-info btn-sm w-100 mt-2 font-orbitron">[ INJECT_PERSONAJE_RECORD ]</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const personajeRow = document.getElementById('personajes-row');
+      const btnOpenModal = document.getElementById('btn-open-modal-personaje');
+      const ADMIN_SESSION_KEY = 'bunker_admin_authenticated';
+      let isAdmin = sessionStorage.getItem(ADMIN_SESSION_KEY) === '1';
+
+      function activarModoAdmin() {
+        sessionStorage.setItem(ADMIN_SESSION_KEY, '1');
+        isAdmin = true;
+      }
+
+      // Color preview system for modal selectors
+      const colorMap = {
+        white: '#ffffff',
+        cyan: '#00f0ff',
+        magenta: '#ff007f',
+        green: '#3afc13',
+        yellow: '#ffee00',
+        purple: '#a072ff',
+        orange: '#ff8c00',
+        dark: '#999',
+        black: '#ccc'
+      };
+
+      function setupColorPreview(selectId, previewId) {
+        const sel = document.getElementById(selectId);
+        const prev = document.getElementById(previewId);
+        if (!sel || !prev) return;
+        const update = () => {
+          const c = colorMap[sel.value] || '#fff';
+          prev.style.color = c;
+          prev.style.borderColor = c;
+          prev.style.textShadow = `0 0 8px ${c}`;
+        };
+        sel.addEventListener('change', update);
+        update();
+      }
+
+      setupColorPreview('personaje-color-nombre', 'preview-color-nombre');
+      setupColorPreview('personaje-color-origen', 'preview-color-origen');
+      setupColorPreview('personaje-color-subjectid', 'preview-color-subjectid');
+      setupColorPreview('personaje-color-ficha', 'preview-color-ficha');
+      setupColorPreview('personaje-color-curiosidades', 'preview-color-curiosidades');
+
+      function createCharacterCard(personaje) {
+        const nombre = personaje.nombre || 'Sin Nombre';
+        const info = personaje.info || 'Sin información adicional';
+        const ficha = personaje.ficha || personaje.info || 'Ficha no disponible.';
+        const curiosidades = personaje.curiosidades || personaje.datosCuriosos || 'No hay datos curiosos registrados.';
+        const cover = personaje.cover || '/assets/images/default.jpg';
+        const subjectId = personaje.subjectId || '';
+
+        // Dynamic styling selectors matching movies style
+        const colorNombre = personaje.colorNombre || 'white';
+        const nameClass = colorNombre === 'white' ? 'text-white' : `text-neon-${colorNombre}`;
+
+        const colorOrigen = personaje.colorOrigen || personaje.colorInfo || personaje.color || 'cyan';
+        const originClass = ['cyan','magenta','green','yellow','purple','orange'].includes(colorOrigen)
+          ? `text-neon-${colorOrigen}`
+          : `text-${colorOrigen}`;
+
+        const colorSubjectId = personaje.colorSubjectId || 'cyan';
+        const subjectIdClass = `text-neon-${colorSubjectId}`;
+
+        const colorFicha = personaje.colorFicha || 'cyan';
+        const fichaClass = `text-neon-${colorFicha}`;
+
+        const colorCuriosidades = personaje.colorCuriosidades || 'magenta';
+        const curiosidadesClass = `text-neon-${colorCuriosidades}`;
+
+        return `
+          <div class="col-md-4">
+            <div class="subject-profile-card flip-card h-100" data-subject-id="${personaje.id || ''}">
+              <div class="flip-card-inner">
+                <div class="flip-card-front">
+                  <div class="position-relative overflow-hidden card-img-wrapper">
+                    <div class="subject-hud-tag ${subjectIdClass}">${subjectId}</div>
+                    <img src="${cover}" class="img-fluid subject-photo" alt="${nombre}">
+                    <div class="subject-scan-line"></div>
+                  </div>
+                  <div class="p-4 card-data-content text-center">
+                    <h3 class="h4 fw-black text-uppercase tracking-wide ${nameClass} mb-1 titulo-favorito">${nombre}</h3>
+                    <span class="text-xs ${originClass} font-monospace d-block mb-3">${info}</span>
+                    <button type="button" class="btn btn-subject-action text-uppercase fw-black w-100 rounded-0 btn-show-ficha">
+                      Ver Ficha
+                    </button>
+                    ${isAdmin ? `<button type="button" class="btn btn-outline-danger btn-sm rounded-0 text-uppercase font-monospace w-100 mt-2 btn-delete-personaje" data-id="${personaje.id || ''}" style="font-size: 0.68rem;">[ ELIMINAR ]</button>` : ''}
+                  </div>
+                </div>
+                <div class="flip-card-back">
+                  <div>
+                    <h3 class="h5 ${fichaClass} mb-3">FICHA</h3>
+                    <p class="text-white mb-3">${ficha}</p>
+                    <h4 class="${curiosidadesClass} mb-2">Datos curiosos</h4>
+                    <p class="text-white mb-4">${curiosidades}</p>
+                  </div>
+                  <button type="button" class="btn btn-subject-action text-uppercase fw-black w-100 rounded-0 btn-close-ficha">
+                    Cerrar Ficha
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>`;
+      }
+
+      async function loadPersonajes() {
+        if (!personajeRow) return;
+
+        try {
+          const response = await fetch('/api/personajes');
+          if (!response.ok) throw new Error('No se pudo cargar los personajes');
+          const personajes = await response.json();
+          console.log('personajes cargados:', Array.isArray(personajes) ? personajes.length : typeof personajes);
+          
+          personajeRow.innerHTML = '';
+          personajes.forEach(personaje => {
+            personajeRow.insertAdjacentHTML('beforeend', createCharacterCard(personaje));
+          });
+        } catch (error) {
+          console.error('Error cargando personajes:', error);
+        }
+      }
+
+      function setCardFlip(card, flipped) {
+        if (!card) return;
+        card.classList.toggle('is-flipped', flipped);
+      }
+
+      async function eliminarPersonaje(id, password) {
+        const response = await fetch('/api/personajes/eliminar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, password })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'FAIL_DELETION');
+        }
+
+        return response.json();
+      }
+
+      document.addEventListener('click', async (event) => {
+        const deleteBtn = event.target.closest('.btn-delete-personaje');
+        const showBtn = event.target.closest('.btn-show-ficha');
+        const closeBtn = event.target.closest('.btn-close-ficha');
+
+        if (deleteBtn && isAdmin) {
+          event.preventDefault();
+          const personajeId = deleteBtn.getAttribute('data-id');
+          if (!personajeId) return;
+
+          if (!confirm('¿Eliminar este personaje del registro?')) return;
+
+          const code = prompt('INGRESE CÓDIGO DE ACCESO DE SEGURIDAD PARA ELIMINAR EL PERSONAJE:');
+          if (code !== 'bunker2026') {
+            if (code !== null) alert('CÓDIGO DE ACCESO INCORRECTO. ACCESO DENEGADO.');
+            return;
+          }
+
+          try {
+            await eliminarPersonaje(personajeId, code);
+            loadPersonajes();
+          } catch (error) {
+            alert(`ERROR AL ELIMINAR: ${error.message}`);
+          }
+          return;
+        }
+
+        if (showBtn) {
+          const card = showBtn.closest('.flip-card');
+          setCardFlip(card, true);
+          event.preventDefault();
+        }
+
+        if (closeBtn) {
+          const card = closeBtn.closest('.flip-card');
+          setCardFlip(card, false);
+          event.preventDefault();
+        }
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'b') {
+          e.preventDefault();
+          const code = prompt('INGRESE CÓDIGO DE ACCESO DE SEGURIDAD:');
+          if (code === 'bunker2026') {
+            activarModoAdmin();
+            const modalEl = document.getElementById('modal-nuevo-personaje');
+            if (modalEl) {
+              const modalInst = bootstrap.Modal.getOrCreateInstance(modalEl);
+              modalInst.show();
+              const passInput = document.getElementById('modal-password-personaje');
+              if (passInput) passInput.value = code;
+            }
+            loadPersonajes();
+          } else if (code !== null) {
+            alert('CÓDIGO DE ACCESO INCORRECTO. ACCESO DENEGADO.');
+          }
+        }
+      });
+
+      const formNuevoPersonaje = document.getElementById('form-nuevo-personaje');
+      if (formNuevoPersonaje) {
+        formNuevoPersonaje.addEventListener('submit', function (e) {
+          e.preventDefault();
+
+          const fileInput = document.getElementById('personaje-imagen-file');
+          const file = fileInput ? fileInput.files[0] : null;
+
+          const submitData = (coverData = null, fileName = null) => {
+            const nombre = document.getElementById('personaje-nombre').value.trim();
+            const info = document.getElementById('personaje-origen').value.trim();
+            const descripcion = document.getElementById('personaje-descripcion').value.trim();
+            const ficha = document.getElementById('personaje-ficha').value.trim();
+            const curiosidades = document.getElementById('personaje-curiosidades').value.trim();
+            
+            const colorNombre = document.getElementById('personaje-color-nombre').value;
+            const colorOrigen = document.getElementById('personaje-color-origen').value;
+            const colorSubjectId = document.getElementById('personaje-color-subjectid').value;
+            const colorFicha = document.getElementById('personaje-color-ficha').value;
+            const colorCuriosidades = document.getElementById('personaje-color-curiosidades').value;
+            const cover = document.getElementById('personaje-imagen').value.trim() || '/assets/images/default.jpg';
+
+            const personajeData = {
+              nombre,
+              info,
+              descripcion,
+              ficha,
+              curiosidades,
+              color: colorOrigen, // fallback for legacy compatibility
+              colorNombre,
+              colorOrigen,
+              colorSubjectId,
+              colorFicha,
+              colorCuriosidades,
+              cover,
+              password: document.getElementById('modal-password-personaje').value.trim(),
+              coverFileData: coverData,
+              coverFileName: fileName
+            };
+
+            fetch('/api/personajes/nuevo', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(personajeData)
+            })
+              .then(res => {
+                if (!res.ok) {
+                  return res.json().then(err => { throw new Error(err.error || 'Http Error'); });
+                }
+                return res.json();
+              })
+              .then(data => {
+                if (data.success) {
+                  if (data.personaje) {
+                    if (personajeRow) personajeRow.insertAdjacentHTML('beforeend', createCharacterCard(data.personaje));
+                  } else {
+                    loadPersonajes();
+                  }
+                  formNuevoPersonaje.reset();
+                  const modalEl = document.getElementById('modal-nuevo-personaje');
+                  if (modalEl) {
+                    const modalInst = bootstrap.Modal.getInstance(modalEl);
+                    if (modalInst) modalInst.hide();
+                  }
+                }
+              })
+              .catch(error => {
+                console.error('Error guardando personaje:', error);
+                alert(`ERROR: ${error.message}`);
+              });
+          };
+
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = function (event) {
+              submitData(event.target.result, file.name);
+            };
+            reader.onerror = function (error) {
+              console.error('Error leyendo imagen:', error);
+              alert('Error leyendo el archivo de imagen.');
+            };
+            reader.readAsDataURL(file);
+          } else {
+            submitData();
+          }
+        });
+      }
+
+      if (btnOpenModal) {
+        btnOpenModal.addEventListener('click', () => {
+          const modalEl = document.getElementById('modal-nuevo-personaje');
+          if (modalEl) {
+            const modalInst = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modalInst.show();
+          }
+        });
+      }
+
+      loadPersonajes();
+    });
+</script>
+
+  <!-- Script de movimiento magnético/distorsión del fondo -->
+  <script>
+    document.addEventListener('mousemove', (e) => {
+      // Calculamos el porcentaje de la posición del ratón en la pantalla
+      const x = (e.clientX / window.innerWidth) * 100;
+      const y = (e.clientY / window.innerHeight) * 100;
+      
+      // Pasamos los datos directamente al body de CSS
+      document.body.style.setProperty('--mouse-x', `${x}%`);
+      document.body.style.setProperty('--mouse-y', `${y}%`);
+    });
+  </script>
+</body>
+</html>

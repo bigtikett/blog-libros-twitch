@@ -1,0 +1,85 @@
+# Restauracion del inicio Matrix (fake login)
+
+Este archivo documenta como volver a activar el inicio Matrix que se retiro de la portada.
+
+## Que se desactivo
+
+- Se retiro el overlay inicial de Matrix del archivo `index.html`.
+- Se quito la clase `matrix-active` del tag body en `index.html`.
+- Se quito la carga del script `matrix-hack.js` en `index.html`.
+- El archivo `matrix-hack.js` sigue existiendo en el proyecto.
+
+## Como reactivarlo
+
+### 1) Volver a poner la clase en body
+
+En `index.html`, cambia:
+
+```html
+<body>
+```
+
+por:
+
+```html
+<body class="matrix-active">
+```
+
+### 2) Volver a inyectar el bloque HTML del overlay
+
+Inserta este bloque justo despues de abrir body y antes de la barra de navegacion:
+
+```html
+<!-- Matrix Hack Landing Overlay -->
+<div id="matrix-landing-overlay" class="position-fixed top-0 start-0 w-100 h-100" style="background: #000; overflow: hidden; display: block; z-index: 10000;">
+  <canvas id="matrix-landing-canvas" class="position-absolute top-0 start-0 w-100 h-100"></canvas>
+
+  <!-- Security Decryption Console -->
+  <div id="matrix-landing-console" class="position-absolute top-50 start-50 translate-middle text-center text-success font-monospace p-4 rounded" style="background: rgba(0, 0, 0, 0.9); border: 1px solid #00ff41; max-width: 500px; width: 90%; z-index: 10001; box-shadow: 0 0 20px rgba(0, 255, 65, 0.2);">
+    <div class="blink mb-3 text-uppercase fw-black tracking-widest fs-5" style="color: #00ff41; text-shadow: 0 0 10px #00ff41;">[ SECURITY_BREACH_DETECTED ]</div>
+    <div class="mb-4 text-white-50 small">&gt; DECRYPT_SYSTEM_CORE // CLASSIFIED // ACCESS_RESTRICTED</div>
+
+    <form id="matrix-landing-form" class="mt-3">
+      <div class="mb-3 text-start">
+        <label class="text-success text-xs mb-1 d-block" style="font-size: 0.75rem;">&gt; ENTER DECRYPTION KEY (ANY PASSWORD):</label>
+        <input type="password" id="matrix-landing-pass" class="form-control form-control-sm bg-black border-success text-success font-monospace text-center py-2" placeholder="••••••••" autofocus required style="border-color: #00ff41 !important;">
+      </div>
+      <button type="submit" class="btn btn-sm btn-outline-success w-100 font-orbitron py-2 tracking-wide text-uppercase" style="border-color: #00ff41; color: #00ff41; text-shadow: 0 0 5px #00ff41;">
+        [ BYPASS_SECURITY ]
+      </button>
+    </form>
+
+    <div id="matrix-decrypting-status" class="mt-3 text-start small d-none" style="font-size: 0.75rem;">
+      <span class="d-block text-success mt-1">&gt; CONNECTING_PORT_3000... [OK]</span>
+      <span class="d-block text-success mt-1">&gt; INJECTING_EXPLOIT_BUFFER... [OK]</span>
+      <span class="d-block text-success mt-1">&gt; DECRYPTING_SECTORS_01_TO_99... [OK]</span>
+      <span class="d-block text-white fw-bold mt-2">&gt; ACCESS GRANTED // WELCOME TO THE BUNKER</span>
+    </div>
+  </div>
+</div>
+```
+
+### 3) Volver a cargar el script
+
+En `index.html`, en la zona de scripts, agrega:
+
+```html
+<script src="/matrix-hack.js"></script>
+```
+
+Colocalo despues de `terminal-loader.js`.
+
+## Comprobacion rapida
+
+1. Levanta el server.
+2. Abre la home.
+3. Debe verse el overlay Matrix al cargar.
+4. Al enviar cualquier password, debe desaparecer y entrar a la web.
+
+## Nota
+
+Si en el futuro quieres desactivar temporalmente el inicio Matrix sin borrar codigo:
+
+- deja el bloque HTML comentado,
+- quita la clase `matrix-active` del body,
+- y quita solo la etiqueta script `matrix-hack.js`.

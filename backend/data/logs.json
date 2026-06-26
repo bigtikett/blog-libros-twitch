@@ -1,0 +1,146 @@
+[
+  {
+    "id": "log-1",
+    "fecha": "2026-06-26",
+    "tag": "SYS_UPDATE",
+    "desc": "Rediseño cyberpunk de la sección Sobre Mí [COMPLETED]",
+    "crtDesc": "Rediseño cyberpunk de Bienvenida & Sobre Mí. Añadidos visores HUD y monitor de estado CRT.",
+    "color": "text-neon-magenta"
+  },
+  {
+    "id": "log-2",
+    "fecha": "2026-06-25",
+    "tag": "DIARIO",
+    "desc": "Corrección en las galerías de series y favoritos [STABLE]",
+    "crtDesc": "Corrección global de Swiper. Optimización de estilos Sass y limpieza de clases redundantes.",
+    "color": "text-neon-cyan"
+  },
+  {
+    "id": "log-3",
+    "fecha": "2026-06-24",
+    "tag": "TERMINAL",
+    "desc": "Nuevas plantillas de biblioteca cargadas con éxito [ONLINE]",
+    "crtDesc": "Nuevas plantillas de biblioteca (Leídos, TBR en cola, Favoritos 2-1-3 y Series interactivos).",
+    "color": "text-white"
+  },
+  {
+    "id": "log-1782436983343-626",
+    "fecha": "2026-06-26",
+    "tag": "FAVORITOS",
+    "desc": "Actualizado podio de favoritos: LA POLLA DE GOMA [ONLINE]",
+    "crtDesc": "El núcleo favorito \"LA POLLA DE GOMA\" ha sido indexado y cargado en el podio digital.",
+    "color": "text-neon-gold"
+  },
+  {
+    "id": "log-1782440855142-268",
+    "fecha": "2026-06-26",
+    "tag": "FAVORITOS",
+    "desc": "Inyectada nueva serie: ALTERED CARBON [ONLINE]",
+    "crtDesc": "La serie \"ALTERED CARBON\" ha sido indexada en el registro de favoritos.",
+    "color": "text-neon-cyan"
+  },
+  {
+    "id": "log-1782443925146-413",
+    "fecha": "2026-06-26",
+    "tag": "FAVORITOS",
+    "desc": "Inyectada nueva película: ASD [ONLINE]",
+    "crtDesc": "La película \"ASD\" ha sido indexada en el registro de favoritos.",
+    "color": "text-neon-magenta"
+  },
+  {
+    "id": "log-1782444739327-517",
+    "fecha": "2026-06-26",
+    "tag": "FAVORITOS",
+    "desc": "Inyectada nueva película: OLA [ONLINE]",
+    "crtDesc": "La película \"OLA\" ha sido indexada en el registro de favoritos.",
+    "color": "text-neon-magenta"
+  },
+  {
+    "id": "log-1782445131124-383",
+    "fecha": "2026-06-26",
+    "tag": "FAVORITOS",
+    "desc": "Inyectada nueva ficha de personaje: TONY MONTANA [ONLINE]",
+    "crtDesc": "El personaje \"TONY MONTANA\" ha sido indexado en el registro de sujetos clasificados.",
+    "color": "text-warning"
+  },
+  {
+    "id": "log-1782445786811-138",
+    "fecha": "2026-06-26",
+    "tag": "FAVORITOS",
+    "desc": "Inyectada nueva ficha de personaje: Test Personaje [ONLINE]",
+    "crtDesc": "El personaje \"Test Personaje\" ha sido indexado en el registro de sujetos clasificados.",
+    "color": "text-warning"
+  },
+  {
+    "id": "log-1782445924496-384",
+    "fecha": "2026-06-26",
+    "tag": "FAVORITOS",
+    "desc": "Inyectada nueva ficha de personaje: aasdasd [ONLINE]",
+    "crtDesc": "El personaje \"aasdasd\" ha sido indexado en el registro de sujetos clasificados.",
+    "color": "text-warning"
+  },
+  {
+    "id": "log-1782473358404-942",
+    "fecha": "2026-06-26",
+    "tag": "FAVORITOS",
+    "desc": "Inyectada nueva película: ASD [ONLINE]",
+    "crtDesc": "La película \"ASD\" ha sido indexada en el registro de favoritos.",
+    "color": "text-neon-magenta"
+  },
+  {
+    "id": "log-1782479932426-481",
+    "fecha": "2026-06-26",
+    "tag": "GAMING",
+    "desc": "Inyectado nuevo juego: asd [ONLINE]",
+    "crtDesc": "El juego \"asd\" ha sido indexada en el registro del Búnker.",
+    "color": "text-neon-cyan"
+  },
+  {
+    "id": "log-1782479947880-125",
+    "fecha": "2026-06-26",
+    "tag": "GAMING",
+    "desc": "Eliminado juego: asd [OFFLINE]",
+    "crtDesc": "El juego \"asd\" ha sido purgado del registro del Búnker.",
+    "color": "text-danger"
+  },
+  {
+    "id": "log-1782490934831-49",
+    "fecha": "2026-06-26",
+    "tag": "FAVORITOS",
+    "desc": "Eliminada película: ASD [OFFLINE]",
+    "crtDesc": "La película \"ASD\" fue purgada del registro de favoritos.",
+    "color": "text-danger"
+  },
+  {
+    "id": "log-1782490948217-673",
+    "fecha": "2026-06-26",
+    "tag": "FAVORITOS",
+    "desc": "Eliminada película: ASD [OFFLINE]",
+    "crtDesc": "La película \"ASD\" fue purgada del registro de favoritos.",
+    "color": "text-danger"
+  },
+  {
+    "id": "log-1782491498690-911",
+    "fecha": "2026-06-26",
+    "tag": "FAVORITOS",
+    "desc": "Eliminado personaje: aasdasd [OFFLINE]",
+    "crtDesc": "El personaje \"aasdasd\" fue purgado del registro de sujetos clasificados.",
+    "color": "text-danger"
+  },
+  {
+    "id": "log-1782491509265-179",
+    "fecha": "2026-06-26",
+    "tag": "FAVORITOS",
+    "desc": "Eliminado personaje: Test Personaje [OFFLINE]",
+    "crtDesc": "El personaje \"Test Personaje\" fue purgado del registro de sujetos clasificados.",
+    "color": "text-danger"
+  },
+  {
+    "id": "log-1782491549635-444",
+    "fecha": "2026-06-26",
+    "tag": "FAVORITOS",
+    "desc": "Eliminado personaje: TONY MONTANA [OFFLINE]",
+    "crtDesc": "El personaje \"TONY MONTANA\" fue purgado del registro de sujetos clasificados.",
+    "color": "text-danger"
+  }
+]

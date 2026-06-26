@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cenizas de Neón | Yaihi</title>
+    <!-- Bootstrap 5 CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <!-- Iconos de Bootstrap -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    />
+    <!-- Tu archivo de estilos personalizados -->
+    <link rel="stylesheet" href="../style.min.css" />
+  </head>
+  <body
+    id="mi-libro"
+    class="section-books-cyber text-white position-relative min-vh-100"
+  >
+    <!-- 🌌 FONDO MULTICAPA CAPAZ DE REACCIONAR -->
+    <div class="cyber-library-bg">
+      <div class="matrix-lines"></div>
+      <div class="neon-shelf-glow"></div>
+      <div class="twitch-ambient-flare"></div>
+    </div>
+
+    <div class="container position-relative z-2 py-5" id="detalle-favorito">
+      <!-- 💡 ESTILOS ESPECTACULARES INYECTADOS PARA EL LIBRO -->
+      <style>
+        /* --- 🧪 MILIBRO CUSTOM EFFECTS & ANIMATIONS --- */
+
+        /* Título estilo neón parpadeante */
+        .neon-flicker-title {
+          font-family: "Orbitron", sans-serif;
+          color: #fff;
+          text-transform: uppercase;
+          letter-spacing: 2px;
+          text-shadow:
+            0 0 10px rgba(0, 240, 255, 0.6),
+            0 0 20px rgba(0, 240, 255, 0.4),
+            0 0 30px rgba(0, 240, 255, 0.2);
+          animation: neon-glow-pulse 4s infinite alternate;
+        }
+
+        /* Animación de parpadeo de letras individuales */
+        .flicker-slow {
+          animation: flicker 4s infinite;
+        }
+        .flicker-fast {
+          animation: flicker 1s infinite;
+        }
+
+        @keyframes flicker {
+          0%,
+          18%,
+          22%,
+          25%,
+          53%,
+          57%,
+          100% {
+            opacity: 1;
+            text-shadow:
+              0 0 10px rgba(0, 240, 255, 0.8),
+              0 0 20px rgba(0, 240, 255, 0.6);
+          }
+          20%,
+          24%,
+          55% {
+            opacity: 0.35;
+            text-shadow: none;
+          }
+        }
+
+        @keyframes neon-glow-pulse {
+          0% {
+            text-shadow:
+              0 0 10px rgba(0, 240, 255, 0.6),
+              0 0 20px rgba(0, 240, 255, 0.4),
+              0 0 30px rgba(0, 240, 255, 0.2);
+          }
+          100% {
+            text-shadow:
+              0 0 15px rgba(160, 114, 255, 0.9),
+              0 0 30px rgba(160, 114, 255, 0.6),
+              0 0 45px rgba(160, 114, 255, 0.4);
+            color: #cda4fc;
+          }
+        }
+
+        /* Halo de luz respirante detrás de la portada 3D */
+        .book-glow-aura {
+          position: absolute;
+          top: 10%;
+          left: 10%;
+          width: 80%;
+          height: 80%;
+          background: radial-gradient(
+            circle,
+            rgba(160, 114, 255, 0.25) 0%,
+            transparent 70%
+          );
+          filter: blur(30px);
+          z-index: -1;
+          pointer-events: none;
+          animation: aura-breathe 6s ease-in-out infinite alternate;
+        }
+
+        @keyframes aura-breathe {
+          0% {
+            transform: scale(0.9);
+            opacity: 0.5;
+          }
+          100% {
+            transform: scale(1.15);
+            opacity: 0.9;
+            background: radial-gradient(
+              circle,
+              rgba(0, 240, 255, 0.3) 0%,
+              transparent 70%
+            );
+          }
+        }
+
+        /* Caja de Sinopsis estilo Datapad Táctico con esquinas HUD */
+        .cyber-synopsis-box {
+          background: rgba(13, 9, 24, 0.7) !important;
+          border: 1px solid rgba(160, 114, 255, 0.15) !important;
+          border-radius: 8px;
+          padding: 25px;
+          position: relative;
+          box-shadow: inset 0 0 20px rgba(160, 114, 255, 0.05);
+        }
+        .cyber-synopsis-box::before,
+        .cyber-synopsis-box::after {
+          content: "";
+          position: absolute;
+          width: 10px;
+          height: 10px;
+          border-color: #00f0ff;
+          border-style: solid;
+          pointer-events: none;
+        }
+        .cyber-synopsis-box::before {
+          top: -1px;
+          left: -1px;
+          border-width: 2px 0 0 2px;
+        }
+        .cyber-synopsis-box::after {
+          bottom: -1px;
+          right: -1px;
+          border-width: 0 2px 2px 0;
+        }
+
+        /* Punto HUD parpadeante de status */
+        .hud-status-dot {
+          width: 8px;
+          height: 8px;
+          background-color: #39ff14;
+          border-radius: 50%;
+          box-shadow: 0 0 8px #39ff14;
+          display: inline-block;
+          animation: status-blink 1.5s infinite alternate;
+        }
+        @keyframes status-blink {
+          0% {
+            opacity: 0.35;
+          }
+          100% {
+            opacity: 1;
+          }
+        }
+
+        /* Botón con gradiente animado y sombra de neón */
+        .btn-gradient-launch {
+          background: linear-gradient(
+            135deg,
+            #ff007f 0%,
+            #a072ff 100%
+          ) !important;
+          border: none !important;
+          color: #fff !important;
+          box-shadow: 0 0 15px rgba(255, 0, 127, 0.35) !important;
+          transition: all 0.3s ease !important;
+        }
+        .btn-gradient-launch:hover {
+          box-shadow: 0 0 25px rgba(160, 114, 255, 0.7) !important;
+          transform: translateY(-2px);
+          color: #fff !important;
+        }
+
+        /* Botón comprar Amazon con gradiente de marca y hover invertido */
+        .btn-amazon-gradient {
+          background: linear-gradient(
+            135deg,
+            #ff9900 0%,
+            #ff5500 100%
+          ) !important;
+          border: 2px solid transparent !important;
+          color: #ffffff !important;
+          box-shadow: 0 0 15px rgba(255, 153, 0, 0.35) !important;
+          transition: all 0.3s ease-in-out !important;
+        }
+        .btn-amazon-gradient:hover {
+          background: linear-gradient(
+            77deg,
+            #ff9900 0%, #f2f2f2 100%
+          ) !important;
+          border-color: #ff9900 !important;
+          color: #000000 !important;
+          box-shadow: 0 0 25px rgba(255, 153, 0, 0.6) !important;
+          transform: translateY(-2px);
+        }
+      </style>
+
+      <div class="row align-items-center g-5 my-4">
+        <!-- Columna Izquierda: Portada 3D con halo de luz animado -->
+        <div class="col-lg-5 text-center order-lg-1 pe-lg-5">
+          <div class="book-container mx-auto">
+            <!-- Halo de luz neón detrás del libro -->
+            <div class="book-glow-aura"></div>
+
+            <img
+              src="/assets/portadas/cenizasneon.jpg"
+              class="img-fluid book-cover-3d"
+              alt="Portada Oficial de Cenizas de Neon"
+            />
+            <div class="book-shadow"></div>
+          </div>
+        </div>
+
+        <!-- Columna Derecha: Sinopsis y HUD de Detalles -->
+        <div class="col-lg-7 order-lg-2">
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <span class="hud-status-dot"></span>
+            <span
+              class="badge bg-dark border border-success text-success fw-bold px-3 py-2 rounded-1 text-uppercase tracking-wider text-xs"
+            >
+              [ DIRECT_LINK_ACTIVE // DISPONIBLE ]
+            </span>
+          </div>
+
+          <h2 class="display-3 fw-black mb-1 text-glow neon-flicker-title">
+            Cen<span class="flicker-slow">i</span>zas de Ne<span
+              class="flicker-fast"
+              >ó</span
+            >n
+          </h2>
+
+          <h5
+            class="text-purple-light fw-medium mb-4 font-monospace"
+            style="font-size: 13px"
+          >
+            // SAGA: CYBER_NETWORKS // ROMANCE / SCI-FI / CYBERPUNK
+          </h5>
+
+          <!-- Frase gancho -->
+          <p
+            class="fs-5 text-white italic border-start border-purple-light border-3 ps-3 mb-4 font-monospace"
+            style="line-height: 1.5"
+          >
+            "El destino no se escribe con tinta, sino con las cenizas de los que
+            se atrevieron a desafiar el orden establecido."
+          </p>
+
+          <!-- Caja de Sinopsis Cyber-Datapad -->
+          <div
+            class="cyber-synopsis-box text-white mb-5 font-monospace"
+            style="font-size: 13px; line-height: 1.7"
+          >
+            <p class="mb-3">
+              En los callejones sumergidos en neón de la megaciudad de Neo-Vigo,
+              la información es la moneda de cambio más valiosa. Cuando Vanya,
+              una ciber-rastreadora sin nada que perder, intercepta un fragmento
+              de memoria corrupto de la megacorporación Kusanagi, se convierte
+              en el blanco número uno de las fuerzas de pacificación de la red.
+            </p>
+            <p class="m-0">
+              Su única alianza posible es Jax, un mercenario retirado con más
+              cromo en su cuerpo que humanidad. Juntos deberán adentrarse en los
+              suburbios virtuales del ciberespacio para revelar la verdad antes
+              de que su propio código de identidad sea purgado de los servidores
+              centrales.
+            </p>
+          </div>
+
+          <!-- Botones de Acción HUD -->
+          <div class="d-flex flex-wrap gap-3 align-items-center">
+            <a
+              href="https://www.wattpad.com/user/yaizamelo"
+              target="_blank"
+              class="btn btn-gradient-launch btn-lg rounded-pill px-4 py-3 shadow font-monospace text-xs text-uppercase fw-bold"
+            >
+              <i class="bi bi-book-half me-2"></i> Leer en Wattpad
+            </a>
+            <a
+              href="https://www.amazon.es"
+              target="_blank"
+              class="btn btn-amazon-gradient btn-lg rounded-pill px-4 py-3 shadow font-monospace text-xs text-uppercase fw-bold"
+            >
+              <i class="bi bi-cart3 me-2"></i> Comprar en Amazon
+            </a>
+          </div>
+
+          <!-- Distribución del Nodo -->
+          <div class="mt-5 pt-3 border-top border-secondary border-opacity-25">
+            <p
+              class="small text-white text-uppercase tracking-wider mb-2 font-monospace"
+              style="font-size: 11px"
+            >
+              // NODE_DISTRIBUTION_AVAILABLE:
+            </p>
+            <div
+              class="d-flex gap-4 fs-5 text-white-50 align-items-center font-monospace"
+            >
+              <span title="Amazon Kindle"
+                ><i class="bi bi-amazon me-1"></i> Kindle</span
+              >
+              <span title="Tapa Blanda"
+                ><i class="bi bi-book me-1"></i> Físico</span
+              >
+              <span title="Wattpad / Plataforma Digital" class="fw-bold fs-6"
+                >Wp Digital</span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

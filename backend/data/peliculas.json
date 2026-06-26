@@ -1,0 +1,94 @@
+[
+  {
+    "id": "pelicula-1",
+    "titulo": "BLADE RUNNER 2049",
+    "puntuacion": "10/10",
+    "director": "Denis Villeneuve",
+    "anio": "2017",
+    "resena": "Una obra maestra visual. Cada plano es cine puro. La cinematografía y la música ambiente te sumergen en un futuro distópico cautivador.",
+    "tags": "Sci-Fi, Cyberpunk, Noir",
+    "overlayTitle": "BLADE RUNNER 2049",
+    "overlayDesc": "Un viaje por un futuro desolado y hermoso",
+    "cover": "/assets/images/BR2049.webp",
+    "color": "cyan"
+  },
+  {
+    "id": "pelicula-2",
+    "titulo": "INTERSTELLAR",
+    "puntuacion": "9.5/10",
+    "director": "Christopher Nolan",
+    "anio": "2014",
+    "resena": "Épica, emocional y visualmente devastadora. Hans Zimmer compuso la banda sonora más hipnotizante. Un ícono del cine contemporáneo.",
+    "tags": "Sci-Fi, Aventura, Drama",
+    "overlayTitle": "INTERSTELLAR",
+    "overlayDesc": "Un viaje por dimensiones y emociones",
+    "cover": "/assets/images/interestelar.jpg",
+    "color": "green"
+  },
+  {
+    "id": "pelicula-3",
+    "titulo": "DUNE",
+    "puntuacion": "9/10",
+    "director": "Denis Villeneuve",
+    "anio": "2021",
+    "resena": "Cinematografía épica y sonido envolvente. Una adaptación que superó expectativas. Visión artística sin concesiones.",
+    "tags": "Sci-Fi, Epopeya, Fantasía",
+    "overlayTitle": "DUNE",
+    "overlayDesc": "Epopeya en las arenas de Arrakis",
+    "cover": "/assets/images/dune.jpg",
+    "color": "purple"
+  },
+  {
+    "id": "pelicula-4",
+    "titulo": "EL VIAJE DE CHIHIRO",
+    "puntuacion": "10/10",
+    "director": "Hayao Miyazaki",
+    "anio": "2001",
+    "resena": "Animación sin igual. Una joya atemporalque resplandece con cada visuazo. Miyazaki en su máxima expresión artística.",
+    "tags": "Animación, Fantasía, Aventura",
+    "overlayTitle": "EL VIAJE DE CHIHIRO",
+    "overlayDesc": "Magia, tradición y crecimiento",
+    "cover": "/assets/images/chihiro.jpg",
+    "color": "cyan"
+  },
+  {
+    "id": "pelicula-5",
+    "titulo": "INCEPTION",
+    "puntuacion": "9.5/10",
+    "director": "Christopher Nolan",
+    "anio": "2010",
+    "resena": "Mente retorcida, acción increíble. Cada vez que la veo descubro detalles nuevos. Cine inteligente llevado a otro nivel.",
+    "tags": "Thriller, Sci-Fi, Misterio",
+    "overlayTitle": "INCEPTION",
+    "overlayDesc": "Sueños dentro de sueños",
+    "cover": "/assets/images/inception.jpg",
+    "color": "yellow"
+  },
+  {
+    "id": "pelicula-6",
+    "titulo": "THE MATRIX",
+    "puntuacion": "9/10",
+    "director": "Wachowski",
+    "anio": "1999",
+    "resena": "Revolucionaria. Cambió la industria para siempre. Acción, filosofía y estilo en dosis perfectas. Un referente absoluto.",
+    "tags": "Sci-Fi, Acción, Hacker",
+    "overlayTitle": "THE MATRIX",
+    "overlayDesc": "La realidad que crees conocer",
+    "cover": "/assets/images/matrix.jpg",
+    "color": "green"
+  },
+  {
+    "id": "pelicula-7",
+    "titulo": "SCARFACE",
+    "puntuacion": "10/10",
+    "director": "Brian De Palma",
+    "anio": "1983",
+    "resena": "Historia inolvidable junto a Tony Montana, protegonizada por Al Paccino, peliculón de culto.",
+    "tags": "Gángster, Crimen, Drama",
+    "overlayTitle": "SCARFACE",
+    "overlayDesc": "El mundo es tuyo.",
+    "cover": "/assets/images/scarface.jpg",
+    "color": "purple"
+  }
+  
+]

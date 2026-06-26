@@ -1,0 +1,1762 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Yaihi | Mi Rincón Gamer & Literario</title>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Iconos de Bootstrap (Nos vendrán genial para las secciones) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <!-- Swiper 11 CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+  <!-- Tu archivo de estilos personalizados -->
+  <link rel="stylesheet" href="style.min.css" />
+  <style>
+    /* Override local: asegurar visibilidad del badge animado en redes */
+    .social-embed-wrapper {
+      position: relative;
+      overflow: visible;
+      isolation: isolate;
+    }
+
+    .social-embed-wrapper .embed-content {
+      position: relative;
+      z-index: 1;
+      max-height: 340px;
+      overflow: hidden;
+    }
+
+    .embed-content iframe,
+    .embed-content .instagram-media,
+    .embed-content .tiktok-embed,
+    .embed-content blockquote {
+      width: 100% !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
+      margin: 0 !important;
+    }
+
+    .embed-content iframe {
+      min-height: 220px;
+      max-height: 340px;
+      border: none;
+    }
+
+    .social-feed-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+
+    .badge-nuevo-post {
+      z-index: 40;
+      transform: translateZ(0);
+    }
+
+    .btn-connect-instagram {
+      border-color: rgba(255, 0, 127, 0.7) !important;
+      color: #ff4da6 !important;
+    }
+
+    .btn-connect-instagram:hover {
+      background: rgba(255, 0, 127, 0.15) !important;
+      border-color: #ff007f !important;
+      color: #ffffff !important;
+      box-shadow: 0 0 12px rgba(255, 0, 127, 0.25);
+    }
+
+    .logs-canvas-toggle {
+      margin-top: 0.9rem;
+      border: 1px solid rgba(0, 240, 255, 0.45) !important;
+      color: #00f0ff !important;
+      background: rgba(6, 10, 22, 0.6) !important;
+      box-shadow: inset 0 0 12px rgba(0, 240, 255, 0.08);
+      letter-spacing: 0.08rem;
+      font-size: 0.72rem;
+    }
+
+    .logs-canvas-toggle:hover {
+      background: rgba(0, 240, 255, 0.12) !important;
+      border-color: #00f0ff !important;
+      box-shadow: 0 0 14px rgba(0, 240, 255, 0.2);
+      color: #ffffff !important;
+    }
+
+    .logs-canvas-panel {
+      position: fixed;
+      top: 0;
+      left: -420px;
+      width: min(420px, 90vw);
+      height: 100vh;
+      z-index: 1090;
+      background: linear-gradient(160deg, rgba(5, 8, 18, 0.98) 0%, rgba(13, 8, 24, 0.98) 100%);
+      border-right: 1px solid rgba(0, 240, 255, 0.3);
+      box-shadow: 18px 0 45px rgba(0, 0, 0, 0.7), inset 0 0 30px rgba(0, 240, 255, 0.07);
+      transition: left 0.35s ease;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .logs-canvas-panel.is-open {
+      left: 0;
+    }
+
+    .logs-canvas-panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background-image: linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+      background-size: 22px 22px;
+      opacity: 0.55;
+    }
+
+    .logs-canvas-header {
+      position: relative;
+      z-index: 1;
+      padding: 1rem;
+      border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+      background: rgba(3, 6, 12, 0.8);
+    }
+
+    .logs-canvas-scroll {
+      position: relative;
+      z-index: 1;
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 0.85rem 0.95rem 1rem;
+      scroll-behavior: smooth;
+    }
+
+    .logs-canvas-scroll::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .logs-canvas-scroll::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.4);
+    }
+
+    .logs-canvas-scroll::-webkit-scrollbar-thumb {
+      background: rgba(0, 240, 255, 0.35);
+      border-radius: 999px;
+    }
+
+    .logs-canvas-entry {
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-left: 3px solid rgba(0, 240, 255, 0.35);
+      background: rgba(0, 0, 0, 0.38);
+      padding: 0.55rem 0.65rem;
+      margin-bottom: 0.55rem;
+    }
+
+    .logs-canvas-entry .meta {
+      font-size: 0.67rem;
+      letter-spacing: 0.06rem;
+      opacity: 0.9;
+    }
+
+    .logs-canvas-entry .desc {
+      font-size: 0.76rem;
+      margin-top: 0.25rem;
+      color: rgba(255, 255, 255, 0.92);
+      line-height: 1.35;
+    }
+
+    .logs-canvas-entry .crt {
+      font-size: 0.71rem;
+      margin-top: 0.35rem;
+      color: rgba(255, 255, 255, 0.68);
+      line-height: 1.3;
+    }
+  </style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+  <!-- BARRA DE NAVEGACIÓN (Fija arriba para moverse fácil) -->
+  <nav class="navbar navbar-expand-lg navbar-dark sticky-top cyber-navbar">
+    <div class="cyber-nav-border-anim"></div>
+    <div class="container">
+      <a class="navbar-brand font-orbitron" href="#">
+        <span class="brand-bracket">[</span><span class="brand-text">YAIHI_NODE</span><span class="brand-bracket">]</span>
+      </a>
+      <button class="navbar-toggler cyber-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link cyber-nav-link" href="#sobre-mi">
+              <span class="nav-hover-accent"></span>
+              <span class="nav-icon">🌿</span> Sobre Mí
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link cyber-nav-link" href="#redes-sociales">
+              <span class="nav-hover-accent"></span>
+              <span class="nav-icon">📱</span> Redes
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link cyber-nav-link" href="#biblioteca">
+              <span class="nav-hover-accent"></span>
+              <span class="nav-icon">📚</span> Biblioteca
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link cyber-nav-link" href="#entrevistas">
+              <span class="nav-hover-accent"></span>
+              <span class="nav-icon">🎤</span> Entrevistas
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link cyber-nav-link" href="#gaming">
+              <span class="nav-hover-accent"></span>
+              <span class="nav-icon">🎮</span> Gaming
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link cyber-nav-link twitch-special-btn" href="#twitch">
+              <span class="twitch-pulse"></span>
+              <span class="nav-icon">💜</span> Twitch
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link cyber-nav-link" href="#galeria">
+              <span class="nav-hover-accent"></span>
+              <span class="nav-icon">🐸</span> Galería
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link cyber-nav-link" href="#setup">
+              <span class="nav-hover-accent"></span>
+              <span class="nav-icon">🖥️</span> Setup
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link cyber-nav-link" href="#favoritos-footer">
+              <span class="nav-hover-accent"></span>
+              <span class="nav-icon">✨</span> Favoritos
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link cyber-nav-link" href="#contacto">
+              <span class="nav-hover-accent"></span>
+              <span class="nav-icon">📩</span> Contacto
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <aside id="logs-canvas-panel" class="logs-canvas-panel" aria-hidden="true">
+    <div class="logs-canvas-header d-flex justify-content-between align-items-center gap-2">
+      <div>
+        <div class="text-neon-cyan small fw-bold font-monospace">[ LOG_CANVAS // FULL_HISTORY ]</div>
+        <div class="text-white-50 font-monospace" style="font-size: 0.68rem;">SCROLL_BUFFER: ENABLED</div>
+      </div>
+      <button id="close-logs-canvas" class="btn btn-outline-danger btn-sm rounded-0 font-monospace text-uppercase" type="button">[ CERRAR ]</button>
+    </div>
+    <div id="logs-canvas-list" class="logs-canvas-scroll font-monospace">
+      <div class="text-white-50 small">[ LOADING_LOG_ARCHIVE... ]</div>
+    </div>
+  </aside>
+
+  <!-- 1. BIENVENIDA (Lo primero que ve la gente) -->
+  <header id="header-inicio" class="position-relative overflow-hidden d-flex flex-column align-items-center justify-content-center">
+    
+    <!-- Capas de fondo (Blur y gradiente para contraste del diario) -->
+    <div class="header-bg-blur"></div>
+    <div class="header-gradient-overlay"></div>
+
+    <!-- Visor de diario de desarrollo (Ticker arriba del todo) -->
+    <div class="dev-log-ticker-container w-100 position-absolute top-0 start-0">
+      <div class="container d-flex align-items-center font-monospace py-2">
+        <span class="ticker-title text-neon-magenta me-3 flex-shrink-0">
+          <i class="bi bi-terminal-fill me-1"></i>[DEV_LOG_VISOR]:
+        </span>
+        <div class="ticker-wrap flex-grow-1 overflow-hidden position-relative">
+          <div class="ticker-content">
+            <!-- Cargado dinámicamente mediante JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contenido Principal -->
+    <div class="container position-relative py-5 mt-5">
+      <div class="row align-items-center g-5">
+        <!-- Columna Izquierda: Monitor Retro de Actualizaciones -->
+        <div class="col-lg-5 col-12 order-2 order-lg-1">
+          <div class="retro-monitor-cabinet">
+            <!-- Bisel/Marco exterior del monitor -->
+            <div class="retro-monitor-screen-bezel">
+              <!-- La pantalla de fósforo con scanlines -->
+              <div class="retro-monitor-screen">
+                <div class="scanlines-overlay"></div>
+                <div class="screen-glow-overlay"></div>
+                <div class="crt-roll-bar"></div>
+                <div class="screen-content font-monospace text-start p-3">
+                  <div class="screen-header mb-3 text-neon-cyan">[ MONITOR STATUS: ON // VER_1.0.4 ]</div>
+                  <div class="update-log-list">
+                    <!-- Cargado dinámicamente mediante JS -->
+                  </div>
+                  <div class="screen-footer mt-3 text-neon-magenta blink-text">> SYS_READY_</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button id="open-logs-canvas" class="btn logs-canvas-toggle rounded-0 fw-bold w-100 font-monospace text-uppercase" type="button">+ Leer mas</button>
+        </div>
+
+        <!-- Columna Derecha: Información de Bienvenida -->
+        <div class="col-lg-7 col-12 text-center text-lg-center order-1 order-lg-2">
+          <!-- Emote flotante -->
+          <div class="emote-container mb-4">
+            <img src="/assets/icons/rani.webp" class="img-fluid custom-header-emote" alt="Emote Yaihi" />
+          </div>
+          
+          <!-- Título principal -->
+          <h1 class="font-orbitron text-white display-4 fw-bold mb-3 tracking-wide text-glow-magenta">
+            ¡Hola, soy Yaihi! ✨
+          </h1>
+          
+          <!-- Breve presentación -->
+          <p class="lead text-light mb-4 font-monospace">
+            Un pedacito de mi mundo donde se cruzan las páginas de los libros y las pantallas de los videojuegos.
+          </p>
+
+          <!-- Frase bonita / Cita en tarjeta cyberpunk -->
+          <div class="cyber-quote-card p-4 col-12">
+            <p class="m-0 italic-text text-light">
+              "Aquí va esa frase bonita que la define o que le encanta."
+            </p>
+            <span class="quote-author text-neon-cyan font-monospace d-block mt-2">
+              [ SYSTEM_MOTIVATION // CITE: SOURCE_TITLE ]
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 2. ⚡ SOBRE MÍ -->
+  <section id="sobre-mi" class="py-5 position-relative overflow-hidden">
+
+    <!-- Fondo cyberpunk multicapa -->
+    <div class="sobre-mi-bg-overlay"></div>
+    <div class="sobre-mi-grid-layer"></div>
+
+    <div class="container position-relative">
+      <div class="row align-items-center g-5">
+        <!-- Columna de Texto -->
+        <div class="col-md-7">
+          <span class="text-uppercase fw-bold font-monospace tracking-wider small text-neon-cyan">
+            [ NODE_ID: YAIHI // DECRYPTING_BIO ]
+          </span>
+          <h2 class="display-5 fw-bold mb-4 text-white mt-2">
+            <i class="bi bi-cpu-fill me-2 text-neon-magenta"></i>Detrás de las páginas y las pantallas
+          </h2>
+
+          <p class="lead mb-4">
+            ¡Hola! Soy <strong class="text-white">Yaihi</strong>. Creé este rincón como un
+            espacio donde mis dos grandes pasiones se dan la mano: la
+            tranquilidad de una buena lectura y la adrenalina de los
+            videojuegos.
+          </p>
+
+          <p class="mb-4">
+            A través de mis directos en Twitch y mi contenido en BookTok,
+            busco construir una comunidad acogedora (*cozy*) donde cualquiera
+            pueda encontrar una recomendación literaria honesta, pasar un rato
+            divertido charlando en el chat o compartir logros de sus juegos
+            favoritos.
+          </p>
+
+          <!-- Bloque de Gustos / Badges -->
+          <div class="mt-4">
+            <h5 class="fw-bold mb-3 text-white font-monospace">
+              <i class="bi bi-broadcast-pin text-neon-magenta me-2"></i>[ SYSTEM_INTERESTS: ACTIVE ]
+            </h5>
+            <div class="d-flex flex-wrap gap-2">
+              <span class="sobre-mi-badge">☕ Café caliente</span>
+              <span class="sobre-mi-badge">🌧️ Días lluviosos</span>
+              <span class="sobre-mi-badge">📚 Libros de fantasía</span>
+              <span class="sobre-mi-badge">✒️ Papelería bonita</span>
+              <span class="sobre-mi-badge">🎮 Juegos indie</span>
+              <span class="sobre-mi-badge">🐸 Cositas de ranas</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Columna de la Imagen con marco neon RGB -->
+        <div class="col-md-5 text-center">
+          <div class="neon-rgb-frame-wrapper mx-auto">
+            <div class="neon-rgb-border-spin"></div>
+            <div class="neon-rgb-inner">
+              <img src="assets/images/perfilweb.png" class="img-fluid neon-profile-img" alt="Ilustración de Yaihi" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================
+       📡 SECCIÓN: CONEXIONES DE RED (REDES SOCIALES)
+       ======================================================== -->
+  <section id="redes-sociales" class="pt-5 pb-0 position-relative overflow-hidden border-top border-bottom border-secondary border-opacity-25 animate-on-scroll">
+    <!-- Cabecera de la sección -->
+    <div class="container text-center mb-5">
+      <span class="text-neon-cyan fw-bold tracking-widest text-uppercase small">[ CORE SOCIAL PLUGINS // SYNCED_FEED ]</span>
+      <h2 class="display-5 fw-bold tracking-tight text-white mt-2">
+        Mis redes ¡echa un vistazo! ☕
+      </h2>
+      <div class="hud-line-divider mx-auto mt-3"></div>
+    </div>
+
+    <div class="row g-0 align-items-stretch min-vh-75">
+      
+      <!-- Columna Instagram -->
+      <div class="col-lg-4 d-flex flex-column justify-content-between p-4 p-md-5 position-relative social-band band-instagram">
+        <div>
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex align-items-center gap-2">
+              <i class="bi bi-instagram fs-4 text-neon-magenta"></i>
+              <span class="font-orbitron fw-bold tracking-wide title-instagram">INSTAGRAM</span>
+            </div>
+            <span class="text-xs text-white-50 font-monospace">
+              <span class="pulse-indicator me-1"></span> SYNCED
+            </span>
+          </div>
+          <div class="d-flex align-items-center gap-3 mb-4">
+            <div class="rounded-circle bg-black p-1 border border-secondary" style="width: 48px; height: 48px;">
+              <img src="assets/images/perfilweb.png" class="rounded-circle img-fluid" alt="Perfil" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+            <div>
+              <a href="https://www.instagram.com/yai_book210/" target="_blank" class="m-0 fw-bold fav-link fav-link-magenta text-decoration-none">@yai_book210</a>
+              <span class="text-xs text-white-50 font-monospace">Red de Reseñas e Ideas</span>
+            </div>
+          </div>
+          <div id="instagram-feed" class="social-feed-container">
+            <!-- Dynamic Content -->
+          </div>
+        </div>
+        <div class="mt-4 pt-3 border-top border-secondary border-opacity-25">
+          <a href="https://www.instagram.com/yai_book210/" target="_blank" class="btn btn-sm w-100 rounded-0 font-monospace text-uppercase btn-connect-instagram">[ CONECTAR_DECK ]</a>
+        </div>
+      </div>
+
+      <!-- Columna TikTok -->
+      <div class="col-lg-4 d-flex flex-column justify-content-between p-4 p-md-5 position-relative social-band band-tiktok">
+        <div>
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex align-items-center gap-2">
+              <i class="bi bi-tiktok fs-4 text-neon-cyan"></i>
+              <span class="font-orbitron fw-bold tracking-wide title-tiktok">TIKTOK</span>
+            </div>
+            <span class="text-xs text-white-50 font-monospace">
+              <span class="pulse-indicator me-1"></span> DECK_LIVE
+            </span>
+          </div>
+          <div class="d-flex align-items-center gap-3 mb-4">
+            <div class="rounded-circle bg-black p-1 border border-secondary" style="width: 48px; height: 48px;">
+              <img src="assets/images/perfilweb.png" class="rounded-circle img-fluid" alt="Perfil" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+            <div>
+              <a href="https://www.tiktok.com/@yai_book210?_r=1&_t=ZN-97XEr95pUuY" target="_blank" class="m-0 fw-bold fav-link fav-link-cyan text-decoration-none">@yai_book210</a>
+              <span class="text-xs text-white-50 font-monospace">Vídeos de Libros y Setup</span>
+            </div>
+          </div>
+          <div id="tiktok-feed" class="social-feed-container">
+            <!-- Dynamic Content -->
+          </div>
+        </div>
+        <div class="mt-4 pt-3 border-top border-secondary border-opacity-25">
+          <a href="https://tiktok.com/@yaaih.c" target="_blank" class="btn btn-outline-info btn-sm w-100 rounded-0 font-monospace text-uppercase">[ ENLAZAR_SECTOR ]</a>
+        </div>
+      </div>
+
+      <!-- Columna Wattpad -->
+      <div class="col-lg-4 d-flex flex-column justify-content-between p-4 p-md-5 position-relative social-band band-wattpad">
+        <div>
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex align-items-center gap-2">
+              <span class="font-orbitron fw-bold tracking-wide text-warning title-wattpad" style="font-size: 1.2rem; line-height: 1;">W</span>
+              <span class="font-orbitron fw-bold tracking-wide title-wattpad">WATTPAD</span>
+            </div>
+            <span class="text-xs text-white-50 font-monospace">
+              <span class="pulse-indicator me-1"></span> WRITING
+            </span>
+          </div>
+          <div class="d-flex align-items-center gap-3 mb-4">
+            <div class="rounded-circle bg-black p-1 border border-secondary" style="width: 48px; height: 48px;">
+              <img src="assets/images/perfilweb.png" class="rounded-circle img-fluid" alt="Perfil" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+            <div>
+              <a href="https://www.wattpad.com/user/yaizamelo" target="_blank" class="m-0 fw-bold fav-link fav-link-warning text-decoration-none">@yai_book210</a>
+              <span class="text-xs text-white-50 font-monospace">Manuscritos Digitales</span>
+            </div>
+          </div>
+          <div id="wattpad-feed" class="social-feed-container">
+            <!-- Dynamic Content -->
+          </div>
+        </div>
+        <div class="mt-4 pt-3 border-top border-secondary border-opacity-25">
+          <a href="https://www.wattpad.com/user/yaizamelo" target="_blank" class="btn btn-outline-warning btn-sm w-100 rounded-0 font-monospace text-uppercase">[ LEER_BORRADORES ]</a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 3. 📚 BIBLIOTECA -->
+  <section id="biblioteca" class="position-relative py-5 overflow-hidden">
+  
+  <div class="blur-bg-effect img-1"></div>
+  <div class="blur-bg-effect img-2"></div>
+ 
+  <div class="container-fluid px-4 px-xl-5 position-relative">
+    <H3 class="text-center py-5 text-neon-magenta font-orbitron">BIBLIOTECA DIGITAL</H3>
+    
+    <div class="mb-4 border border-secondary border-opacity-25 bg-black-50 p-3 font-monospace rounded-1">
+      <div class="row g-2 small text-white-50 align-items-center">
+        <div class="col-md-4 d-flex align-items-center gap-2">
+          <span class="spinner-grow spinner-grow-sm text-glow-magenta"></span>
+          <span>SYS_STATUS: <strong class="text-white">[ ONLINE ]</strong></span>
+        </div>
+        <div class="col-md-4 text-md-center">
+          <span>BÚNKER_CAPACITY: <strong class="text-info">[ 42.8% USED ]</strong></span>
+        </div>
+        <div class="col-md-4 text-md-end">
+          <span>TOTAL_FILES: <strong class="text-warning">[ 05_DATA_DECKS_LOADED ]</strong></span>
+        </div>
+      </div>
+      <div class="progress mt-2 rounded-0 bg-dark-purple progress-loader">
+        <div class="progress-bar bg-info progress-loader-bar"></div>
+      </div>
+    </div>
+ 
+    <div class="border border-secondary border-opacity-25 rounded-1 overflow-hidden library-screen-frame">
+      
+      <div class="row g-0 font-monospace">
+        
+        <div class="col-xl-4 border-end border-secondary border-opacity-25 p-4 bg-black-25">
+          <div class="mb-4">
+            <span class="text-white text-xs d-block mb-2">// SELECT_DATA_CARTRIDGE:</span>
+            
+            <div class="d-flex flex-column gap-2" id="library-cartridge-selector">
+              
+              <button class="cartridge-btn cartridge-cyan active" data-target="biblioteca/milibro.html">
+                <span class="btn-index">01_</span>
+                <span class="btn-label">Mi Libro</span>
+                <i class="bi bi-play-fill ms-auto status-icon"></i>
+              </button>
+ 
+              <button class="cartridge-btn cartridge-magenta" data-target="biblioteca/leidos.html">
+                <span class="btn-index">02_</span>
+                <span class="btn-label">Registros Leídos</span>
+                <i class="bi bi-dot ms-auto status-icon"></i>
+              </button>
+ 
+              <button class="cartridge-btn cartridge-yellow" data-target="biblioteca/tbr.html">
+                <span class="btn-index">03_</span>
+                <span class="btn-label">TBR // En Cola</span>
+                <i class="bi bi-dot ms-auto status-icon"></i>
+              </button>
+ 
+              <button class="cartridge-btn cartridge-purple" data-target="biblioteca/favoritos.html">
+                <span class="btn-index">04_</span>
+                <span class="btn-label">Núcleos Favoritos</span>
+                <i class="bi bi-dot ms-auto status-icon"></i>
+              </button>
+ 
+              <button class="cartridge-btn cartridge-cyan" data-target="biblioteca/citas.html">
+                <span class="btn-index">05_</span>
+                <span class="btn-label">Citas Filtradas</span>
+                <i class="bi bi-dot ms-auto status-icon"></i>
+              </button>
+ 
+            </div>
+          </div>
+ 
+          <div class="border-top border-secondary border-opacity-25 pt-3 text-white library-footer-note">
+            <div class="text-white-50 mb-1">[ TERMINAL_LOGS ]</div>
+            <div>&gt; Awaiting hardware interruption...</div>
+            <div class="text-success">&gt; Connection to file fragments: SECURE</div>
+            <div id="terminal-live-log" class="text-info">&gt; Active deck changed successfully.</div>
+          </div>
+        </div>
+ 
+        <div class="col-xl-8 p-4 p-md-5 bg-black-50 d-flex flex-column justify-content-between library-screen-content-col">
+          
+          <div>
+            <div class="d-flex justify-content-between align-items-center border-bottom border-secondary border-opacity-10 pb-2 mb-4">
+              <span class="text-white text-xs" id="terminal-path">[ SCREEN_SRC: /read/milibro.html ]</span>
+              <span class="badge bg-dark font-monospace text-glow-cyan p-2">[ DECRYPTING_BUFFER ]</span>
+            </div>
+
+            <div id="terminal-screen-content" class="fade-in-effect">
+              <div class="text-center py-5 text-white">
+                <div class="spinner-border text-info mb-3" role="status"></div>
+                <p>Cargando sector inicial del búnker...</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="text-end text-white text-xs pt-4 border-top border-secondary border-opacity-10 mt-5">
+            CRT_EMULATOR_NODE_V4 // MONITOR_OUTPUT: 20:9_RATIO
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+  <!-- 🎮 SECCIÓN: BOOKTOK BOSSES (ENTREVISTAS) -->
+  <section id="entrevistas" class="py-5 bg-dark-gaming text-white position-relative">
+    <div class="container-fluid px-4 px-md-5">
+      <!-- Cabecera Agresiva Estilo Torneo -->
+      <div class="text-center mb-5 position-relative">
+        <span class="badge bg-neon-cyan text-dark fw-black px-3 py-1 text-uppercase tracking-widest text-xs header-tag">
+          [ Live Interviews ]
+        </span>
+        <h2 class="display-4 fw-black mt-2 text-uppercase text-stroke-gaming">
+          ⚔️ BookTok <span class="text-neon-magenta">Challengers</span>
+        </h2>
+        <p class="text-light text-uppercase tracking-wider small">
+          Rompiendo el algoritmo. Entrevistas a los nuevos jefes de la
+          literatura.
+        </p>
+      </div>
+        
+      <!-- Grid de Tarjetas de Autores -->
+      <div class="row g-4 justify-content-center" id="contenedor-entrevistas">
+        <!-- Cargado dinámicamente mediante JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- 🌊 DIVISOR EN OLA CON MÁS NOTORIEDAD Y CURVA -->
+  <div class="wave-transition-container">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+      <!-- Ola trasera (Súper curvada y translúcida) -->
+      <path d="M0,60 C150,110 350,10 500,60 C650,110 850,20 1000,70 C1100,95 1150,75 1200,60 L1200,120 L0,120 Z"
+        class="wave-fill wave-back"></path>
+      <!-- Ola delantera (Principal, picos profundos) -->
+      <path d="M0,40 C200,100 400,20 600,75 C800,130 1000,30 1200,50 L1200,120 L0,120 Z" class="wave-fill wave-front">
+      </path>
+    </svg>
+  </div>
+
+  <!-- 4. 🎮 GAMING -->
+  <section id="gaming" class="py-5 section-gaming-principal text-white position-relative">
+    <div class="container-fluid px-4 px-md-5 position-relative z-1">
+      <div
+        class="d-flex flex-wrap justify-content-between align-items-end mb-5 gap-3 border-bottom border-purple-gaming pb-3">
+        <div>
+          <span class="text-neon-cyan fw-bold tracking-widest text-uppercase small">[ STATUS: ONLINE ]</span>
+          <h2 class="display-4 fw-black text-uppercase m-0 tracking-tight text-glow-purple">
+            🎮 Gaming Lounge
+          </h2>
+        </div>
+        <p class="text-light text-md-end max-w-md m-0 small">
+          Cuando no estoy entre páginas, me encuentras rompiendo teclados o
+          construyendo granjas pixeladas. ¡Mi rincón más 'setup'!
+        </p>
+      </div>
+
+      <div class="row g-4" id="contenedor-juegos"></div>
+    </div>
+  </section>
+
+  <!-- 💜 SECCIÓN 5: TWITCH STREAMING STATION -->
+  <section id="twitch" class="py-5 section-twitch-live text-white position-relative overflow-hidden">
+    <!-- Efecto de luces de fondo -->
+    <div class="twitch-glow-effect"></div>
+
+    <div class="container-fluid px-4 px-md-5 position-relative z-1">
+      <!-- Título de la Estación -->
+      <div class="text-center mb-5">
+        <div class="d-inline-flex align-items-center gap-2 badge bg-live-pulse px-3 py-1 text-uppercase fw-black mb-2">
+          <span class="pulse-dot"></span> On Air
+        </div>
+        <h2 class="display-4 fw-black text-uppercase tracking-tight text-glow-twitch">
+          💜 BROADCAST <span class="text-neon-cyan">CENTER</span>
+        </h2>
+        <p class="text-neon-magenta text-uppercase tracking-wider small">
+          Charlas de libros, gameplays y caos en comunidad. ¡Únete al chat!
+        </p>
+      </div>
+
+      <div class="row g-4 align-items-center">
+        <!-- LADO IZQUIERDO: REPRODUCTOR / PANTALLA EN VIVO -->
+        <div class="col-lg-7">
+          <div class="twitch-player-container position-relative">
+            <!-- Marco de pantalla tecnológico -->
+            <div class="player-hud-top d-flex justify-content-between align-items-center px-3 py-2">
+              <span class="text-xs text-neon-magenta fw-bold tracking-widest"><i class="bi bi-twitch"></i>
+                TWITCH_STREAM_FEED</span>
+              <span class="badge bg-danger text-xs fw-bold tracking-wider animate-blink">LIVE</span>
+            </div>
+
+            <!-- Contenedor del Iframe o Placeholder -->
+            <div class="ratio ratio-16x9 stream-screen-bg">
+              <iframe id="twitch-player-frame" src="" allowfullscreen>
+              </iframe>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- LADO DERECHO: CALENDARIO DE TRANSMISIÓN (ESTILO RPG/MISIONES) -->
+        <div class="col-lg-5">
+          <div class="twitch-schedule-card p-4 h-100">
+            <h4 class="fw-black text-uppercase border-bottom border-twitch pb-2 mb-4 tracking-wide text-neon-cyan">
+              📅 MISIONES DIARIAS
+            </h4>
+
+            <!-- Lista de Días estilo Cronograma de Torneo -->
+            <div class="d-flex flex-column gap-3">
+              <!-- LUNES -->
+              <div class="schedule-item d-flex justify-content-between align-items-center p-3">
+                <div class="d-flex align-items-center gap-3">
+                  <div class="day-badge fw-black">LUN</div>
+                  <div>
+                    <h6 class="m-0 fw-bold text-uppercase">
+                      BookTok & Chill
+                    </h6>
+                    <span class="text-xs text-light-subtle">Reseñas y salseo literario</span>
+                  </div>
+                </div>
+                <span class="badge bg-dark border border-purple text-neon-magenta fw-bold">18:00h</span>
+              </div>
+
+              <!-- MIÉRCOLES -->
+              <div class="schedule-item d-flex justify-content-between align-items-center p-3 active-day">
+                <div class="d-flex align-items-center gap-3">
+                  <div class="day-badge fw-black">MIE</div>
+                  <div>
+                    <h6 class="m-0 fw-bold text-uppercase">
+                      Gaming Night 🎮
+                    </h6>
+                    <span class="text-xs text-light-subtle">¡Viciando en directo!</span>
+                  </div>
+                </div>
+                <span class="badge bg-neon-cyan text-dark fw-black">18:00h</span>
+              </div>
+
+              <!-- VIERNES -->
+              <div class="schedule-item d-flex justify-content-between align-items-center p-3">
+                <div class="d-flex align-items-center gap-3">
+                  <div class="day-badge fw-black">VIE</div>
+                  <div>
+                    <h6 class="m-0 fw-bold text-uppercase">
+                      Spicy Chat & Escritura
+                    </h6>
+                    <span class="text-xs text-light-subtle">Avanzando proyectos juntos</span>
+                  </div>
+                </div>
+                <span class="badge bg-dark border border-purple text-neon-magenta fw-bold">18:00h</span>
+              </div>
+            </div>
+
+            <div
+              class="text-center mt-4 pt-2 text-xs text-warning border-top border-twitch text-uppercase tracking-widest">
+              * Los horarios pueden variar según los niveles de cafeína.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 🐸 SECCIÓN 6: UNLOCKED EMOTES (INFINITE TICKER) -->
+  <section id="galeria" class="py-5 section-emotes-vault text-white position-relative overflow-hidden">
+    <div class="container-fluid px-0"> <!-- px-0 para que la cinta toque los bordes de la pantalla -->
+
+      <!-- Cabecera de la Bóveda -->
+      <div class="text-center mb-5 px-4">
+        <span class="text-neon-magenta fw-bold tracking-widest text-uppercase small">[ STREAMING REWARDS ACTIVE ]</span>
+        <h2 class="display-4 fw-black text-uppercase tracking-tight text-glow-cyan mt-1">
+          <span class="frogmote">🐸</span> EMOTE INVENTORY
+        </h2>
+        <p class="text-warning text-uppercase tracking-wider small">Pasa el ratón para pausar e inspeccionar el
+          inventario.</p>
+      </div>
+      
+      <div class="marquee-master-wrapper" id="emotes-marquee-container"></div>
+        </div>
+      </div>
+  </section>
+
+  <!-- 🖥️ SECCIÓN 7: BATTLESTATION HUD / SETUP -->
+  <div class="setup-laser-wrapper">
+    <section id="setup" class="py-5 section-setup-hud text-white position-relative">
+      <div class="container">
+
+        <!-- Cabecera de la sección -->
+        <div class="text-center mb-5">
+          <span class="text-neon-cyan fw-bold tracking-widest text-uppercase small">[ SYSTEM HARDWARE DIAGNOSTICS
+            ]</span>
+          <h2 class="display-4 fw-black text-uppercase tracking-tight text-glow-magenta mt-1">
+            <span class="monitor-tech">🖥️</span> BATTLESTATION & SETUP
+          </h2>
+          <div class="hud-line-divider mx-auto"></div>
+        </div>
+
+        <div class="row g-4 align-items-center">
+          <!-- COLUMNA IZQUIERDA: La foto con marco Cyber-Tech -->
+          <div class="col-lg-6 setup-laser-wrapper p-0 ">
+            <div class="setup-frame-container ">
+              <div class="corner-tag">[ LIVE_VIEW_01 ]</div>
+              <img src="/assets/images/setup.jfif" class="img-fluid setup-img"
+                alt="Foto de la Estación de Transmisión" />
+              <div class="frame-scanner-line"></div>
+            </div>
+          </div>
+
+          <!-- COLUMNA DERECHA: El desglose del Inventario de Hardware -->
+          <div class="col-lg-6">
+            <div class="hud-spec-container d-flex flex-column gap-4">
+
+              <!-- Bloque 1: PC Torre -->
+              <div class="hud-spec-block">
+                <div class="block-header d-flex justify-content-between align-items-center">
+                  <h3 class="h5 text-neon-cyan mb-0 fw-bold"><span class="badge bg-dark-cyan me-2">01</span> TOWER CORE
+                  </h3>
+                  <span class="text-neon-green small">STATUS: STABLE</span>
+                </div>
+                <div class="block-body mt-2">
+                  <table class=" table-sm  mb-0 custom-hud-table">
+                    <tbody>
+                      <tr>
+                        <td class="text-neon-cyan width-label">CPU</td>
+                        <td class="fw-semibold">Intel i7 6700k</td>
+                      </tr>
+                      <tr>
+                        <td class="text-neon-cyan">GPU</td>
+                        <td class="fw-semibold text-neon-green">NVIDIA GTX 980Ti Gigabyte OC GAMING</td>
+                      </tr>
+                      <tr>
+                        <td class="text-neon-cyan">RAM</td>
+                        <td class="fw-semibold">16GB G.Skill Trident Z 3200mhz</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Bloque 2: Periféricos -->
+              <div class="hud-spec-block">
+                <div class="block-header d-flex justify-content-between align-items-center">
+                  <h3 class="h5 text-neon-magenta mb-0 fw-bold"><span class="badge bg-dark-magenta me-2">02</span>
+                    PERIPHERALS</h3>
+                  <span class="text-neon-magenta small">INPUTS: ACTIVE</span>
+                </div>
+                <div class="block-body mt-2">
+                  <table class=" table-sm text-white mb-0 custom-hud-table">
+                    <tbody>
+                      <tr>
+                        <td class="text-neon-magenta width-label">KEYBOARD</td>
+                        <td class="fw-semibold">Custom 75% Mechanical (Gateron Milky Yellow)</td>
+                      </tr>
+                      <tr>
+                        <td class="text-neon-magenta">MOUSE</td>
+                        <td class="fw-semibold">Logitech G Pro X Superlight 2</td>
+                      </tr>
+                      <tr>
+                        <td class="text-neon-magenta">AUDIO</td>
+                        <td class="fw-semibold">Beyerdynamic DT 990 Pro + Shure SM7B Mic</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Bloque 3: Decoración/Ambiente -->
+              <div class="hud-spec-block">
+                <div class="block-header d-flex justify-content-between align-items-center">
+                  <h3 class="h5 text-warning mb-0 fw-bold"><span class="badge bg-dark-warning me-2">03</span> ATMOSPHERE
+                  </h3>
+                  <span class="text-neon-gold small">RGB: SYNCED</span>
+                </div>
+                <div class="block-body mt-2">
+                  <table class=" table-sm text-white mb-0 custom-hud-table">
+                    <tbody>
+                      <tr>
+                        <td class="text-warning width-label">LIGHTING</td>
+                        <td class="fw-semibold">Govee RGBIC Neon Rope Lights + Philip Hue</td>
+                      </tr>
+                      <tr>
+                        <td class="text-warning">DESK</td>
+                        <td class="fw-semibold">Tablero de Madera Maciza con Soporte Custom</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </div>
+  <!-- SECCION FAVORITOS FOOTER -->
+  <section id="favoritos-footer" class="py-5 section-favorites text-white position-relative">
+    <div class="container-fluid px-4 px-md-5">
+
+      <div class="text-center mb-5">
+        <span class="text-neon-cyan fw-bold tracking-widest text-uppercase small">[ DECRYPTING PERSONAL INTERESTS
+          ]</span>
+        <h2 class="display-4 fw-black text-uppercase tracking-tight text-glow-purple mt-1">
+          ✨ THE FAVORITES
+        </h2>
+        <p class="text-neon-green text-uppercase tracking-wider small">Las ficciones, mundos y frecuencias que dan forma
+          a mi búnker.</p>
+      </div>
+
+      <div class="row g-4">
+
+        <!-- Añadir justo debajo de la <div class="row g-4"> pero dentro del container-fluid -->
+        <div id="cyber-terminal-preview" class="mt-4 d-none">
+          <div class="fav-datapad-card p-4 border-neon-cyan">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <span id="terminal-status" class="text-neon-green font-monospace small">[ ACCESSING DATABASE... ]</span>
+              <button id="close-terminal" class="btn btn-sm btn-outline-danger font-monospace text-xs">[ CLOSE_DECK
+                ]</button>
+            </div>
+            <div id="terminal-content" class="text-white">
+              <!-- Aquí se inyectará el contenido real asíncronamente -->
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+          <div class="fav-datapad-card p-4 h-100 d-flex flex-column justify-content-between">
+            <div>
+              <div class="datapad-header d-flex justify-content-between align-items-center mb-3">
+                <span class="text-neon-magenta fw-bold tracking-wider text-lg font-monospace ">DATA_FILE_01</span>
+                <i class="bi bi-tv display-6 text-neon-magenta"></i>
+              </div>
+              <h4 class="fw-black text-uppercase tracking-wide mb-2">📺 SERIES </h4>
+              <p class="small text-white mb-3">Las producciones que me marcaron de por vida. Mundos distópicos, ciencia
+                ficción o historias de las que no sales igual.</p>
+              <ul class="list-unstyled fav-list small">
+                <li><a href="/favoritos/series.html" class="fav-link fav-link-magenta text-decoration-none"><i
+                      class="bi bi-chevron-right"></i> </a></li>
+                <li><a href="/favoritos/series.html" class="fav-link fav-link-magenta text-decoration-none"><i
+                      class="bi bi-chevron-right"></i> </a></li>
+                <li><a href="/favoritos/series.html" class="fav-link fav-link-magenta text-decoration-none"><i
+                      class="bi bi-chevron-right"></i> </a></li>
+                <li><a href="/favoritos/series.html" class="fav-link fav-link-magenta text-decoration-none"><i
+                      class="bi bi-chevron-right"></i> </a></li>
+                <li><a href="/favoritos/series.html" class="fav-link fav-link-magenta text-decoration-none"><i
+                      class="bi bi-chevron-right"></i> </a></li>
+                <li><a href="/favoritos/series.html" class="fav-link fav-link-magenta text-decoration-none"><i
+                      class="bi bi-chevron-right"></i> </a></li>
+                <li><a href="/favoritos/series.html" class="fav-link fav-link-magenta text-decoration-none"><i
+                      class="bi bi-chevron-right"></i> </a></li>
+                <li><a href="/favoritos/series.html" class="fav-link fav-link-magenta text-decoration-none"><i
+                      class="bi bi-chevron-right"></i> </a></li>
+              </ul>
+            </div>
+            <div class="datapad-footer-line bg-neon-magenta"></div>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+          <div class="fav-datapad-card p-4 h-100 d-flex flex-column justify-content-between">
+            <div>
+              <div class="datapad-header d-flex justify-content-between align-items-center mb-3">
+                <span class="text-neon-cyan fw-bold tracking-wider text-lg font-monospace">DATA_FILE_02</span>
+                <i class="bi bi-film display-6 text-neon-cyan"></i>
+              </div>
+              <h4 class="fw-black text-uppercase tracking-wide mb-2">🎬 PELÍCULAS</h4>
+              <p class="small text-white mb-3">Historias inolvidables y direcciones de arte que me obsesionan
+                visualmente.</p>
+              <ul class="list-unstyled fav-list small">
+                <li><a href="/favoritos/peliculas.html" class="fav-link fav-link-cyan text-decoration-none"><i
+                      class="bi bi-chevron-right"></i> </a></li>
+                <li><a href="/favoritos/peliculas.html" class="fav-link fav-link-cyan text-decoration-none"><i
+                      class="bi bi-chevron-right"></i> </a></li>
+                <li><a href="/favoritos/peliculas.html" class="fav-link fav-link-cyan text-decoration-none"><i
+                      class="bi bi-chevron-right"></i> </a></li>
+                <li><a href="/favoritos/peliculas.html" class="fav-link fav-link-cyan text-decoration-none"><i
+                      class="bi bi-chevron-right"></i> </a></li>
+                <li><a href="/favoritos/peliculas.html" class="fav-link fav-link-cyan text-decoration-none"><i
+                      class="bi bi-chevron-right"></i> </a></li>
+                <li><a href="/favoritos/peliculas.html" class="fav-link fav-link-cyan text-decoration-none"><i
+                      class="bi bi-chevron-right"></i> </a></li>
+                <li><a href="/favoritos/peliculas.html" class="fav-link fav-link-cyan text-decoration-none"><i
+                      class="bi bi-chevron-right"></i> </a></li>
+                <li><a href="/favoritos/peliculas.html" class="fav-link fav-link-cyan text-decoration-none"><i
+                      class="bi bi-chevron-right"></i> </a></li>
+
+              </ul>
+            </div>
+            <div class="datapad-footer-line bg-neon-cyan"></div>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+          <div class="fav-datapad-card p-4 h-100 d-flex flex-column justify-content-between">
+            <div>
+              <div class="datapad-header d-flex justify-content-between align-items-center mb-3">
+                <span class="text-warning fw-bold tracking-wider text-lg font-monospace">DATA_FILE_03</span>
+                <i class="bi bi-person-badge display-6 text-warning"></i>
+              </div>
+              <h4 class="fw-black text-uppercase tracking-wide mb-2">👤 PERSONAJES</h4>
+              <p class="small text-white mb-3">Esos seres de ficción que se ganaron un rincón eterno en mi corazón.</p>
+              <ul class="list-unstyled fav-list small">
+                <li><a href="/favoritos/personajes.html" class="fav-link fav-link-warning text-decoration-none"><i
+                      class="bi bi-chevron-right"></i> <span class="text-xs text-white">(CP2077)</span></a></li>
+                <li><a href="/favoritos/personajes.html" class="fav-link fav-link-warning text-decoration-none"><i
+                      class="bi bi-chevron-right"></i> <span class="text-xs text-white">(Arcane)</span></a></li>
+                <li><a href="/favoritos/personajes.html" class="fav-link fav-link-warning text-decoration-none"><i
+                      class="bi bi-chevron-right"></i> <span class="text-xs text-white">(Shatter Me)</span></a></li>
+                <li><a href="/favoritos/personajes.html" class="fav-link fav-link-warning text-decoration-none"><i
+                      class="bi bi-chevron-right"></i> <span class="text-xs text-white">(Arcane)</span></a></li>
+              </ul>
+            </div>
+            <div class="datapad-footer-line bg-warning"></div>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+          <div class="fav-datapad-card p-4 h-100 d-flex flex-column justify-content-between fav-music-active">
+            <div>
+              <div class="datapad-header d-flex justify-content-between align-items-center mb-3">
+                <span class="text-neon-purple fw-bold tracking-wider text-lg font-monospace">AUDIO_DECK_04</span>
+                <div class="mini-equalizer d-flex align-items-end gap-1">
+                  <span></span><span></span><span></span><span></span>
+                </div>
+              </div>
+              <h4 class="fw-black text-uppercase tracking-wide mb-1">🎵 BACKGROUND BEATS</h4>
+              <span class="text-neon-purple text-xs font-monospace d-block mb-2">[ STATUS: STREAMING FREQUENCIES
+                ]</span>
+
+              <ul class="list-unstyled fav-list small mb-3">
+                <li><a href="/favoritos/musica.html" class="fav-link fav-link-purple text-decoration-none"><i
+                      class="bi bi-chevron-right"></i> </a></li>
+                <li><a href="/favoritos/musica.html" class="fav-link fav-link-purple text-decoration-none"><i
+                      class="bi bi-chevron-right"></i> </a></li>
+                <li><a href="/favoritos/musica.html" class="fav-link fav-link-purple text-decoration-none"><i
+                      class="bi bi-chevron-right"></i> </a></li>
+                <li><a href="/favoritos/musica.html" class="fav-link fav-link-purple text-decoration-none"><i
+                      class="bi bi-chevron-right"></i> </a></li>
+                <li><a href="/favoritos/musica.html" class="fav-link fav-link-purple text-decoration-none"><i
+                      class="bi bi-chevron-right"></i> </a></li>
+                <li><a href="/favoritos/musica.html" class="fav-link fav-link-purple text-decoration-none"><i
+                      class="bi bi-chevron-right"></i> </a></li>
+                <li><a href="/favoritos/musica.html" class="fav-link fav-link-purple text-decoration-none"><i
+                      class="bi bi-chevron-right"></i> </a></li>
+                <li><a href="/favoritos/musica.html" class="fav-link fav-link-purple text-decoration-none"><i
+                      class="bi bi-chevron-right"></i> </a></li>
+                <li><a href="/favoritos/musica.html" class="fav-link fav-link-purple text-decoration-none"><i
+                      class="bi bi-chevron-right"></i> </a></li>
+
+              </ul>
+
+
+            </div>
+            <div class="datapad-footer-line bg-neon-purple"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- 9. 📩 CONTACTO / REDES -->
+  <footer id="contacto" class="position-relative overflow-hidden py-5 text-center cyber-footer">
+    <!-- Línea superior animada como la navbar -->
+    <div class="cyber-footer-border-anim"></div>
+    <div class="footer-grid-layer"></div>
+    
+    <div class="container position-relative" style="z-index: 2;">
+      <h2 class="font-orbitron mb-4 text-glow-magenta text-white">
+        <span class="text-neon-cyan">&lt;</span> TRANSMISSION // TALK_TO_ME <span class="text-neon-cyan">&gt;</span>
+      </h2>
+      
+      <!-- Contenedores circulares de redes sociales con efecto neón -->
+      <div class="d-flex justify-content-center gap-4 mb-4">
+        <a href="https://www.twitch.tv/yai_booksttv" target="_blank" class="social-connector connector-twitch" title="Twitch Channel">
+          <div class="connector-glow"></div>
+          <i class="bi bi-twitch"></i>
+        </a>
+        <a href="https://www.tiktok.com/@yai_book210?_r=1&_t=ZN-97XEr95pUuY" target="_blank" class="social-connector connector-tiktok" title="TikTok Channel">
+          <div class="connector-glow"></div>
+          <i class="bi bi-tiktok"></i>
+        </a>
+        <a href="#" target="_blank" class="social-connector connector-discord" title="Discord Server">
+          <div class="connector-glow"></div>
+          <i class="bi bi-discord"></i>
+        </a>
+      </div>
+      
+      <p class="font-monospace text-muted small mt-4 footer-credits">
+        // ESTABLECIENDO NODO PRINCIPAL YAIHI • <span class="text-white">2026</span> • HECHO CON ❤️ PARA LA COMUNIDAD <br>
+        <span class="text-neon-cyan dev-credits">&gt; DESARROLLADO POR G4rNeTT_</span>
+      </p>
+    </div>
+  </footer>
+
+  <!-- Bootstrap JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script src="/favoritos-interactivos.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+  <script>
+    (function () {
+      const frame = document.getElementById('twitch-player-frame');
+      if (!frame) return;
+
+      const parentHost = window.location.hostname || 'localhost';
+      frame.src = `https://player.twitch.tv/?channel=yai_booksttv&parent=${encodeURIComponent(parentHost)}`;
+    })();
+  </script>
+  <script src="/terminal-loader.js"></script>
+
+
+  <!-- Modal Secreto de Inyección de Libros (Se abre con Ctrl + Shift + B) -->
+  <div class="modal fade" id="modal-nuevo-libro" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content bg-dark border border-secondary border-opacity-50 text-white font-monospace">
+        <div class="modal-header border-bottom border-secondary border-opacity-25 bg-black-25">
+          <h5 class="modal-title text-neon-cyan font-orbitron">[ INJECT_READ_DATA ]</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <!-- Password field unified at the top of the modal content -->
+        <div class="px-4 pt-3 pb-2 border-bottom border-secondary border-opacity-10 bg-black-25">
+          <label class="form-label text-neon-magenta small">&gt; CÓDIGO_SISTEMA (PASSWORD)</label>
+          <input type="password" id="modal-password" class="form-control form-control-sm bg-black border-secondary text-white" placeholder="••••••••" required>
+        </div>
+
+        <!-- Navigation Tabs inside modal -->
+        <div class="px-4 pt-3">
+          <ul class="nav nav-tabs border-secondary border-opacity-25" id="modalTab" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active modal-tab-btn" id="book-tab-btn" data-bs-toggle="tab" data-bs-target="#book-tab-content" type="button" role="tab" aria-controls="book-tab-content" aria-selected="true">
+                [ UNIDAD_LIBRO ]
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link modal-tab-btn" id="quote-tab-btn" data-bs-toggle="tab" data-bs-target="#quote-tab-content" type="button" role="tab" aria-controls="quote-tab-content" aria-selected="false">
+                [ UNIDAD_CITA ]
+              </button>
+            </li>
+          </ul>
+        </div>
+
+        <div class="modal-body" style="max-height: 65vh; overflow-y: auto;">
+          <div class="tab-content" id="modalTabContent">
+            
+            <!-- PESTAÑA: INYECTAR LIBROS -->
+            <div class="tab-pane fade show active" id="book-tab-content" role="tabpanel" aria-labelledby="book-tab-btn">
+              <form id="form-nuevo-libro" class="p-2">
+                <div class="mb-3">
+                  <label class="form-label text-neon-magenta small">&gt; TÍTULO_DEL_LIBRO</label>
+                  <input type="text" id="lib-titulo" class="form-control form-control-sm bg-black border-secondary text-white text-uppercase" placeholder="NEUROMANTE" required>
+                </div>
+                <div class="row mb-3">
+                  <div class="col-8">
+                    <label class="form-label text-neon-magenta small">&gt; COLOR_TÍTULO</label>
+                    <select id="lib-color-titulo" class="form-select form-select-sm bg-black border-secondary text-white">
+                      <option value="white">WHITE (STANDARD)</option>
+                      <option value="cyan">CYAN (NEÓN)</option>
+                      <option value="magenta">MAGENTA (NEÓN)</option>
+                      <option value="green">GREEN (NEÓN)</option>
+                      <option value="yellow">YELLOW (NEÓN)</option>
+                      <option value="purple">PURPLE (NEÓN)</option>
+                      <option value="orange">ORANGE (NEÓN)</option>
+                    </select>
+                  </div>
+                  <div class="col-4 d-flex align-items-end">
+                    <div id="preview-lib-color-titulo" class="w-100 text-center py-1 rounded" style="border:1px solid rgba(255,255,255,0.3); font-size:0.7rem; font-weight:700; color:#fff;">PREVIEW</div>
+                  </div>
+                </div>
+                
+                <div class="mb-3">
+                  <label class="form-label text-neon-magenta small">&gt; AUTOR_DEL_CORE</label>
+                  <input type="text" id="lib-autor" class="form-control form-control-sm bg-black border-secondary text-white text-uppercase" placeholder="WILLIAM GIBSON" required>
+                </div>
+                <div class="row mb-3">
+                  <div class="col-8">
+                    <label class="form-label text-neon-magenta small">&gt; COLOR_AUTOR</label>
+                    <select id="lib-color-autor" class="form-select form-select-sm bg-black border-secondary text-white">
+                      <option value="yellow">YELLOW (STANDARD)</option>
+                      <option value="cyan">CYAN (NEÓN)</option>
+                      <option value="magenta">MAGENTA (NEÓN)</option>
+                      <option value="green">GREEN (NEÓN)</option>
+                      <option value="purple">PURPLE (NEÓN)</option>
+                      <option value="orange">ORANGE (NEÓN)</option>
+                      <option value="white">WHITE</option>
+                    </select>
+                  </div>
+                  <div class="col-4 d-flex align-items-end">
+                    <div id="preview-lib-color-autor" class="w-100 text-center py-1 rounded" style="border:1px solid rgba(255,238,0,0.3); font-size:0.7rem; font-weight:700; color:#ffee00;">PREVIEW</div>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label text-neon-magenta small">&gt; GÉNERO_SECTOR</label>
+                  <input type="text" id="lib-genero" class="form-control form-control-sm bg-black border-secondary text-white text-uppercase" placeholder="CYBERPUNK" required>
+                </div>
+                <div class="row mb-3">
+                  <div class="col-8">
+                    <label class="form-label text-neon-magenta small">&gt; COLOR_GÉNERO</label>
+                    <select id="lib-color-genero" class="form-select form-select-sm bg-black border-secondary text-white">
+                      <option value="info">INFO (STANDARD)</option>
+                      <option value="cyan">CYAN (NEÓN)</option>
+                      <option value="magenta">MAGENTA (NEÓN)</option>
+                      <option value="green">GREEN (NEÓN)</option>
+                      <option value="yellow">YELLOW (NEÓN)</option>
+                      <option value="purple">PURPLE (NEÓN)</option>
+                      <option value="orange">ORANGE (NEÓN)</option>
+                      <option value="white">WHITE</option>
+                    </select>
+                  </div>
+                  <div class="col-4 d-flex align-items-end">
+                    <div id="preview-lib-color-genero" class="w-100 text-center py-1 rounded" style="border:1px solid rgba(0,240,255,0.3); font-size:0.7rem; font-weight:700; color:#00f0ff;">PREVIEW</div>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label text-neon-magenta small">&gt; ESTADO_DE_CARGA</label>
+                  <select id="lib-estado" class="form-select form-select-sm bg-black border-secondary text-white">
+                    <option value="leido">LEÍDO / RESEÑADO</option>
+                    <option value="tbr">TBR (EN COLA)</option>
+                  </select>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label text-neon-magenta small">&gt; PUNTUACIÓN_SINCRO (1-5)</label>
+                  <input type="number" id="lib-puntuacion" class="form-control form-control-sm bg-black border-secondary text-white" min="1" max="5" step="0.5" value="5" required>
+                </div>
+                <div class="row mb-3">
+                  <div class="col-8">
+                    <label class="form-label text-neon-magenta small">&gt; COLOR_PUNTUACIÓN</label>
+                    <select id="lib-color-puntuacion" class="form-select form-select-sm bg-black border-secondary text-white">
+                      <option value="yellow">YELLOW (STANDARD)</option>
+                      <option value="cyan">CYAN (NEÓN)</option>
+                      <option value="magenta">MAGENTA (NEÓN)</option>
+                      <option value="green">GREEN (NEÓN)</option>
+                      <option value="purple">PURPLE (NEÓN)</option>
+                      <option value="orange">ORANGE (NEÓN)</option>
+                      <option value="white">WHITE</option>
+                    </select>
+                  </div>
+                  <div class="col-4 d-flex align-items-end">
+                    <div id="preview-lib-color-puntuacion" class="w-100 text-center py-1 rounded" style="border:1px solid rgba(255,238,0,0.3); font-size:0.7rem; font-weight:700; color:#ffee00;">PREVIEW</div>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label text-neon-magenta small">&gt; COZY_HYPE_PERCENTAGE (Opcional, 1-100)</label>
+                  <input type="number" id="lib-hype" class="form-control form-control-sm bg-black border-secondary text-white" min="1" max="100" value="90">
+                </div>
+                <div class="row mb-3">
+                  <div class="col-8">
+                    <label class="form-label text-neon-magenta small">&gt; COLOR_HYPE / ESTADO</label>
+                    <select id="lib-color-hype" class="form-select form-select-sm bg-black border-secondary text-white">
+                      <option value="yellow">YELLOW (STANDARD)</option>
+                      <option value="cyan">CYAN (NEÓN)</option>
+                      <option value="magenta">MAGENTA (NEÓN)</option>
+                      <option value="green">GREEN (NEÓN)</option>
+                      <option value="purple">PURPLE (NEÓN)</option>
+                      <option value="orange">ORANGE (NEÓN)</option>
+                      <option value="white">WHITE</option>
+                    </select>
+                  </div>
+                  <div class="col-4 d-flex align-items-end">
+                    <div id="preview-lib-color-hype" class="w-100 text-center py-1 rounded" style="border:1px solid rgba(255,238,0,0.3); font-size:0.7rem; font-weight:700; color:#ffee00;">PREVIEW</div>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label text-neon-magenta small">&gt; RESEÑA_LOG_DE_DATOS</label>
+                  <textarea id="lib-resena" class="form-control form-control-sm bg-black border-secondary text-white" rows="3" placeholder="Una atmósfera brutal, neón, hackers y una trama densa..."></textarea>
+                </div>
+                <div class="row mb-3">
+                  <div class="col-8">
+                    <label class="form-label text-neon-magenta small">&gt; COLOR_RESEÑA</label>
+                    <select id="lib-color-resena" class="form-select form-select-sm bg-black border-secondary text-white">
+                      <option value="white">WHITE (STANDARD)</option>
+                      <option value="cyan">CYAN (NEÓN)</option>
+                      <option value="magenta">MAGENTA (NEÓN)</option>
+                      <option value="green">GREEN (NEÓN)</option>
+                      <option value="yellow">YELLOW (NEÓN)</option>
+                      <option value="purple">PURPLE (NEÓN)</option>
+                      <option value="orange">ORANGE (NEÓN)</option>
+                    </select>
+                  </div>
+                  <div class="col-4 d-flex align-items-end">
+                    <div id="preview-lib-color-resena" class="w-100 text-center py-1 rounded" style="border:1px solid rgba(255,255,255,0.3); font-size:0.7rem; font-weight:700; color:#fff;">PREVIEW</div>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label text-neon-magenta small">&gt; SUBIR_PORTADA_LOCAL (IMG)</label>
+                  <input type="file" id="lib-cover-file" class="form-control form-control-sm bg-black border-secondary text-white" accept="image/*">
+                  <div class="form-text text-white small mt-1">// Opcional: selecciona un archivo de imagen local</div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label text-neon-magenta small">&gt; PATH_PORTADA_IMG (MANUAL)</label>
+                  <input type="text" id="lib-cover" class="form-control form-control-sm bg-black border-secondary text-white" value="/assets/images/jony.jpg">
+                </div>
+
+                <!-- CONTROLES DE FAVORITOS Y PODIO -->
+                <div class="form-check mb-3 mt-3">
+                  <input type="checkbox" id="lib-favorito" class="form-check-input bg-black border-secondary">
+                  <label class="form-check-label text-neon-cyan small" for="lib-favorito">&gt; REGISTRAR COMO FAVORITO</label>
+                </div>
+
+                <div class="mb-3 d-none" id="podio-select-container">
+                  <label class="form-label text-neon-magenta small">&gt; POSICIÓN_PODIO (RANKING)</label>
+                  <select id="lib-podio" class="form-select form-select-sm bg-black border-secondary text-white">
+                    <option value="">Ninguno (Solo Carrusel)</option>
+                    <option value="1">Top 1 (Oro)</option>
+                    <option value="2">Top 2 (Plata)</option>
+                    <option value="3">Top 3 (Bronce)</option>
+                  </select>
+                </div>
+
+                <button type="submit" class="btn btn-outline-info btn-sm w-100 mt-2 font-orbitron">[ INJECT_BOOK_RECORD ]</button>
+              </form>
+            </div>
+
+            <!-- PESTAÑA: INYECTAR FRASES / CITAS -->
+            <div class="tab-pane fade" id="quote-tab-content" role="tabpanel" aria-labelledby="quote-tab-btn">
+              <form id="form-nueva-cita" class="p-2">
+                <div class="mb-3">
+                  <label class="form-label text-neon-magenta small">&gt; TEXTO_LOG_DE_LA_CITA</label>
+                  <textarea id="cita-texto" class="form-control form-control-sm bg-black border-secondary text-white" rows="3" placeholder="Si vuelas, yo volaré contigo..." required></textarea>
+                </div>
+                <div class="row mb-3">
+                  <div class="col-8">
+                    <label class="form-label text-neon-magenta small">&gt; COLOR_TEXTO_CITA</label>
+                    <select id="cita-color-texto" class="form-select form-select-sm bg-black border-secondary text-white">
+                      <option value="white">WHITE (STANDARD)</option>
+                      <option value="cyan">CYAN (NEÓN)</option>
+                      <option value="magenta">MAGENTA (NEÓN)</option>
+                      <option value="green">GREEN (NEÓN)</option>
+                      <option value="yellow">YELLOW (NEÓN)</option>
+                      <option value="purple">PURPLE (NEÓN)</option>
+                      <option value="orange">ORANGE (NEÓN)</option>
+                    </select>
+                  </div>
+                  <div class="col-4 d-flex align-items-end">
+                    <div id="preview-cita-color-texto" class="w-100 text-center py-1 rounded" style="border:1px solid rgba(255,255,255,0.3); font-size:0.7rem; font-weight:700; color:#fff;">PREVIEW</div>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label text-neon-magenta small">&gt; AUTOR_DE_LA_CITA / CORES</label>
+                  <input type="text" id="cita-autor" class="form-control form-control-sm bg-black border-secondary text-white text-uppercase" placeholder="REBECCA YARROS" required>
+                </div>
+                <div class="row mb-3">
+                  <div class="col-8">
+                    <label class="form-label text-neon-magenta small">&gt; COLOR_AUTOR_CITA</label>
+                    <select id="cita-color-autor" class="form-select form-select-sm bg-black border-secondary text-white">
+                      <option value="cyan">CYAN (NEÓN)</option>
+                      <option value="magenta">MAGENTA (NEÓN)</option>
+                      <option value="green">GREEN (NEÓN)</option>
+                      <option value="yellow">YELLOW (NEÓN)</option>
+                      <option value="purple">PURPLE (NEÓN)</option>
+                      <option value="orange">ORANGE (NEÓN)</option>
+                      <option value="white">WHITE</option>
+                    </select>
+                  </div>
+                  <div class="col-4 d-flex align-items-end">
+                    <div id="preview-cita-color-autor" class="w-100 text-center py-1 rounded" style="border:1px solid rgba(0,240,255,0.3); font-size:0.7rem; font-weight:700; color:#00f0ff;">PREVIEW</div>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label text-neon-magenta small">&gt; CLASIFICACIÓN_TIPO</label>
+                  <select id="cita-tipo" class="form-select form-select-sm bg-black border-secondary text-white">
+                    <option value="literaria">LITERARIA / MÁGICA</option>
+                    <option value="spicy">SPICY / CLIP</option>
+                  </select>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label text-neon-magenta small">&gt; ETIQUETA_BADGE</label>
+                  <input type="text" id="cita-label" class="form-control form-control-sm bg-black border-secondary text-white text-uppercase" placeholder="TWITCH_CLIP" required>
+                </div>
+                <div class="row mb-3">
+                  <div class="col-8">
+                    <label class="form-label text-neon-magenta small">&gt; COLOR_ETIQUETA_CITA</label>
+                    <select id="cita-color-label" class="form-select form-select-sm bg-black border-secondary text-white">
+                      <option value="cyan">CYAN (NEÓN)</option>
+                      <option value="magenta">MAGENTA (NEÓN)</option>
+                      <option value="green">GREEN (NEÓN)</option>
+                      <option value="yellow">YELLOW (NEÓN)</option>
+                      <option value="purple">PURPLE (NEÓN)</option>
+                      <option value="orange">ORANGE (NEÓN)</option>
+                      <option value="white">WHITE</option>
+                    </select>
+                  </div>
+                  <div class="col-4 d-flex align-items-end">
+                    <div id="preview-cita-color-label" class="w-100 text-center py-1 rounded" style="border:1px solid rgba(0,240,255,0.3); font-size:0.7rem; font-weight:700; color:#00f0ff;">PREVIEW</div>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label text-neon-magenta small">&gt; NOTA_CATEGORÍA / CAPÍTULO</label>
+                  <input type="text" id="cita-nota" class="form-control form-control-sm bg-black border-secondary text-white" placeholder="Clip de Noviembre" required>
+                </div>
+                <div class="row mb-3">
+                  <div class="col-8">
+                    <label class="form-label text-neon-magenta small">&gt; COLOR_NOTA_CITA</label>
+                    <select id="cita-color-nota" class="form-select form-select-sm bg-black border-secondary text-white">
+                      <option value="white">WHITE (STANDARD)</option>
+                      <option value="cyan">CYAN (NEÓN)</option>
+                      <option value="magenta">MAGENTA (NEÓN)</option>
+                      <option value="green">GREEN (NEÓN)</option>
+                      <option value="yellow">YELLOW (NEÓN)</option>
+                      <option value="purple">PURPLE (NEÓN)</option>
+                      <option value="orange">ORANGE (NEÓN)</option>
+                    </select>
+                  </div>
+                  <div class="col-4 d-flex align-items-end">
+                    <div id="preview-cita-color-nota" class="w-100 text-center py-1 rounded" style="border:1px solid rgba(255,255,255,0.3); font-size:0.7rem; font-weight:700; color:#fff;">PREVIEW</div>
+                  </div>
+                </div>
+
+                <button type="submit" class="btn btn-outline-info btn-sm w-100 mt-2 font-orbitron">[ INJECT_QUOTE_RECORD ]</button>
+              </form>
+            </div>
+
+          </div>
+        </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Secreto de Inyección de Entrevistas (Se abre con Ctrl + Shift + E) -->
+  <div class="modal fade" id="modal-nueva-entrevista" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content bg-dark border border-secondary border-opacity-50 text-white font-monospace">
+        <div class="modal-header border-bottom border-secondary border-opacity-25 bg-black-25">
+          <h5 class="modal-title text-neon-cyan font-orbitron">[ INJECT_INTERVIEW_RECORD ]</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="px-4 pt-3 pb-2 border-bottom border-secondary border-opacity-10 bg-black-25">
+          <label class="form-label text-neon-magenta small">&gt; CÓDIGO_SISTEMA (PASSWORD)</label>
+          <input type="password" id="modal-password-entrevista" class="form-control form-control-sm bg-black border-secondary text-white" placeholder="••••••••" required>
+        </div>
+        <div class="modal-body" style="max-height: 65vh; overflow-y: auto;">
+          <form id="form-nueva-entrevista" class="p-2">
+            <div class="mb-3">
+              <label class="form-label text-neon-magenta small">&gt; NOMBRE_DEL_ENTREVISTADO</label>
+              <input type="text" id="ent-nombre" class="form-control form-control-sm bg-black border-secondary text-white text-uppercase" placeholder="NOMBRE_AUTOR" required>
+            </div>
+            <div class="row mb-3">
+              <div class="col-8">
+                <label class="form-label text-neon-magenta small">&gt; COLOR_NOMBRE</label>
+                <select id="ent-color-nombre" class="form-select form-select-sm bg-black border-secondary text-white">
+                  <option value="warning">WARNING (STANDARD)</option>
+                  <option value="cyan">CYAN (NEÓN)</option>
+                  <option value="magenta">MAGENTA (NEÓN)</option>
+                  <option value="green">GREEN (NEÓN)</option>
+                  <option value="yellow">YELLOW (NEÓN)</option>
+                  <option value="purple">PURPLE (NEÓN)</option>
+                  <option value="orange">ORANGE (NEÓN)</option>
+                  <option value="white">WHITE</option>
+                </select>
+              </div>
+              <div class="col-4 d-flex align-items-end">
+                <div id="preview-ent-color-nombre" class="w-100 text-center py-1 rounded" style="border:1px solid rgba(255,238,0,0.3); font-size:0.7rem; font-weight:700; color:#ffee00;">PREVIEW</div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label text-neon-magenta small">&gt; OBRA_DEL_ENTREVISTADO</label>
+              <input type="text" id="ent-obra" class="form-control form-control-sm bg-black border-secondary text-white" placeholder='Obra: "Tu Novela Favorita"' required>
+            </div>
+            <div class="row mb-3">
+              <div class="col-8">
+                <label class="form-label text-neon-magenta small">&gt; COLOR_OBRA</label>
+                <select id="ent-color-obra" class="form-select form-select-sm bg-black border-secondary text-white">
+                  <option value="primary">PRIMARY (STANDARD)</option>
+                  <option value="cyan">CYAN (NEÓN)</option>
+                  <option value="magenta">MAGENTA (NEÓN)</option>
+                  <option value="green">GREEN (NEÓN)</option>
+                  <option value="yellow">YELLOW (NEÓN)</option>
+                  <option value="purple">PURPLE (NEÓN)</option>
+                  <option value="orange">ORANGE (NEÓN)</option>
+                  <option value="white">WHITE</option>
+                </select>
+              </div>
+              <div class="col-4 d-flex align-items-end">
+                <div id="preview-ent-color-obra" class="w-100 text-center py-1 rounded" style="border:1px solid rgba(0,240,255,0.3); font-size:0.7rem; font-weight:700; color:#00f0ff;">PREVIEW</div>
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-6">
+                <label class="form-label text-neon-magenta small">&gt; SQUAD_ID</label>
+                <input type="text" id="ent-squad" class="form-control form-control-sm bg-black border-secondary text-white text-uppercase" value="WRITER" required>
+              </div>
+              <div class="col-6">
+                <label class="form-label text-neon-magenta small">&gt; LEVEL_LVL</label>
+                <input type="number" id="ent-level" class="form-control form-control-sm bg-black border-secondary text-white" value="99" required>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label text-neon-magenta small">&gt; RESUMEN_LOG_DE_DATOS</label>
+              <textarea id="ent-resumen" class="form-control form-control-sm bg-black border-secondary text-white" rows="3" placeholder="Hablamos sobre cómo sobrevivir al bloqueo..." required></textarea>
+            </div>
+            <div class="row mb-3">
+              <div class="col-8">
+                <label class="form-label text-neon-magenta small">&gt; COLOR_RESUMEN</label>
+                <select id="ent-color-resena" class="form-select form-select-sm bg-black border-secondary text-white">
+                  <option value="white">WHITE (STANDARD)</option>
+                  <option value="cyan">CYAN (NEÓN)</option>
+                  <option value="magenta">MAGENTA (NEÓN)</option>
+                  <option value="green">GREEN (NEÓN)</option>
+                  <option value="yellow">YELLOW (NEÓN)</option>
+                  <option value="purple">PURPLE (NEÓN)</option>
+                  <option value="orange">ORANGE (NEÓN)</option>
+                </select>
+              </div>
+              <div class="col-4 d-flex align-items-end">
+                <div id="preview-ent-color-resena" class="w-100 text-center py-1 rounded" style="border:1px solid rgba(255,255,255,0.3); font-size:0.7rem; font-weight:700; color:#fff;">PREVIEW</div>
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-6">
+                <label class="form-label text-neon-magenta small">&gt; USUARIO_RED_SOCIAL</label>
+                <input type="text" id="ent-social-user" class="form-control form-control-sm bg-black border-secondary text-white" placeholder="@UserTok" required>
+              </div>
+              <div class="col-6">
+                <label class="form-label text-neon-magenta small">&gt; URL_ENLACE_SOCIAL</label>
+                <input type="url" id="ent-social-url" class="form-control form-control-sm bg-black border-secondary text-white" value="https://tiktok.com" required>
+              </div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-8">
+                <label class="form-label text-neon-magenta small">&gt; COLOR_BOTÓN_SOCIAL</label>
+                <select id="ent-color-social" class="form-select form-select-sm bg-black border-secondary text-white">
+                  <option value="cyan">CYAN (NEÓN)</option>
+                  <option value="magenta">MAGENTA (NEÓN)</option>
+                  <option value="green">GREEN (NEÓN)</option>
+                  <option value="yellow">YELLOW (NEÓN)</option>
+                  <option value="purple">PURPLE (NEÓN)</option>
+                  <option value="orange">ORANGE (NEÓN)</option>
+                </select>
+              </div>
+              <div class="col-4 d-flex align-items-end">
+                <div id="preview-ent-color-social" class="w-100 text-center py-1 rounded" style="border:1px solid rgba(0,240,255,0.3); font-size:0.7rem; font-weight:700; color:#00f0ff;">PREVIEW</div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label text-neon-magenta small">&gt; YOUTUBE_VIDEO_ID / EMBED_URL</label>
+              <input type="text" id="ent-video" class="form-control form-control-sm bg-black border-secondary text-white" placeholder="dQw4w9WgXcQ" required>
+              <div class="form-text text-white small mt-1">// Ingresa el ID del video (por ejemplo, dQw4w9WgXcQ) o la URL completa de YouTube.</div>
+            </div>
+
+            <button type="submit" class="btn btn-outline-info btn-sm w-100 mt-2 font-orbitron">[ INJECT_INTERVIEW_RECORD ]</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Secreto de Inyección de Juegos (Se abre con Ctrl + Shift + G) -->
+  <div class="modal fade" id="modal-nuevo-juego" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content bg-dark border border-secondary border-opacity-50 text-white font-monospace">
+        <div class="modal-header border-bottom border-secondary border-opacity-25 bg-black-25">
+          <h5 class="modal-title text-neon-cyan font-orbitron">[ INJECT_GAME_RECORD ]</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="px-4 pt-3 pb-2 border-bottom border-secondary border-opacity-10 bg-black-25">
+          <label class="form-label text-neon-magenta small">&gt; CÓDIGO_SISTEMA (PASSWORD)</label>
+          <input type="password" id="modal-password-juego" class="form-control form-control-sm bg-black border-secondary text-white" placeholder="••••••••" required>
+        </div>
+        <div class="modal-body" style="max-height: 65vh; overflow-y: auto;">
+          <form id="form-nuevo-juego" class="p-2">
+            <div class="mb-3">
+              <label class="form-label text-neon-magenta small">&gt; TÍTULO_DEL_JUEGO</label>
+              <input type="text" id="game-titulo" class="form-control form-control-sm bg-black border-secondary text-white" placeholder="Cyberpunk 2077" required>
+            </div>
+            <div class="row mb-3">
+              <div class="col-8">
+                <label class="form-label text-neon-magenta small">&gt; COLOR_TÍTULO</label>
+                <select id="game-color-titulo" class="form-select form-select-sm bg-black border-secondary text-white">
+                  <option value="magenta">MAGENTA (NEÓN)</option>
+                  <option value="cyan">CYAN (NEÓN)</option>
+                  <option value="green">GREEN (NEÓN)</option>
+                  <option value="yellow">YELLOW (NEÓN)</option>
+                  <option value="purple">PURPLE (NEÓN)</option>
+                  <option value="orange">ORANGE (NEÓN)</option>
+                  <option value="warning">WARNING</option>
+                  <option value="info">INFO</option>
+                  <option value="white">WHITE</option>
+                </select>
+              </div>
+              <div class="col-4 d-flex align-items-end">
+                <div id="preview-game-color-titulo" class="w-100 text-center py-1 rounded" style="border:1px solid rgba(255,0,127,0.3); font-size:0.7rem; font-weight:700; color:#ff007f;">PREVIEW</div>
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-6">
+                <label class="form-label text-neon-magenta small">&gt; TEXTO_ETIQUETA (BADGE)</label>
+                <input type="text" id="game-badge-texto" class="form-control form-control-sm bg-black border-secondary text-white text-uppercase" placeholder="FAV ⭐️" required>
+              </div>
+              <div class="col-6">
+                <label class="form-label text-neon-magenta small">&gt; COLOR_ETIQUETA</label>
+                <select id="game-color-badge" class="form-select form-select-sm bg-black border-secondary text-white">
+                  <option value="cyan">CYAN (NEÓN)</option>
+                  <option value="magenta">MAGENTA (NEÓN)</option>
+                  <option value="green">GREEN (NEÓN)</option>
+                  <option value="yellow">YELLOW (NEÓN)</option>
+                  <option value="purple">PURPLE (NEÓN)</option>
+                  <option value="orange">ORANGE (NEÓN)</option>
+                  <option value="warning">WARNING</option>
+                  <option value="info">INFO</option>
+                  <option value="white">WHITE</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label text-neon-magenta small">&gt; DESCRIPCIÓN_LOG_DE_DATOS</label>
+              <textarea id="game-descripcion" class="form-control form-control-sm bg-black border-secondary text-white" rows="3" placeholder="Inundada en los neones de Night City..." required></textarea>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-4">
+                <label class="form-label text-neon-magenta small">&gt; NIVEL_DE_VICIO (%)</label>
+                <input type="number" id="game-vicio" class="form-control form-control-sm bg-black border-secondary text-white" min="0" max="100" value="80" required>
+              </div>
+              <div class="col-8">
+                <label class="form-label text-neon-magenta small">&gt; COLOR_BARRA_PROGRESO</label>
+                <select id="game-color-progress" class="form-select form-select-sm bg-black border-secondary text-white">
+                  <option value="magenta">MAGENTA (NEÓN)</option>
+                  <option value="cyan">CYAN (NEÓN)</option>
+                  <option value="green">GREEN (NEÓN)</option>
+                  <option value="yellow">YELLOW (NEÓN)</option>
+                  <option value="purple">PURPLE (NEÓN)</option>
+                  <option value="orange">ORANGE (NEÓN)</option>
+                  <option value="warning">WARNING</option>
+                  <option value="info">INFO</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-6">
+                <label class="form-label text-neon-magenta small">&gt; PLATAFORMA</label>
+                <input type="text" id="game-plataforma" class="form-control form-control-sm bg-black border-secondary text-white" placeholder="PC / Steam" required>
+              </div>
+              <div class="col-6">
+                <label class="form-label text-neon-magenta small">&gt; HORAS_JUGADAS</label>
+                <input type="text" id="game-horas" class="form-control form-control-sm bg-black border-secondary text-white" placeholder="+100h" required>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label text-neon-magenta small">&gt; URL_IMAGEN_DE_PORTADA</label>
+              <input type="text" id="game-imagen" class="form-control form-control-sm bg-black border-secondary text-white" placeholder="/assets/images/cyberpunk.jpg">
+              <div class="form-text text-white small mt-1">// Si se deja vacío, se utilizará una portada por defecto.</div>
+            </div>
+
+            <button type="submit" class="btn btn-outline-info btn-sm w-100 mt-2 font-orbitron">[ INJECT_GAME_RECORD ]</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Secreto de Inyección de Redes Sociales (Se abre con Ctrl + Shift + R) -->
+  <div class="modal fade" id="modal-nueva-red" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content bg-dark border border-secondary border-opacity-50 text-white font-monospace">
+        <div class="modal-header border-bottom border-secondary border-opacity-25 bg-black-25">
+          <h5 class="modal-title text-neon-cyan font-orbitron">[ INJECT_SOCIAL_EMBED ]</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <!-- Password field -->
+        <div class="px-4 pt-3 pb-2 border-bottom border-secondary border-opacity-25">
+          <label class="form-label text-xs text-white-50 text-uppercase">> ACCESS_CODE</label>
+          <input type="password" id="modal-password-red" class="form-control form-control-sm bg-black border-secondary text-white" placeholder="••••••••" required>
+        </div>
+        <div class="modal-body" style="max-height: 65vh; overflow-y: auto;">
+          <form id="form-nueva-red" autocomplete="off">
+
+            <!-- Network selector -->
+            <div class="mb-3">
+              <label class="form-label text-neon-magenta small">> SELECT_NETWORK</label>
+              <select id="red-tipo" class="form-select form-select-sm bg-black border-secondary text-white">
+                <option value="instagram">📸 Instagram</option>
+                <option value="tiktok">🎵 TikTok</option>
+                <option value="wattpad">📖 Wattpad</option>
+              </select>
+            </div>
+
+            <!-- Content type selector -->
+            <div class="mb-3">
+              <label class="form-label text-neon-magenta small">> CONTENT_TYPE</label>
+              <div class="btn-group w-100" role="group">
+                <input type="radio" class="btn-check" name="content-type-red" id="ct-embed" value="embed" checked>
+                <label class="btn btn-outline-info btn-sm font-monospace" for="ct-embed"><i class="bi bi-code-slash me-1"></i>EMBED / HTML</label>
+                <input type="radio" class="btn-check" name="content-type-red" id="ct-url" value="url">
+                <label class="btn btn-outline-info btn-sm font-monospace" for="ct-url"><i class="bi bi-link-45deg me-1"></i>ENLACE URL</label>
+              </div>
+            </div>
+
+            <!-- Embed HTML textarea (shown when embed is selected) -->
+            <div id="campo-embed" class="mb-3">
+              <label class="form-label text-neon-magenta small">> EMBED_HTML_CODE</label>
+              <textarea id="red-embed-html" class="form-control form-control-sm bg-black border-secondary text-white" rows="6" placeholder='Pega aquí el código embed de Instagram, TikTok, etc.'></textarea>
+              <div class="form-text text-white small mt-1">// Copia el código de "Insertar" o "Embed" de la publicación.</div>
+            </div>
+
+            <!-- URL fields (hidden by default, shown when URL is selected) -->
+            <div id="campo-url" class="mb-3 d-none">
+              <label class="form-label text-neon-magenta small">> POST_URL</label>
+              <input type="url" id="red-url" class="form-control form-control-sm bg-black border-secondary text-white" placeholder="https://www.instagram.com/p/...">
+              <div class="form-text text-white small mt-1">// Pega la URL directa de la publicación.</div>
+            </div>
+
+            <button type="submit" class="btn btn-outline-info btn-sm w-100 mt-2 font-orbitron">[ INJECT_POST ]</button>
+          </form>
+
+          <!-- Current posts preview -->
+          <div class="mt-4 pt-3 border-top border-secondary border-opacity-25">
+            <h6 class="text-neon-cyan font-orbitron mb-3 small">[ CURRENT_POSTS ]</h6>
+            <div id="red-posts-preview" class="text-white-50 small">
+              <!-- Populated dynamically -->
+              <div class="text-center py-2">[ LOADING... ]</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+
+</html>

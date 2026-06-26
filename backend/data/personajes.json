@@ -1,0 +1,26 @@
+[
+  {
+    "id": "personaje-1",
+    "nombre": "Opie",
+    "info": "Sons of Anarchy — Co-Protagonista",
+    "cover": "/assets/images/opie.jfif",
+    "color": "magenta",
+    "subjectId": "SUBJECT_01"
+  },
+  {
+    "id": "personaje-2",
+    "nombre": "Tony Montana",
+    "info": "Scarface — Protagonista / Gángster",
+    "cover": "/assets/images/tonymontana.jpg",
+    "color": "cyan",
+    "subjectId": "SUBJECT_02"
+  },
+  {
+    "id": "personaje-3",
+    "nombre": "Anakin Skywalker",
+    "info": "Star Wars — Lord Sith / Miedo",
+    "cover": "/assets/images/anakin.webp",
+    "color": "warning",
+    "subjectId": "SUBJECT_03"
+  }
+]

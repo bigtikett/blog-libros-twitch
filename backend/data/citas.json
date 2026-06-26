@@ -1,0 +1,66 @@
+[
+  {
+    "id": "cita-1",
+    "texto": "Si vuelas, yo volaré contigo. Y si caes, estaré allí para atraparte antes de que toques el suelo.",
+    "autor": "REBECCA YARROS",
+    "tipo": "literaria",
+    "label": "RECOMENDACIÓN DE TWITCH",
+    "nota": "Novela de Fantasía Romántica"
+  },
+  {
+    "id": "cita-2",
+    "texto": "La mente no es un libro que se pueda abrir a voluntad y examinar por placer.",
+    "autor": "J.K. ROWLING",
+    "tipo": "literaria",
+    "label": "CAPÍTULO 13",
+    "nota": "Novela Fantástica"
+  },
+  {
+    "id": "cita-3",
+    "texto": "A veces, las historias que más necesitamos son aquellas que aún no nos hemos atrevido a escribir.",
+    "autor": "REFLEXIÓN DE ESCRITURA",
+    "tipo": "literaria",
+    "label": "PROYECTO DIGITAL",
+    "nota": "Reflexión de Escritura"
+  },
+  {
+    "id": "cita-4",
+    "texto": "El mundo exterior es solo ruido; en este búnker de páginas y píxeles, somos libres.",
+    "autor": "YAIHI",
+    "tipo": "literaria",
+    "label": "YAI_BOOKSTTV",
+    "nota": "Bitácora Gamer"
+  },
+  {
+    "id": "cita-5",
+    "texto": "¡Que no soy bajita, que vuestras mentes están demasiado arriba!",
+    "autor": "YAIHI",
+    "tipo": "spicy",
+    "label": "TWITCH_CLIP",
+    "nota": "Clip de Noviembre"
+  },
+  {
+    "id": "cita-6",
+    "texto": "Si tengo que quemar el mundo entero para mantenerte a salvo, lo haré sonriendo.",
+    "autor": "ROMANCE OSCURO",
+    "tipo": "spicy",
+    "label": "SPICY_NOVEL",
+    "nota": "Capítulo 14"
+  },
+  {
+    "id": "cita-7",
+    "texto": "Tú eres mi debilidad y mi mayor fortaleza. No me importa el peligro si estás en mis brazos.",
+    "autor": "NEW ADULT",
+    "tipo": "spicy",
+    "label": "SPICY_NOVEL",
+    "nota": "Página 242"
+  },
+  {
+    "id": "cita-8",
+    "texto": "¡Una taza más de café y juro que hackeo el algoritmo!",
+    "autor": "YAIHI",
+    "tipo": "spicy",
+    "label": "TWITCH_CLIP",
+    "nota": "Stream de Escritura"
+  }
+]

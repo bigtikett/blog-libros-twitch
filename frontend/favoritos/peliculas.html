@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Búnker Archive // Películas</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="../style.min.css">
+</head>
+<body class="movies-cinema-section min-vh-100">
+
+  <div class="movies-nav py-4">
+    <div class="container d-flex justify-content-between align-items-center">
+      <a href="/index.html#favoritos-footer" class="btn btn-cinema-back rounded-0 btn-sm text-uppercase fw-black px-4">
+        <i class="bi bi-arrow-left"></i> Volver
+      </a>
+      <div class="movies-title-nav">
+        <span class="text-neon-cyan fw-bold tracking-widest large">[ CINEMA_VAULT ]</span>
+      </div>
+    </div>
+  </div>
+
+  <section class="movies-hero py-5 text-center position-relative overflow-hidden">
+    <div class="hero-content position-relative z-2">
+      <h1 class="display-2 fw-black text-uppercase tracking-tighter mb-3">
+        <span class="text-neon-cyan">🎬</span> CINEMA <span class="text-neon-purple">ARCHIVE</span>
+      </h1>
+      <p class="text-neon-green fs-5 tracking-wide mb-0">[ DECRYPTING CINEMATIC EXPERIENCES ]</p>
+      <p class="text-white large mt-2">Historias que trascienden pantallas, direcciones que me hipnotizaron</p>
+    </div>
+  </section>
+
+<div id="detalle-favorito">
+  <div class="container-fluid px-4 px-lg-5 py-5">
+
+    <div class="movies-grid" id="contenedor-peliculas">
+
+      <!-- PELÍCULA 1 -->
+      <div class="movie-card-container">
+        <div class="movie-card">
+          <div class="movie-poster-wrapper">
+            <img src="/assets/images/BR2049.webp" alt="Blade Runner 2049" class="movie-poster">
+            <div class="movie-overlay">
+              <div class="overlay-content">
+                <h3>BLADE RUNNER 2049</h3>
+                <p>El futuro es ahora</p>
+              </div>
+            </div>
+          </div>
+          <div class="movie-info">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <h4 class="text-neon-cyan fw-black mb-0 titulo-favorito">BLADE RUNNER 2049</h4>
+              <span class="badge badge-cinema text-neon-yellow">⭐ 10/10</span>
+            </div>
+            <p class="text-xs text-neon-green mb-2 font-monospace">DIR: Denis Villeneuve | AÑO: 2017</p>
+            <p class="text-white text-lg mb-2">
+              Una obra maestra visual. Cada plano es cine puro. La cinematografía y la música ambiente te sumergen en un futuro distópico cautivador.
+            </p>
+            <div class="movie-tags">
+              <span class="tag tag-cyan">Sci-Fi</span>
+              <span class="tag tag-purple">Cyberpunk</span>
+              <span class="tag tag-magenta">Noir</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PELÍCULA 2 -->
+      <div class="movie-card-container">
+        <div class="movie-card">
+          <div class="movie-poster-wrapper">
+            <img src="/assets/images/interestelar.jpg" alt="Interstellar" class="movie-poster">
+            <div class="movie-overlay">
+              <div class="overlay-content">
+                <h3>INTERSTELLAR</h3>
+                <p>Más allá del tiempo</p>
+              </div>
+            </div>
+          </div>
+          <div class="movie-info">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <h4 class="text-neon-green fw-black mb-0 titulo-favorito">INTERSTELLAR</h4>
+              <span class="badge badge-cinema text-neon-magenta">⭐ 9.5/10</span>
+            </div>
+            <p class="text-xs text-neon-green mb-2 font-monospace">DIR: Christopher Nolan | AÑO: 2014</p>
+            <p class="text-white text-lg mb-2">
+              Épica, emocional y visualmente devastadora. Hans Zimmer compuso la banda sonora más hipnotizante. Un ícono del cine contemporáneo.
+            </p>
+            <div class="movie-tags">
+              <span class="tag tag-green">Sci-Fi</span>
+              <span class="tag tag-cyan">Aventura</span>
+              <span class="tag tag-yellow">Drama</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PELÍCULA 3 -->
+      <div class="movie-card-container">
+        <div class="movie-card">
+          <div class="movie-poster-wrapper">
+            <img src="/assets/images/dune.jpg" alt="Dune" class="movie-poster">
+            <div class="movie-overlay">
+              <div class="overlay-content">
+                <h3>DUNE</h3>
+                <p>El desierto aguarda</p>
+              </div>
+            </div>
+          </div>
+          <div class="movie-info">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <h4 class="text-neon-purple fw-black mb-0 titulo-favorito">DUNE</h4>
+              <span class="badge badge-cinema text-neon-cyan">⭐ 9/10</span>
+            </div>
+            <p class="text-xs text-neon-purple mb-2 font-monospace">DIR: Denis Villeneuve | AÑO: 2021</p>
+            <p class="text-white text-lg mb-2">
+              Cinematografía épica y sonido envolvente. Una adaptación que superó expectativas. Visión artística sin concesiones.
+            </p>
+            <div class="movie-tags">
+              <span class="tag tag-purple">Sci-Fi</span>
+              <span class="tag tag-magenta">Epopeya</span>
+              <span class="tag tag-dark">Fantasía</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PELÍCULA 4 -->
+      <div class="movie-card-container">
+        <div class="movie-card">
+          <div class="movie-poster-wrapper">
+            <img src="/assets/images/chihiro.jpg" alt="El Viaje de Chihiro" class="movie-poster">
+            <div class="movie-overlay">
+              <div class="overlay-content">
+                <h3>EL VIAJE DE CHIHIRO</h3>
+                <p>Un mundo mágico</p>
+              </div>
+            </div>
+          </div>
+          <div class="movie-info">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <h4 class="text-neon-cyan fw-black mb-0 titulo-favorito">EL VIAJE DE CHIHIRO</h4>
+              <span class="badge badge-cinema text-neon-green">⭐ 10/10</span>
+            </div>
+            <p class="text-xs text-neon-cyan mb-2 font-monospace">DIR: Hayao Miyazaki | AÑO: 2001</p>
+            <p class="text-white text-lg mb-2">
+              Animación sin igual. Una joya atemporal que resplandece con cada visuazo. Miyazaki en su máxima expresión artística.
+            </p>
+            <div class="movie-tags">
+              <span class="tag tag-cyan">Animación</span>
+              <span class="tag tag-yellow">Fantasía</span>
+              <span class="tag tag-magenta">Aventura</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PELÍCULA 5 -->
+      <div class="movie-card-container">
+        <div class="movie-card">
+          <div class="movie-poster-wrapper">
+            <img src="/assets/images/inception.jpg" alt="Inception" class="movie-poster">
+            <div class="movie-overlay">
+              <div class="overlay-content">
+                <h3>INCEPTION</h3>
+                <p>Sueños dentro de sueños</p>
+              </div>
+            </div>
+          </div>
+          <div class="movie-info">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <h4 class="text-neon-yellow fw-black mb-0 titulo-favorito">INCEPTION</h4>
+              <span class="badge badge-cinema text-neon-purple">⭐ 9.5/10</span>
+            </div>
+            <p class="text-xs text-neon-yellow mb-2 font-monospace">DIR: Christopher Nolan | AÑO: 2010</p>
+            <p class="text-white text-lg mb-2">
+              Mente retorcida, acción increíble. Cada vez que la veo descubro detalles nuevos. Cine inteligente llevado a otro nivel.
+            </p>
+            <div class="movie-tags">
+              <span class="tag tag-yellow">Thriller</span>
+              <span class="tag tag-cyan">Sci-Fi</span>
+              <span class="tag tag-purple">Misterio</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PELÍCULA 6 -->
+      <div class="movie-card-container">
+        <div class="movie-card">
+          <div class="movie-poster-wrapper">
+            <img src="/assets/images/matrix.jpg" alt="The Matrix" class="movie-poster">
+            <div class="movie-overlay">
+              <div class="overlay-content">
+                <h3>THE MATRIX</h3>
+                <p>Bienvenido al mundo real</p>
+              </div>
+            </div>
+          </div>
+          <div class="movie-info">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <h4 class="text-neon-green fw-black mb-0 titulo-favorito">THE MATRIX</h4>
+              <span class="badge badge-cinema text-neon-cyan">⭐ 9/10</span>
+            </div>
+            <p class="text-xs text-neon-green mb-2 font-monospace">DIR: Wachowski | AÑO: 1999</p>
+            <p class="text-white text-lg mb-2">
+              Revolucionaria. Cambió la industria para siempre. Acción, filosofía y estilo en dosis perfectas. Un referente absoluto.
+            </p>
+            <div class="movie-tags">
+              <span class="tag tag-green">Sci-Fi</span>
+              <span class="tag tag-magenta">Acción</span>
+              <span class="tag tag-yellow">Hacker</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PELÍCULA 7 -->
+      <div class="movie-card-container">
+        <div class="movie-card">
+          <div class="movie-poster-wrapper">
+            <img src="/assets/images/scarface.jpg" alt="Scarface" class="movie-poster">
+            <div class="movie-overlay">
+              <div class="overlay-content">
+                <h3>SCARFACE</h3>
+                <p>El mundo es tuyo.</p>
+              </div>
+            </div>
+          </div>
+          <div class="movie-info">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <h4 class="text-neon-purple fw-black mb-0 titulo-favorito">SCARFACE</h4>
+              <span class="badge badge-cinema text-neon-cyan">⭐ 10/10</span>
+            </div>
+            <p class="text-xs text-neon-purple mb-2 font-monospace">DIR: Brian De Palma | AÑO: 1983</p>
+            <p class="text-white large mb-2">
+              Historia inolvidable junto a Tony Montana, protegonizada por Al Paccino, peliculón de culto.
+            </p>
+            <div class="movie-tags">
+              <span class="tag tag-black">Gángster</span>
+              <span class="tag tag-magenta">Crimen</span>
+              <span class="tag tag-yellow">Drama</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Modal Secreto de Inyección de Películas (Se abre con Ctrl + Shift + B) -->
+    <div class="modal fade" id="modal-nueva-pelicula" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content bg-dark border border-secondary border-opacity-50 text-white font-monospace">
+          <div class="modal-header border-bottom border-secondary border-opacity-25 bg-black-25">
+            <h5 class="modal-title text-neon-cyan font-orbitron">[ INJECT_PELICULA_RECORD ]</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="px-4 pt-3 pb-2 border-bottom border-secondary border-opacity-10 bg-black-25">
+            <label class="form-label text-neon-magenta small">&gt; CÓDIGO_SISTEMA (PASSWORD)</label>
+            <input type="password" id="modal-password-pelicula" class="form-control form-control-sm bg-black border-secondary text-white" placeholder="••••••••" required>
+          </div>
+          <div class="modal-body" style="max-height: 65vh; overflow-y: auto;">
+            <form id="form-nueva-pelicula" class="p-2">
+              <div class="mb-3">
+                <label class="form-label text-neon-magenta small">&gt; TITULO_DE_LA_PELICULA</label>
+                <input type="text" id="pelicula-titulo" class="form-control form-control-sm bg-black border-secondary text-white text-uppercase" placeholder="INCEPTION" required>
+              </div>
+              <div class="row mb-3">
+                <div class="col-8">
+                  <label class="form-label text-neon-magenta small">&gt; COLOR_TITULO</label>
+                  <select id="pelicula-color-titulo" class="form-select form-select-sm bg-black border-secondary text-white">
+                    <option value="cyan">CYAN (NEÓN)</option>
+                    <option value="magenta">MAGENTA (NEÓN)</option>
+                    <option value="green">GREEN (NEÓN)</option>
+                    <option value="yellow">YELLOW (NEÓN)</option>
+                    <option value="purple">PURPLE (NEÓN)</option>
+                    <option value="orange">ORANGE (NEÓN)</option>
+                  </select>
+                </div>
+                <div class="col-4 d-flex align-items-end">
+                  <div id="preview-color-titulo" class="w-100 text-center py-1 rounded" style="border:1px solid rgba(0,240,255,0.3); font-size:0.7rem; font-weight:700;">PREVIEW</div>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label text-neon-magenta small">&gt; PUNTUACION (e.g. 10/10 o 9.5/10)</label>
+                <input type="text" id="pelicula-puntuacion" class="form-control form-control-sm bg-black border-secondary text-white" placeholder="10/10" required>
+              </div>
+              <div class="row mb-3">
+                <div class="col-8">
+                  <label class="form-label text-neon-magenta small">&gt; COLOR_PUNTUACIÓN</label>
+                  <select id="pelicula-color-puntuacion" class="form-select form-select-sm bg-black border-secondary text-white">
+                    <option value="cyan">CYAN (NEÓN)</option>
+                    <option value="magenta">MAGENTA (NEÓN)</option>
+                    <option value="green">GREEN (NEÓN)</option>
+                    <option value="yellow">YELLOW (NEÓN)</option>
+                    <option value="purple">PURPLE (NEÓN)</option>
+                    <option value="orange">ORANGE (NEÓN)</option>
+                  </select>
+                </div>
+                <div class="col-4 d-flex align-items-end">
+                  <div id="preview-color-puntuacion" class="w-100 text-center py-1 rounded" style="border:1px solid rgba(0,240,255,0.3); font-size:0.7rem; font-weight:700;">PREVIEW</div>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label text-neon-magenta small">&gt; DIRECTOR / AÑO</label>
+                <input type="text" id="pelicula-director" class="form-control form-control-sm bg-black border-secondary text-white text-uppercase" placeholder="DIR: Christopher Nolan | AÑO: 2010" required>
+              </div>
+              <div class="row mb-3">
+                <div class="col-8">
+                  <label class="form-label text-neon-magenta small">&gt; COLOR_DIRECTOR</label>
+                  <select id="pelicula-color-director" class="form-select form-select-sm bg-black border-secondary text-white">
+                    <option value="cyan">CYAN (NEÓN)</option>
+                    <option value="magenta">MAGENTA (NEÓN)</option>
+                    <option value="green">GREEN (NEÓN)</option>
+                    <option value="yellow">YELLOW (NEÓN)</option>
+                    <option value="purple">PURPLE (NEÓN)</option>
+                    <option value="orange">ORANGE (NEÓN)</option>
+                  </select>
+                </div>
+                <div class="col-4 d-flex align-items-end">
+                  <div id="preview-color-director" class="w-100 text-center py-1 rounded" style="border:1px solid rgba(0,240,255,0.3); font-size:0.7rem; font-weight:700;">PREVIEW</div>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label text-neon-magenta small">&gt; RESEÑA / VALORACIÓN</label>
+                <textarea id="pelicula-resena" class="form-control form-control-sm bg-black border-secondary text-white" rows="3" placeholder="Una trama compleja sobre el sueño dentro del sueño..." required></textarea>
+              </div>
+              <div class="mb-3">
+                <label class="form-label text-neon-magenta small">&gt; TAGS (separados por comas)</label>
+                <input type="text" id="pelicula-tags" class="form-control form-control-sm bg-black border-secondary text-white" placeholder="Sci-Fi, Thriller, Drama">
+              </div>
+              <div class="row mb-3">
+                <div class="col-8">
+                  <label class="form-label text-neon-magenta small">&gt; COLOR_TAGS (paleta inicial; cada tag rotará un color único)</label>
+                  <select id="pelicula-color-tags" class="form-select form-select-sm bg-black border-secondary text-white">
+                    <option value="cyan">CYAN</option>
+                    <option value="purple">PURPLE</option>
+                    <option value="magenta">MAGENTA</option>
+                    <option value="yellow">YELLOW</option>
+                    <option value="green">GREEN</option>
+                    <option value="orange">ORANGE</option>
+                    <option value="dark">DARK</option>
+                    <option value="black">BLACK</option>
+                  </select>
+                </div>
+                <div class="col-4 d-flex align-items-end">
+                  <div id="preview-color-tags" class="w-100 text-center py-1 rounded" style="border:1px solid rgba(0,240,255,0.3); font-size:0.7rem; font-weight:700;">TAG</div>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label text-neon-magenta small">&gt; OVERLAY_DESC (texto en hover del póster)</label>
+                <input type="text" id="pelicula-overlay-desc" class="form-control form-control-sm bg-black border-secondary text-white" placeholder="Sueños dentro de sueños">
+              </div>
+              <div class="mb-3">
+                <label class="form-label text-neon-magenta small">&gt; SUBIR_POSTER_LOCAL (IMG)</label>
+                <input type="file" id="pelicula-cover-file" class="form-control form-control-sm bg-black border-secondary text-white" accept="image/*">
+                <div class="form-text text-white small mt-1">// Opcional: selecciona un archivo de imagen local</div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label text-neon-magenta small">&gt; PATH_POSTER_IMG (MANUAL)</label>
+                <input type="text" id="pelicula-cover" class="form-control form-control-sm bg-black border-secondary text-white" value="/assets/images/default.jpg">
+              </div>
+              <button type="submit" class="btn btn-outline-info btn-sm w-100 mt-2 font-orbitron">[ INJECT_PELICULA_RECORD ]</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Color preview system for modal selectors
+      const ADMIN_SESSION_KEY = 'bunker_admin_authenticated';
+      let isAdmin = sessionStorage.getItem(ADMIN_SESSION_KEY) === '1';
+
+      function activarModoAdmin() {
+        sessionStorage.setItem(ADMIN_SESSION_KEY, '1');
+        isAdmin = true;
+      }
+
+      const colorMap = {
+        cyan: '#00f0ff', magenta: '#ff007f', green: '#3afc13',
+        yellow: '#ffee00', purple: '#a072ff', orange: '#ff8c00',
+        dark: '#999', black: '#ccc'
+      };
+
+      function setupColorPreview(selectId, previewId) {
+        const sel = document.getElementById(selectId);
+        const prev = document.getElementById(previewId);
+        if (!sel || !prev) return;
+        const update = () => {
+          const c = colorMap[sel.value] || '#fff';
+          prev.style.color = c;
+          prev.style.borderColor = c;
+          prev.style.textShadow = `0 0 8px ${c}`;
+        };
+        sel.addEventListener('change', update);
+        update();
+      }
+
+      setupColorPreview('pelicula-color-titulo', 'preview-color-titulo');
+      setupColorPreview('pelicula-color-puntuacion', 'preview-color-puntuacion');
+      setupColorPreview('pelicula-color-director', 'preview-color-director');
+      setupColorPreview('pelicula-color-tags', 'preview-color-tags');
+
+      const tagPalette = ['cyan', 'purple', 'magenta', 'yellow', 'green', 'orange', 'dark', 'black'];
+
+      function parseTagItems(tagsValue, startColor) {
+        const rawTags = String(tagsValue || '').split(',').map(t => t.trim()).filter(Boolean);
+        const startIndex = tagPalette.indexOf(startColor) >= 0 ? tagPalette.indexOf(startColor) : 0;
+        return rawTags.map((tag, index) => {
+          const color = tagPalette[(startIndex + index) % tagPalette.length];
+          return { label: tag, color };
+        });
+      }
+
+      function renderMovieCard(movie) {
+        const titulo = movie.titulo || movie.title || 'TÍTULO DESCONOCIDO';
+        const puntuacion = movie.puntuacion || movie.rating || 'N/A';
+        const director = movie.director || 'DESCONOCIDO';
+        const anio = movie.anio || movie.year || '';
+        const resena = movie.resena || movie.review || '';
+        const overlayDesc = movie.overlayDesc || titulo;
+        const cover = movie.cover || '/assets/images/default.jpg';
+        const colorTitulo = movie.colorTitulo || movie.color || 'cyan';
+        const colorPuntuacion = movie.colorPuntuacion || 'cyan';
+        const colorDirector = movie.colorDirector || 'cyan';
+        const tags = movie.tags || [];
+
+        let tagsHtml = '';
+        if (Array.isArray(tags)) {
+          tagsHtml = tags.map(tag => {
+            if (typeof tag === 'object' && tag.label) {
+              return `<span class="tag tag-${tag.color || 'cyan'}">${tag.label}</span>`;
+            }
+            const label = String(tag).trim();
+            return label ? `<span class="tag tag-cyan">${label}</span>` : '';
+          }).join('');
+        } else {
+          tagsHtml = parseTagItems(tags, movie.colorTags || 'cyan')
+            .map(tag => `<span class="tag tag-${tag.color}">${tag.label}</span>`)
+            .join('');
+        }
+
+        const directorText = anio ? `DIR: ${director} | AÑO: ${anio}` : director;
+
+        return `
+          <div class="movie-card-container">
+            <div class="movie-card">
+              <div class="movie-poster-wrapper">
+                <img src="${cover}" alt="${titulo}" class="movie-poster" />
+                <div class="movie-overlay">
+                  <div class="overlay-content">
+                    <h3>${titulo}</h3>
+                    <p>${overlayDesc}</p>
+                  </div>
+                </div>
+              </div>
+              <div class="movie-info">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                  <h4 class="text-neon-${colorTitulo} fw-black mb-0 titulo-favorito">${titulo}</h4>
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="badge badge-cinema text-neon-${colorPuntuacion}">⭐ ${puntuacion}</span>
+                    ${isAdmin ? `<button type="button" class="btn btn-outline-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-pelicula" data-id="${movie.id || ''}" style="font-size: 0.62rem; padding: 2px 6px;">[ ELIMINAR ]</button>` : ''}
+                  </div>
+                </div>
+                <p class="text-xs text-neon-${colorDirector} mb-2 font-monospace">${directorText}</p>
+                <p class="text-white text-lg mb-2">${resena}</p>
+                <div class="movie-tags">${tagsHtml}</div>
+              </div>
+            </div>
+          </div>`;
+      }
+
+      async function loadPeliculas() {
+        const container = document.getElementById('contenedor-peliculas');
+        if (!container) return;
+
+        try {
+          const response = await fetch('/api/peliculas');
+          if (!response.ok) throw new Error('No se pudo cargar la base de datos de películas');
+          const peliculas = await response.json();
+
+          container.innerHTML = '';
+          peliculas.forEach(movie => {
+            container.insertAdjacentHTML('beforeend', renderMovieCard(movie));
+          });
+        } catch (error) {
+          console.warn('Error cargando películas:', error);
+        }
+      }
+
+      loadPeliculas();
+
+      async function eliminarPelicula(id, password) {
+        const response = await fetch('/api/peliculas/eliminar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, password })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'FAIL_DELETION');
+        }
+
+        return response.json();
+      }
+
+      document.addEventListener('click', async (event) => {
+        const deleteBtn = event.target.closest('.btn-delete-pelicula');
+        if (!deleteBtn || !isAdmin) return;
+
+        const peliculaId = deleteBtn.getAttribute('data-id');
+        if (!peliculaId) return;
+
+        if (!confirm('¿Eliminar esta película del registro?')) return;
+
+        const code = prompt('INGRESE CÓDIGO DE ACCESO DE SEGURIDAD PARA ELIMINAR LA PELÍCULA:');
+        if (code !== 'bunker2026') {
+          if (code !== null) alert('CÓDIGO DE ACCESO INCORRECTO. ACCESO DENEGADO.');
+          return;
+        }
+
+        try {
+          await eliminarPelicula(peliculaId, code);
+          loadPeliculas();
+        } catch (error) {
+          alert(`ERROR AL ELIMINAR: ${error.message}`);
+        }
+      });
+
+      // Shortcut to open modal (Ctrl+Shift+B)
+      document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'b') {
+          e.preventDefault();
+          const code = prompt('INGRESE CÓDIGO DE ACCESO DE SEGURIDAD:');
+          if (code === 'bunker2026') {
+            activarModoAdmin();
+            const modalEl = document.getElementById('modal-nueva-pelicula');
+            if (modalEl) {
+              const modalInst = bootstrap.Modal.getOrCreateInstance(modalEl);
+              modalInst.show();
+              const passInput = document.getElementById('modal-password-pelicula');
+              if (passInput) passInput.value = code;
+            }
+            loadPeliculas();
+          } else if (code !== null) {
+            alert('CÓDIGO DE ACCESO INCORRECTO. ACCESO DENEGADO.');
+          }
+        }
+      });
+
+      // Form submit handler – saves to peliculas.json via API and injects card locally
+      const formNuevaPelicula = document.getElementById('form-nueva-pelicula');
+      if (formNuevaPelicula) {
+        formNuevaPelicula.addEventListener('submit', function (e) {
+          e.preventDefault();
+
+          const fileInput = document.getElementById('pelicula-cover-file');
+          const file = fileInput ? fileInput.files[0] : null;
+
+          const submitData = (coverData = null, fileName = null) => {
+            const titulo = document.getElementById('pelicula-titulo').value.trim().toUpperCase();
+            const puntuacion = document.getElementById('pelicula-puntuacion').value.trim();
+            const directorRaw = document.getElementById('pelicula-director').value.trim();
+            const resena = document.getElementById('pelicula-resena').value.trim();
+            const tagsValue = document.getElementById('pelicula-tags').value.trim();
+            const colorTitulo = document.getElementById('pelicula-color-titulo').value;
+            const colorPuntuacion = document.getElementById('pelicula-color-puntuacion').value;
+            const colorDirector = document.getElementById('pelicula-color-director').value;
+            const colorTags = document.getElementById('pelicula-color-tags').value;
+            const overlayDesc = document.getElementById('pelicula-overlay-desc').value.trim();
+            const cover = document.getElementById('pelicula-cover').value.trim() || '/assets/images/default.jpg';
+
+            const parsedTags = parseTagItems(tagsValue, colorTags);
+            const datosPelicula = {
+              titulo,
+              puntuacion,
+              director: directorRaw.replace(/^DIR:\s*/i, '').split('|')[0].trim(),
+              anio: (directorRaw.match(/AÑO:\s*(\d{4})/i) || directorRaw.match(/(\d{4})/) || ['', ''])[1],
+              resena,
+              tags: parsedTags,
+              overlayTitle: titulo,
+              overlayDesc: overlayDesc || titulo,
+              cover,
+              color: colorTitulo,
+              colorTitulo,
+              colorPuntuacion,
+              colorDirector,
+              colorTags,
+              password: document.getElementById('modal-password-pelicula').value,
+              coverFileData: coverData,
+              coverFileName: fileName
+            };
+
+            fetch('/api/peliculas/nuevo', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(datosPelicula)
+            })
+              .then(res => {
+                if (!res.ok) {
+                  return res.json().then(err => { throw new Error(err.error || 'Http Error'); });
+                }
+                return res.json();
+              })
+              .then(data => {
+                if (data.success) {
+                  console.log(`[SYS]: ${data.message}`);
+                  if (data.movie) {
+                    const container = document.getElementById('contenedor-peliculas');
+                    if (container) container.insertAdjacentHTML('beforeend', renderMovieCard(data.movie));
+                  } else {
+                    loadPeliculas();
+                  }
+
+                  formNuevaPelicula.reset();
+                  const modalEl = document.getElementById('modal-nueva-pelicula');
+                  if (modalEl) {
+                    const modalInst = bootstrap.Modal.getInstance(modalEl);
+                    if (modalInst) modalInst.hide();
+                  }
+                }
+              })
+              .catch(err => {
+                console.error('Error adding movie:', err);
+                alert(`ERROR: ${err.message}`);
+              });
+          };
+
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = function (event) {
+              submitData(event.target.result, file.name);
+            };
+            reader.onerror = function (error) {
+              console.error('Error reading file:', error);
+              alert('Error leyendo el archivo de imagen.');
+            };
+            reader.readAsDataURL(file);
+          } else {
+            submitData();
+          }
+        });
+      }
+    </script>
+
+  </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

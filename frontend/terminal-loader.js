@@ -1,0 +1,1678 @@
+document.addEventListener("DOMContentLoaded", () => {
+  const botonesCartucho = document.querySelectorAll("#library-cartridge-selector .cartridge-btn");
+  const pantallaContenido = document.getElementById("terminal-screen-content");
+  const pathTerminal = document.getElementById("terminal-path");
+  const logTerminal = document.getElementById("terminal-live-log");
+  const logsCanvasPanel = document.getElementById("logs-canvas-panel");
+  const openLogsCanvasBtn = document.getElementById("open-logs-canvas");
+  const closeLogsCanvasBtn = document.getElementById("close-logs-canvas");
+
+  let swiperFavoritos = null;
+
+  function setLogsCanvasOpen(isOpen) {
+    if (!logsCanvasPanel) return;
+    logsCanvasPanel.classList.toggle("is-open", isOpen);
+    logsCanvasPanel.setAttribute("aria-hidden", isOpen ? "false" : "true");
+  }
+
+  if (openLogsCanvasBtn) {
+    openLogsCanvasBtn.addEventListener("click", () => {
+      const shouldOpen = !logsCanvasPanel || !logsCanvasPanel.classList.contains("is-open");
+      setLogsCanvasOpen(shouldOpen);
+    });
+  }
+
+  if (closeLogsCanvasBtn) {
+    closeLogsCanvasBtn.addEventListener("click", () => {
+      setLogsCanvasOpen(false);
+    });
+  }
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      setLogsCanvasOpen(false);
+    }
+  });
+
+  // 🌟 FUNCIÓN AUXILIAR PARA RECONECTAR SWIPER CUANDO APAREZCA EN PANTALLA
+  function inicializarSwiperFavoritos() {
+    if (swiperFavoritos) {
+      console.log("[HUD_LOADER]: Destruyendo instancia previa de Swiper...");
+      swiperFavoritos.destroy(true, true);
+      swiperFavoritos = null;
+    }
+
+    if (document.querySelector(".mySwiperBooks")) {
+      console.log("[HUD_LOADER]: Activando stream horizontal estilo Paint...");
+      
+      swiperFavoritos = new Swiper(".mySwiperBooks", {
+        direction: "horizontal",  // Movimiento horizontal continuo
+        slidesPerView: 1,         // 1 libro en pantallas móviles muy pequeñas
+        spaceBetween: 20,         // Margen entre libros
+        grabCursor: true,
+        loop: true,               // Bucle infinito
+        autoplay: {
+          delay: 3000,
+          disableOnInteraction: false,
+        },
+        pagination: {
+          el: ".swiper-pagination",
+          clickable: true,
+        },
+        // 📱 Ajuste dinámico según el ancho de la pantalla:
+        breakpoints: {
+          400: { slidesPerView: 2, spaceBetween: 15 },
+          768: { slidesPerView: 3, spaceBetween: 20 },
+          1024: { slidesPerView: 4, spaceBetween: 25 } // 🖥️ En PC muestra 4 a la vez tal cual tu boceto
+        }
+      });
+    }
+  }
+
+  async function cargarFicheroBinario(urlPath, botonActivo) {
+    try {
+      // Destruir el swiper si existe antes de cambiar de página/contenido
+      if (swiperFavoritos) {
+        console.log("[HUD_LOADER]: Destruyendo Swiper activo por cambio de cartucho...");
+        swiperFavoritos.destroy(true, true);
+        swiperFavoritos = null;
+      }
+
+      // 1. Efecto estético de apagado/parpadeo de pantalla
+      pantallaContenido.classList.add("fade-out");
+      logTerminal.textContent = `> Requesting sector: ${urlPath.toUpperCase()}...`;
+      
+      // 2. Traemos el archivo HTML externo por red de fondo
+      const response = await fetch(urlPath);
+      if (!response.ok) throw new Error(`ERR_CODE_404: Node unreachable`);
+      
+      const htmlText = await response.text();
+      
+      // 3. Parseamos el HTML recibido para extraer solo las fichas de datos
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlText, "text/html");
+      
+      // Buscamos el contenedor donde están las listas de libros en la subpágina
+      const nuevoContenido = doc.getElementById("detalle-favorito") || doc.body;
+
+      // 4. Esperamos un pelín para simular latencia de descompresión de datos
+      setTimeout(() => {
+        pantallaContenido.innerHTML = nuevoContenido.innerHTML;
+        pathTerminal.textContent = `[ SCREEN_SRC: /read/${urlPath} ]`;
+        logTerminal.textContent = `> Sector ${botonActivo.querySelector('.btn-label').textContent.toUpperCase()} loaded [OK]`;
+        pantallaContenido.classList.remove("fade-out");
+        
+        // 🔧 CORREGIDO: Arreglado el typo 'antallaContenido' a 'pantallaContenido'
+        pantallaContenido.scrollTop = 0; 
+  
+        // 🔥 ¡LA MAGIA OCURRE AQUÍ!: Ahora que el HTML ya está físicamente renderizado en el index, despertamos a Swiper
+        inicializarSwiperFavoritos();
+
+        // 📚 SYNC DATA SEGMENT WITH LIBRARY DATABASE
+        cargarBibliotecaReal(urlPath);
+
+      }, 200);
+
+    } catch (error) {
+      console.error(error);
+      pantallaContenido.innerHTML = `
+        <div class="text-danger font-monospace p-4 border border-danger border-opacity-25 bg-black-25">
+          <h5 class="fw-bold">[ ❌ CRITICAL_LOAD_ERROR ]</h5>
+          <p class="small m-0">No se pudo acceder a los fragmentos del nodo físico del búnker. Asegúrate de que el archivo '${urlPath}' existe en el servidor.</p>
+        </div>
+      `;
+      pantallaContenido.classList.remove("fade-out");
+      logTerminal.textContent = `> CRITICAL: Sector allocation table corrupt.`;
+    }
+  }
+
+  // Configurar los listeners para cada ranura de cartucho
+  botonesCartucho.forEach(boton => {
+    boton.addEventListener("click", () => {
+      if (boton.classList.contains("active")) return; // Ya está cargado
+
+      // Cambiar estados visuales de los botones
+      botonesCartucho.forEach(b => {
+        b.classList.remove("active");
+        b.querySelector(".status-icon").className = "bi bi-dot ms-auto status-icon";
+      });
+      
+      boton.classList.add("active");
+      boton.querySelector(".status-icon").className = "bi bi-play-fill ms-auto status-icon";
+
+      // Ejecutar la carga asíncrona
+      const destinoHTML = boton.getAttribute("data-target");
+      cargarFicheroBinario(destinoHTML, boton);
+    });
+  });
+
+  // Carga inicial automática del primer cartucho por defecto
+  const primerCartucho = document.querySelector("#library-cartridge-selector .cartridge-btn.active");
+  if (primerCartucho) {
+    cargarFicheroBinario(primerCartucho.getAttribute("data-target"), primerCartucho);
+  }
+
+  // 🌈 LÓGICA DE ROTACIÓN NEÓN RGB ULTRA-FLUIDA VÍA JS Y VARIABLES CSS
+  const wrapper = document.querySelector('.neon-rgb-frame-wrapper');
+  if (wrapper) {
+    const spinner = wrapper.querySelector('.neon-rgb-border-spin');
+    if (spinner) {
+      let currentAngle = 0;
+      let lastTime = performance.now();
+      let direction = 1; // 1 = forward, -1 = reverse
+      const SPEED = 90;  // grados por segundo (360deg / 4s de duración)
+
+      function animate(time) {
+        const dt = (time - lastTime) / 1000; // delta time en segundos
+        lastTime = time;
+
+        // Limitar dt para evitar saltos si el navegador suspende la pestaña
+        const safeDt = Math.min(dt, 0.1);
+
+        currentAngle += direction * SPEED * safeDt;
+        
+        // Mantener el ángulo en el rango [0, 360)
+        currentAngle = (currentAngle % 360 + 360) % 360;
+
+        spinner.style.setProperty('--rotation', `${currentAngle}deg`);
+        
+        requestAnimationFrame(animate);
+      }
+
+      wrapper.addEventListener('mouseenter', () => {
+        direction = -1;
+      });
+
+      wrapper.addEventListener('mouseleave', () => {
+        direction = 1;
+      });
+
+      // Iniciar el bucle de rotación
+      requestAnimationFrame((time) => {
+        lastTime = time;
+        requestAnimationFrame(animate);
+      });
+    }
+  }
+
+  // 🐸 CARGA DINÁMICA DE EMOTES DESDE ASSETS/ICONS
+  function inicializarMarquesinaEmotes() {
+    const container = document.getElementById('emotes-marquee-container');
+    if (!container) return;
+
+    // Lista fija de iconos leída del directorio assets/icons
+    const emotes = [
+      { file: 'ranidk.jfif', rarity: 'SUB', color: 'bg-neon-cyan' },
+      { file: 'ranifire.jfif', rarity: 'HOT', color: 'bg-neon-magenta' },
+      { file: 'ranihappy.jfif', rarity: 'EPIC', color: 'btn-purple' },
+      { file: 'raniking.jfif', rarity: 'VIP', color: 'bg-purple' },
+      { file: 'ranimad.jfif', rarity: 'ANGRY', color: 'bg-dark' },
+      { file: 'raniok.jfif', rarity: 'SUB', color: 'bg-neon-cyan' },
+      { file: 'ranireading.jfif', rarity: 'COZY', color: 'bg-neon-cyan' },
+      { file: 'ranisketch.jfif', rarity: 'ART', color: 'bg-warning' },
+      { file: 'ranite.jfif', rarity: 'COZY', color: 'bg-neon-cyan' },
+      { file: 'raniwow.jfif', rarity: 'EPIC', color: 'btn-purple' },
+      { file: 'raniwtf.jfif', rarity: 'WTF', color: 'bg-neon-magenta' },
+      { file: 'yaiangry.jfif', rarity: 'STREAMER', color: 'bg-gold' },
+      { file: 'yaicat.jfif', rarity: 'COZY', color: 'bg-neon-cyan' },
+      { file: 'yailol.jfif', rarity: 'STREAMER', color: 'bg-gold' },
+      { file: 'yaipalm.jfif', rarity: 'EXCL', color: 'bg-neon-magenta' },
+      { file: 'yaiplay.jfif', rarity: 'GAMER', color: 'bg-info' },
+      { file: 'yaiwow.jfif', rarity: 'STREAMER', color: 'bg-gold' }
+    ];
+
+    // Dividimos los emotes en dos filas/cintas para darle contra-ritmo
+    const midPoint = Math.ceil(emotes.length / 2);
+    const fila1 = emotes.slice(0, midPoint);
+    const fila2 = emotes.slice(midPoint);
+
+    // Función auxiliar para construir el contenido HTML de una fila (duplicado para el loop infinito)
+    function crearFilaHTML(listaEmotes, esIzquierda) {
+      const trackClass = esIzquierda ? 'track-left' : 'track-right';
+      
+      // Construimos los slots de emotes
+      const itemsHTML = listaEmotes.map(emote => `
+        <div class="emote-ticker-slot">
+          <img src="assets/icons/${emote.file}" alt="${emote.file.split('.')[0]}" loading="lazy">
+          <span class="badge-rarity ${emote.color}">${emote.rarity}</span>
+        </div>
+      `).join('');
+
+      return `
+        <div class="marquee-track ${trackClass}">
+          <div class="marquee-content">
+            ${itemsHTML}
+            <!-- Duplicado para loop infinito fluido -->
+            ${itemsHTML}
+          </div>
+        </div>
+      `;
+    }
+
+    // Insertamos ambas filas en el contenedor
+    container.innerHTML = `
+      ${crearFilaHTML(fila1, true)}
+      ${crearFilaHTML(fila2, false)}
+    `;
+  }
+
+  // --- LIBRARY DATABASE LOGIC (FETCH GET/POST & MODAL CONTROLS) ---
+
+  // 1. Keyboard Shortcut: Ctrl + Shift + B to toggle Modal with password verification
+  document.addEventListener("keydown", (e) => {
+    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "b") {
+      e.preventDefault();
+      const code = prompt("INGRESE CÓDIGO DE ACCESO DE SEGURIDAD:");
+      if (code === "bunker2026") {
+        const modalEl = document.getElementById("modal-nuevo-libro");
+        if (modalEl) {
+          const modalInst = bootstrap.Modal.getOrCreateInstance(modalEl);
+          modalInst.show();
+          // Auto-fill password input in modal
+          const passInput = document.getElementById("modal-password");
+          if (passInput) passInput.value = code;
+        }
+      } else if (code !== null) {
+        alert("CÓDIGO DE ACCESO INCORRECTO. ACCESO DENEGADO.");
+      }
+    }
+  });
+
+  // Dynamic show/hide podium selector based on favorito checkbox
+  const favCheckbox = document.getElementById("lib-favorito");
+  const podioContainer = document.getElementById("podio-select-container");
+  if (favCheckbox && podioContainer) {
+    favCheckbox.addEventListener("change", function() {
+      if (this.checked) {
+        podioContainer.classList.remove("d-none");
+      } else {
+        podioContainer.classList.add("d-none");
+        const podioSelect = document.getElementById("lib-podio");
+        if (podioSelect) podioSelect.value = "";
+      }
+    });
+  }
+
+  // 2. Submit handler for form-nuevo-libro
+  const formNuevoLibro = document.getElementById("form-nuevo-libro");
+  if (formNuevoLibro) {
+    formNuevoLibro.addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const fileInput = document.getElementById("lib-cover-file");
+      const file = fileInput ? fileInput.files[0] : null;
+
+      const submitData = (coverData = null, fileName = null) => {
+        const datosLibro = {
+          titulo: document.getElementById("lib-titulo").value.toUpperCase(),
+          colorTitulo: document.getElementById("lib-color-titulo") ? document.getElementById("lib-color-titulo").value : "white",
+          autor: document.getElementById("lib-autor").value.toUpperCase(),
+          colorAutor: document.getElementById("lib-color-autor") ? document.getElementById("lib-color-autor").value : "yellow",
+          genero: document.getElementById("lib-genero").value.toUpperCase(),
+          colorGenero: document.getElementById("lib-color-genero") ? document.getElementById("lib-color-genero").value : "info",
+          estado: document.getElementById("lib-estado").value,
+          puntuacion: parseFloat(document.getElementById("lib-puntuacion").value) || 5,
+          colorPuntuacion: document.getElementById("lib-color-puntuacion") ? document.getElementById("lib-color-puntuacion").value : "yellow",
+          hype: parseInt(document.getElementById("lib-hype").value) || 90,
+          colorHype: document.getElementById("lib-color-hype") ? document.getElementById("lib-color-hype").value : "yellow",
+          resena: document.getElementById("lib-resena").value,
+          colorResena: document.getElementById("lib-color-resena") ? document.getElementById("lib-color-resena").value : "white",
+          cover: document.getElementById("lib-cover").value || "/assets/images/jony.jpg",
+          password: document.getElementById("modal-password").value,
+          favorito: document.getElementById("lib-favorito").checked,
+          podio: document.getElementById("lib-podio").value ? parseInt(document.getElementById("lib-podio").value) : null,
+          coverFileData: coverData,
+          coverFileName: fileName
+        };
+
+        fetch("/api/biblioteca/nuevo", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(datosLibro)
+        })
+          .then((res) => {
+            if (!res.ok) {
+              return res.json().then(err => { throw new Error(err.error || "Http Error"); });
+            }
+            return res.json();
+          })
+          .then((data) => {
+            if (data.success) {
+              console.log(`[SYS]: ${data.message}`);
+              logTerminal.textContent = `> ${data.message}`;
+              
+              // Reset form and close modal
+              formNuevoLibro.reset();
+              if (podioContainer) podioContainer.classList.add("d-none");
+              const modalEl = document.getElementById("modal-nuevo-libro");
+              if (modalEl) {
+                const modalInst = bootstrap.Modal.getInstance(modalEl);
+                if (modalInst) modalInst.hide();
+              }
+
+              // Reload current deck/cartridge if it's leidos.html, tbr.html or favoritos.html
+              const activeCartridge = document.querySelector("#library-cartridge-selector .cartridge-btn.active");
+              if (activeCartridge) {
+                const currentPath = activeCartridge.getAttribute("data-target");
+                cargarBibliotecaReal(currentPath);
+              }
+
+              // Trigger log reload
+              cargarLogsYVisores();
+            }
+          })
+          .catch((err) => {
+            console.error("Error adding book:", err);
+            alert(`ERROR: ${err.message}`);
+            logTerminal.textContent = `> ERR: Fail to write to library sector.`;
+          });
+      };
+
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (event) {
+          submitData(event.target.result, file.name);
+        };
+        reader.onerror = function (error) {
+          console.error("Error reading file:", error);
+          alert("Error leyendo el archivo de imagen.");
+        };
+        reader.readAsDataURL(file);
+      } else {
+        submitData();
+      }
+    });
+  }
+
+  // Submit handler for form-nueva-cita
+  const formNuevaCita = document.getElementById("form-nueva-cita");
+  if (formNuevaCita) {
+    formNuevaCita.addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const datosCita = {
+        texto: document.getElementById("cita-texto").value,
+        colorTexto: document.getElementById("cita-color-texto") ? document.getElementById("cita-color-texto").value : "white",
+        autor: document.getElementById("cita-autor").value.toUpperCase(),
+        colorAutor: document.getElementById("cita-color-autor") ? document.getElementById("cita-color-autor").value : "cyan",
+        tipo: document.getElementById("cita-tipo").value,
+        label: document.getElementById("cita-label").value.toUpperCase(),
+        colorLabel: document.getElementById("cita-color-label") ? document.getElementById("cita-color-label").value : "cyan",
+        nota: document.getElementById("cita-nota").value,
+        colorNota: document.getElementById("cita-color-nota") ? document.getElementById("cita-color-nota").value : "white",
+        password: document.getElementById("modal-password").value
+      };
+
+      fetch("/api/citas/nuevo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(datosCita)
+      })
+        .then((res) => {
+          if (!res.ok) {
+            return res.json().then(err => { throw new Error(err.error || "Http Error"); });
+          }
+          return res.json();
+        })
+        .then((data) => {
+          if (data.success) {
+            console.log(`[SYS]: ${data.message}`);
+            logTerminal.textContent = `> ${data.message}`;
+            
+            formNuevaCita.reset();
+            const modalEl = document.getElementById("modal-nuevo-libro");
+            if (modalEl) {
+              const modalInst = bootstrap.Modal.getInstance(modalEl);
+              if (modalInst) modalInst.hide();
+            }
+
+            // Reload current deck/cartridge if it's citas.html
+            const activeCartridge = document.querySelector("#library-cartridge-selector .cartridge-btn.active");
+            if (activeCartridge) {
+              const currentPath = activeCartridge.getAttribute("data-target");
+              cargarBibliotecaReal(currentPath);
+            }
+
+            // Trigger log reload
+            cargarLogsYVisores();
+          }
+        })
+        .catch((err) => {
+          console.error("Error adding quote:", err);
+          alert(`ERROR: ${err.message}`);
+          logTerminal.textContent = `> ERR: Fail to write to quotes sector.`;
+        });
+    });
+  }
+
+  // 3. Submit handler for form-nueva-entrevista (opened with Ctrl + Shift + E)
+  const formNuevaEntrevista = document.getElementById("form-nueva-entrevista");
+  if (formNuevaEntrevista) {
+    formNuevaEntrevista.addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const datosEntrevista = {
+        nombre: document.getElementById("ent-nombre").value.trim(),
+        colorNombre: document.getElementById("ent-color-nombre").value,
+        obra: document.getElementById("ent-obra").value.trim(),
+        colorObra: document.getElementById("ent-color-obra").value,
+        squad: document.getElementById("ent-squad").value.trim().toUpperCase(),
+        level: parseInt(document.getElementById("ent-level").value) || 99,
+        resumen: document.getElementById("ent-resumen").value.trim(),
+        colorResena: document.getElementById("ent-color-resena").value,
+        socialUser: document.getElementById("ent-social-user").value.trim(),
+        socialUrl: document.getElementById("ent-social-url").value.trim(),
+        colorSocial: document.getElementById("ent-color-social").value,
+        videoUrl: document.getElementById("ent-video").value.trim(),
+        password: document.getElementById("modal-password-entrevista").value
+      };
+
+      fetch("/api/entrevistas/nuevo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(datosEntrevista)
+      })
+        .then((res) => {
+          if (!res.ok) {
+            return res.json().then(err => { throw new Error(err.error || "Http Error"); });
+          }
+          return res.json();
+        })
+        .then((data) => {
+          if (data.success) {
+            console.log(`[SYS]: ${data.message}`);
+            logTerminal.textContent = `> ${data.message}`;
+            
+            formNuevaEntrevista.reset();
+            const modalEl = document.getElementById("modal-nueva-entrevista");
+            if (modalEl) {
+              const modalInst = bootstrap.Modal.getInstance(modalEl);
+              if (modalInst) modalInst.hide();
+            }
+
+            cargarEntrevistas();
+            cargarLogsYVisores();
+          }
+        })
+        .catch((err) => {
+          console.error("Error adding interview:", err);
+          alert(`ERROR: ${err.message}`);
+          logTerminal.textContent = `> ERR: Fail to write to interviews sector.`;
+        });
+    });
+  }
+
+  // Submit handler for form-nuevo-juego (opened with Ctrl + Shift + G)
+  const formNuevoJuego = document.getElementById("form-nuevo-juego");
+  if (formNuevoJuego) {
+    formNuevoJuego.addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const datosJuego = {
+        titulo: document.getElementById("game-titulo").value.trim(),
+        tituloColor: document.getElementById("game-color-titulo").value,
+        badgeTexto: document.getElementById("game-badge-texto").value.trim(),
+        badgeColor: document.getElementById("game-color-badge").value,
+        descripcion: document.getElementById("game-descripcion").value.trim(),
+        vicio: parseInt(document.getElementById("game-vicio").value) || 80,
+        progressColor: document.getElementById("game-color-progress").value,
+        plataforma: document.getElementById("game-plataforma").value.trim(),
+        horas: document.getElementById("game-horas").value.trim(),
+        imagen: document.getElementById("game-imagen").value.trim(),
+        password: document.getElementById("modal-password-juego").value
+      };
+
+      fetch("/api/juegos/nuevo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(datosJuego)
+      })
+        .then((res) => {
+          if (!res.ok) {
+            return res.json().then(err => { throw new Error(err.error || "Http Error"); });
+          }
+          return res.json();
+        })
+        .then((data) => {
+          if (data.success) {
+            console.log(`[SYS]: ${data.message}`);
+            logTerminal.textContent = `> ${data.message}`;
+            
+            formNuevoJuego.reset();
+            const modalEl = document.getElementById("modal-nuevo-juego");
+            if (modalEl) {
+              const modalInst = bootstrap.Modal.getInstance(modalEl);
+              if (modalInst) modalInst.hide();
+            }
+
+            cargarJuegos();
+            cargarLogsYVisores();
+          }
+        })
+        .catch((err) => {
+          console.error("Error adding game:", err);
+          alert(`ERROR: ${err.message}`);
+          logTerminal.textContent = `> ERR: Fail to write to gaming sector.`;
+        });
+    });
+  }
+
+  // 4. Keyboard Shortcut: Ctrl + Shift + E to open interviews modal
+  document.addEventListener("keydown", (e) => {
+    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "e") {
+      e.preventDefault();
+      const code = prompt("INGRESE CÓDIGO DE ACCESO DE SEGURIDAD DEL BÚNKER:");
+      if (code === "bunker2026") {
+        const modalEl = document.getElementById("modal-nueva-entrevista");
+        if (modalEl) {
+          const modalInst = bootstrap.Modal.getOrCreateInstance(modalEl);
+          modalInst.show();
+          const passInput = document.getElementById("modal-password-entrevista");
+          if (passInput) passInput.value = code;
+        }
+      } else if (code !== null) {
+        alert("CÓDIGO DE ACCESO INCORRECTO. ACCESO DENEGADO.");
+      }
+    }
+
+    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "g") {
+      e.preventDefault();
+      const code = prompt("INGRESE CÓDIGO DE ACCESO DE SEGURIDAD DEL BÚNKER (GAMING):");
+      if (code === "bunker2026") {
+        const modalEl = document.getElementById("modal-nuevo-juego");
+        if (modalEl) {
+          const modalInst = bootstrap.Modal.getOrCreateInstance(modalEl);
+          modalInst.show();
+          const passInput = document.getElementById("modal-password-juego");
+          if (passInput) passInput.value = code;
+        }
+      } else if (code !== null) {
+        alert("CÓDIGO DE ACCESO INCORRECTO. ACCESO DENEGADO.");
+      }
+    }
+  });
+
+  // Function to load logs dynamically
+  let logsSyncInProgress = false;
+  let lastLogsSignature = "";
+  async function cargarLogsYVisores(force = false) {
+    if (logsSyncInProgress) return;
+    logsSyncInProgress = true;
+    try {
+      const response = await fetch("/api/logs");
+      if (!response.ok) throw new Error("API_ERROR");
+      const logs = await response.json();
+
+      const signature = logs.map(log => log.id).join("|");
+      if (!force && signature === lastLogsSignature) {
+        return;
+      }
+      lastLogsSignature = signature;
+
+      // 1. Ticker logs
+      const tickerContent = document.querySelector(".ticker-content");
+      if (tickerContent) {
+        tickerContent.innerHTML = "";
+        
+        const spansHTML = logs.map(log => `
+          <span class="ticker-item">// ${log.tag}: ${log.desc}</span>
+        `).join('');
+
+        tickerContent.innerHTML = spansHTML + spansHTML;
+      }
+
+      // 2. CRT Monitor logs
+      const crtList = document.querySelector(".update-log-list");
+      if (crtList) {
+        crtList.innerHTML = "";
+        
+        const recentLogs = logs.slice(-3).reverse();
+        recentLogs.forEach(log => {
+          const logEntryHTML = `
+            <div class="log-entry mb-2">
+              <span class="log-tag ${log.color || 'text-white'}">[+] ${log.fecha}</span>
+              <p class="log-desc m-0 text-white-50">${log.crtDesc}</p>
+            </div>`;
+          crtList.innerHTML += logEntryHTML;
+        });
+      }
+
+      // 3. Full logs canvas panel
+      const fullLogsList = document.getElementById("logs-canvas-list");
+      if (fullLogsList) {
+        fullLogsList.innerHTML = "";
+
+        const sortedLogs = logs.slice().reverse();
+        sortedLogs.forEach(log => {
+          const colorClass = log.color || "text-white";
+          const entryHTML = `
+            <div class="logs-canvas-entry">
+              <div class="meta ${colorClass}">[${log.tag}] ${log.fecha}</div>
+              <div class="desc">${log.desc || "Sin descripcion"}</div>
+              <div class="crt">${log.crtDesc || "Sin detalle de monitor"}</div>
+            </div>`;
+          fullLogsList.innerHTML += entryHTML;
+        });
+      }
+    } catch (error) {
+      console.error("Error loading dev logs:", error);
+    } finally {
+      logsSyncInProgress = false;
+    }
+  }
+
+  // 3. Function to fetch and render books dynamically
+  async function cargarBibliotecaReal(urlPath) {
+    const isLeidos = urlPath.includes("leidos.html");
+    const isTbr = urlPath.includes("tbr.html");
+    const isFavoritos = urlPath.includes("favoritos.html");
+    const isCitas = urlPath.includes("citas.html");
+    if (!isLeidos && !isTbr && !isFavoritos && !isCitas) return;
+
+    try {
+      logTerminal.textContent = `> Syncing library database sector...`;
+
+      if (isLeidos || isTbr || isFavoritos) {
+        const response = await fetch("/api/biblioteca");
+        if (!response.ok) throw new Error("API_ERROR");
+        const libros = await response.json();
+
+        if (isLeidos) {
+          const contenedorLeidos = document.getElementById("contenedor-leidos");
+          if (!contenedorLeidos) return;
+          contenedorLeidos.innerHTML = "";
+
+          const librosLeidos = libros.filter((l) => l.estado === "leido");
+          if (librosLeidos.length === 0) {
+            contenedorLeidos.innerHTML = `
+              <div class="col-12 text-center text-white font-monospace py-4">
+                [ NO_COMPLETED_RECORDS_FOUND ]
+              </div>`;
+            return;
+          }
+
+          librosLeidos.forEach((libro, index) => {
+            const rating = parseFloat(libro.puntuacion) || 0;
+            const ratingColor = libro.colorPuntuacion || 'yellow';
+            const ratingClass = ratingColor === 'white' ? 'text-white' : `text-neon-${ratingColor}`;
+
+            let starsHTML = "";
+            for (let i = 1; i <= 5; i++) {
+              if (i <= Math.floor(rating)) {
+                starsHTML += `<i class="bi bi-star-fill ${ratingClass}"></i>`;
+              } else if (i - 0.5 <= rating) {
+                starsHTML += `<i class="bi bi-star-half ${ratingClass}"></i>`;
+              } else {
+                starsHTML += '<i class="bi bi-star text-white-50"></i>';
+              }
+            }
+
+            const colorTitulo = libro.colorTitulo || 'white';
+            const titleClass = colorTitulo === 'white' ? 'text-white' : `text-neon-${colorTitulo}`;
+
+            const colorAutor = libro.colorAutor || 'yellow';
+            const autorClass = ['cyan','magenta','green','yellow','purple','orange'].includes(colorAutor)
+              ? `text-neon-${colorAutor}`
+              : `text-${colorAutor}`;
+
+            const colorGenero = libro.colorGenero || 'info';
+            const generoClass = ['cyan','magenta','green','yellow','purple','orange'].includes(colorGenero)
+              ? `text-neon-${colorGenero}`
+              : `text-${colorGenero}`;
+
+            const colorResena = libro.colorResena || 'white';
+            const resenaClass = colorResena === 'white' ? 'text-white' : `text-neon-${colorResena}`;
+
+            const colors = ["text-neon-magenta", "text-neon-cyan", "text-neon-gold", "text-neon-purple"];
+            const colorClass = colors[index % colors.length];
+
+            const cardHTML = `
+              <div class="col-12">
+                <div class="cyber-book-card d-flex flex-column flex-md-row align-items-center p-4 gap-4">
+                  <div class="cyber-cover-wrap flex-shrink-0 shadow">
+                    <img src="${libro.cover || '/assets/images/jony.jpg'}" class="cyber-img" alt="${libro.titulo}">
+                  </div>
+                  <div class="flex-grow-1 min-w-0">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+                      <div>
+                        <span class="${colorClass} font-monospace text-xs d-block mb-1">[ COMPLETED_RECORD // CORE_${String(index + 1).padStart(2, '0')} ]</span>
+                        <h3 class="fw-bold ${titleClass} text-uppercase m-0 h4">${libro.titulo}</h3>
+                        <div class="text-white-50 small mt-1 font-monospace">
+                          POR <span class="${autorClass}">${libro.autor}</span> // GÉNERO: <span class="${generoClass}">${libro.genero || 'CYBERPUNK'}</span>
+                        </div>
+                      </div>
+                      <div class="${ratingClass} fw-bold fs-5 font-monospace d-flex align-items-center gap-1">
+                        ${starsHTML}
+                        <span class="text-white ms-1" style="font-size: 14px;">${rating.toFixed(1)}</span>
+                      </div>
+                    </div>
+                    <hr class="border-secondary border-opacity-25 my-3">
+                    <p class="${resenaClass} small font-monospace m-0" style="line-height: 1.6;">
+                      ${libro.resena || '// No review logged for this sector.'}
+                    </p>
+                  </div>
+                </div>
+              </div>`;
+            contenedorLeidos.innerHTML += cardHTML;
+          });
+        } else if (isTbr) {
+          const contenedorTbr = document.getElementById("contenedor-tbr");
+          if (!contenedorTbr) return;
+          contenedorTbr.innerHTML = "";
+
+          const librosTbr = libros.filter((l) => l.estado === "tbr");
+          if (librosTbr.length === 0) {
+            contenedorTbr.innerHTML = `
+              <div class="col-12 text-center text-white font-monospace py-4">
+                [ READ_BUFFER_EMPTY ]
+              </div>`;
+            return;
+          }
+
+          librosTbr.forEach((libro, index) => {
+            const hype = parseInt(libro.hype) || 90;
+            let badgeText = "STANDBY_DECK 💾";
+            if (hype >= 90) badgeText = "CRITICAL_HYPE 🔥";
+            else if (hype >= 75) badgeText = "COZY_READ ☕";
+            else if (hype >= 60) badgeText = "STUDY_CORE 🌌";
+
+            const queueState = index === 0 ? 'NEXT_LOAD' : index === 1 ? 'ACTIVE_QUEUE' : 'BUFFER_STANDBY';
+            const buyLink = `https://www.amazon.es/s?k=${encodeURIComponent(libro.titulo + ' ' + libro.autor)}`;
+
+            const colorTitulo = libro.colorTitulo || 'white';
+            const titleClass = colorTitulo === 'white' ? 'text-white' : `text-neon-${colorTitulo}`;
+
+            const colorAutor = libro.colorAutor || 'warning';
+            const autorClass = ['cyan','magenta','green','yellow','purple','orange'].includes(colorAutor)
+              ? `text-neon-${colorAutor}`
+              : `text-${colorAutor}`;
+
+            const colorGenero = libro.colorGenero || 'white';
+            const generoClass = ['cyan','magenta','green','yellow','purple','orange'].includes(colorGenero)
+              ? `text-neon-${colorGenero}`
+              : `text-${colorGenero}`;
+
+            const colorResena = libro.colorResena || 'white';
+            const resenaClass = colorResena === 'white' ? 'text-white' : `text-neon-${colorResena}`;
+
+            const colorHype = libro.colorHype || 'yellow';
+            const hypeHex = colorMap[colorHype] || '#ffee00';
+
+            const cardHTML = `
+              <div class="col">
+                <div class="card h-100 tbr-cyber-card border-0 shadow-sm overflow-hidden" style="border: 1px solid rgba(255,255,255,0.05) !important;">
+                  <div class="tbr-cover-container">
+                    <img src="${libro.cover || '/assets/images/jony.jpg'}" alt="${libro.titulo}">
+                    <div class="position-absolute top-0 start-0 m-2">
+                      <span class="badge bg-dark font-monospace text-xs" style="background: rgba(0,0,0,0.85) !important; border: 1px solid ${hypeHex} !important; color: ${hypeHex} !important; text-shadow: 0 0 6px ${hypeHex};">
+                        ${badgeText}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="card-body d-flex flex-column justify-content-between p-3 text-white">
+                    <div>
+                      <span style="color: ${hypeHex}; text-shadow: 0 0 5px ${hypeHex};" class="font-monospace text-xs d-block mb-1">[ QUEUE_POS: #${String(index + 1).padStart(2, '0')} // ${queueState} ]</span>
+                      <h5 class="fw-bold text-truncate ${titleClass} text-uppercase m-0" style="font-size: 14px;">${libro.titulo}</h5>
+                      <p class="text-white small mb-3 font-monospace" style="font-size: 10px;">POR: <span class="${autorClass}">${libro.autor}</span> // <span class="${generoClass}">${libro.genero || 'SCI-FI'}</span></p>
+                      <p class="${resenaClass} font-monospace mb-4" style="font-size: 11px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                        ${libro.resena || '// Awaiting synopsis decrypt...'}
+                      </p>
+                    </div>
+                    <div>
+                      <div class="d-flex justify-content-between align-items-center mb-1 font-monospace" style="font-size: 11px; color: ${hypeHex}; text-shadow: 0 0 5px ${hypeHex};">
+                        <span>LOAD_HYPE:</span>
+                        <span class="fw-bold">${hype}%</span>
+                      </div>
+                      <div class="tbr-hype-progress mb-3">
+                        <div class="tbr-hype-bar" style="width: ${hype}%; background-color: ${hypeHex} !important; box-shadow: 0 0 8px ${hypeHex} !important;"></div>
+                      </div>
+                      <a href="${buyLink}" target="_blank" style="border-color: ${hypeHex} !important; color: ${hypeHex} !important;" class="btn btn-outline-warning btn-sm w-100 rounded-1 py-2 font-monospace text-xs text-uppercase fw-bold">
+                        <i class="bi bi-cart3 me-1"></i> Acquire Core
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>`;
+            contenedorTbr.innerHTML += cardHTML;
+          });
+        } else if (isFavoritos) {
+          const contenedorPodio = document.getElementById("contenedor-favoritos-podio");
+          const contenedorCarrusel = document.getElementById("contenedor-favoritos-carrusel");
+
+          if (contenedorPodio) {
+            contenedorPodio.innerHTML = "";
+            const t1 = libros.find(l => l.favorito && parseInt(l.podio) === 1);
+            const t2 = libros.find(l => l.favorito && parseInt(l.podio) === 2);
+            const t3 = libros.find(l => l.favorito && parseInt(l.podio) === 3);
+
+            let t2HTML = "";
+            if (t2) {
+              const t2ColorTitulo = t2.colorTitulo || 'white';
+              const t2TitleClass = t2ColorTitulo === 'white' ? 'text-white' : `text-neon-${t2ColorTitulo}`;
+              const t2ColorAutor = t2.colorAutor || 'white';
+              const t2AutorClass = ['cyan','magenta','green','yellow','purple','orange'].includes(t2ColorAutor) ? `text-neon-${t2ColorAutor}` : `text-${t2ColorAutor}`;
+              const t2ColorGenero = t2.colorGenero || 'info';
+              const t2BadgeBorderColor = ['cyan','magenta','green','yellow','purple','orange'].includes(t2ColorGenero) ? `border-${t2ColorGenero}` : 'border-info';
+              const t2BadgeTextClass = ['cyan','magenta','green','yellow','purple','orange'].includes(t2ColorGenero) ? `text-neon-${t2ColorGenero}` : 'text-info';
+              const t2ColorResena = t2.colorResena || 'white';
+              const t2ResenaClass = t2ColorResena === 'white' ? 'text-white' : `text-neon-${t2ColorResena}`;
+
+              t2HTML = `
+                <div class="col-md-4 order-2 order-md-1">
+                  <div class="card card-podium card-podium-second h-100 text-center p-3">
+                    <div class="podium-rank-badge badge-second">#2 PUESTO</div>
+                    <div class="podium-cover-wrap">
+                      <img src="${t2.cover || '/assets/images/jony.jpg'}" alt="Top 2" />
+                    </div>
+                    <div class="card-body p-2 d-flex flex-column justify-content-between">
+                      <div>
+                        <i class="bi bi-award-fill text-info fs-4 d-block mb-1"></i>
+                        <h5 class="fw-bold mb-1 ${t2TitleClass} text-uppercase" style="font-size: 15px;">${t2.titulo}</h5>
+                        <p class="text-white small mb-2 font-monospace" style="font-size: 11px;">POR: <span class="${t2AutorClass}">${t2.autor}</span></p>
+                        <div class="d-flex flex-wrap gap-1 justify-content-center mb-3">
+                          <span class="badge bg-dark border ${t2BadgeBorderColor} ${t2BadgeTextClass} rounded-pill text-xs">${t2.genero || 'CYBERPUNK'}</span>
+                        </div>
+                        <p class="card-text ${t2ResenaClass} small font-monospace italic">
+                          "${t2.resena || '// Awaiting sector review decrypt...'}"
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>`;
+            } else {
+              t2HTML = `<div class="col-md-4 order-2 order-md-1 text-center text-white font-monospace py-4 border border-secondary border-opacity-10 bg-black-10 rounded-1">[ #2_VACANTE ]</div>`;
+            }
+
+            let t1HTML = "";
+            if (t1) {
+              const t1ColorTitulo = t1.colorTitulo || 'white';
+              const t1TitleClass = t1ColorTitulo === 'white' ? 'text-white' : `text-neon-${t1ColorTitulo}`;
+              const t1ColorAutor = t1.colorAutor || 'white';
+              const t1AutorClass = ['cyan','magenta','green','yellow','purple','orange'].includes(t1ColorAutor) ? `text-neon-${t1ColorAutor}` : `text-${t1ColorAutor}`;
+              const t1ColorGenero = t1.colorGenero || 'warning';
+              const t1BadgeBorderColor = ['cyan','magenta','green','yellow','purple','orange'].includes(t1ColorGenero) ? `border-${t1ColorGenero}` : 'border-warning';
+              const t1BadgeTextClass = ['cyan','magenta','green','yellow','purple','orange'].includes(t1ColorGenero) ? `text-neon-${t1ColorGenero}` : 'text-warning';
+              const t1ColorResena = t1.colorResena || 'white';
+              const t1ResenaClass = t1ColorResena === 'white' ? 'text-white' : `text-neon-${t1ColorResena}`;
+
+              t1HTML = `
+                <div class="col-md-4 order-1 order-md-2 podium-col-first">
+                  <div class="card card-podium card-podium-first h-100 text-center p-3">
+                    <div class="podium-rank-badge badge-first">#1 PUESTO</div>
+                    <div class="podium-cover-wrap">
+                      <img src="${t1.cover || '/assets/images/ALAS.jpg'}" alt="Top 1" />
+                    </div>
+                    <div class="card-body p-2 d-flex flex-column justify-content-between">
+                      <div>
+                        <i class="bi bi-crown-fill text-warning fs-3 d-block mb-1"></i>
+                        <h5 class="fw-bold mb-1 ${t1TitleClass} text-uppercase" style="font-size: 17px;">${t1.titulo}</h5>
+                        <p class="text-white small mb-2 font-monospace" style="font-size: 11px;">POR: <span class="${t1AutorClass}">${t1.autor}</span></p>
+                        <div class="d-flex flex-wrap gap-1 justify-content-center mb-3">
+                          <span class="badge bg-dark border ${t1BadgeBorderColor} ${t1BadgeTextClass} rounded-pill text-xs">${t1.genero || 'CYBERPUNK'}</span>
+                        </div>
+                        <p class="card-text ${t1ResenaClass} small font-monospace italic">
+                          "${t1.resena || '// Awaiting sector review decrypt...'}"
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>`;
+            } else {
+              t1HTML = `<div class="col-md-4 order-1 order-md-2 podium-col-first text-center text-white font-monospace py-4 border border-warning border-opacity-10 bg-black-10 rounded-1">[ #1_VACANTE ]</div>`;
+            }
+
+            let t3HTML = "";
+            if (t3) {
+              const t3ColorTitulo = t3.colorTitulo || 'white';
+              const t3TitleClass = t3ColorTitulo === 'white' ? 'text-white' : `text-neon-${t3ColorTitulo}`;
+              const t3ColorAutor = t3.colorAutor || 'white';
+              const t3AutorClass = ['cyan','magenta','green','yellow','purple','orange'].includes(t3ColorAutor) ? `text-neon-${t3ColorAutor}` : `text-${t3ColorAutor}`;
+              const t3ColorGenero = t3.colorGenero || 'danger';
+              const t3BadgeBorderColor = ['cyan','magenta','green','yellow','purple','orange'].includes(t3ColorGenero) ? `border-${t3ColorGenero}` : 'border-danger';
+              const t3BadgeTextClass = ['cyan','magenta','green','yellow','purple','orange'].includes(t3ColorGenero) ? `text-neon-${t3ColorGenero}` : 'text-danger';
+              const t3ColorResena = t3.colorResena || 'white';
+              const t3ResenaClass = t3ColorResena === 'white' ? 'text-white' : `text-neon-${t3ColorResena}`;
+
+              t3HTML = `
+                <div class="col-md-4 order-3 order-md-3">
+                  <div class="card card-podium card-podium-third h-100 text-center p-3">
+                    <div class="podium-rank-badge badge-third">#3 PUESTO</div>
+                    <div class="podium-cover-wrap">
+                      <img src="${t3.cover || '/assets/images/forastero.jpg'}" alt="Top 3" />
+                    </div>
+                    <div class="card-body p-2 d-flex flex-column justify-content-between">
+                      <div>
+                        <i class="bi bi-award text-danger fs-4 d-block mb-1"></i>
+                        <h5 class="fw-bold mb-1 ${t3TitleClass} text-uppercase" style="font-size: 15px;">${t3.titulo}</h5>
+                        <p class="text-white small mb-2 font-monospace" style="font-size: 11px;">POR: <span class="${t3AutorClass}">${t3.autor}</span></p>
+                        <div class="d-flex flex-wrap gap-1 justify-content-center mb-3">
+                          <span class="badge bg-dark border ${t3BadgeBorderColor} ${t3BadgeTextClass} rounded-pill text-xs">${t3.genero || 'CYBERPUNK'}</span>
+                        </div>
+                        <p class="card-text ${t3ResenaClass} small font-monospace italic">
+                          "${t3.resena || '// Awaiting sector review decrypt...'}"
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>`;
+            } else {
+              t3HTML = `<div class="col-md-4 order-3 order-md-3 text-center text-white font-monospace py-4 border border-secondary border-opacity-10 bg-black-10 rounded-1">[ #3_VACANTE ]</div>`;
+            }
+
+            contenedorPodio.innerHTML = t2HTML + t1HTML + t3HTML;
+          }
+
+          if (contenedorCarrusel) {
+            contenedorCarrusel.innerHTML = "";
+            const carruselLibros = libros.filter(l => l.favorito && !l.podio);
+            if (carruselLibros.length === 0) {
+              contenedorCarrusel.innerHTML = `
+                <div class="swiper-slide text-center text-white font-monospace py-4">
+                  [ NO_ADDITIONAL_FAVORITES_LOADED ]
+                </div>`;
+            } else {
+              carruselLibros.forEach((libro, index) => {
+                const colorTitulo = libro.colorTitulo || 'white';
+                const titleClass = colorTitulo === 'white' ? 'text-white' : `text-neon-${colorTitulo}`;
+
+                const slideHTML = `
+                  <div class="swiper-slide">
+                    <div class="cyber-book-card d-flex flex-column align-items-center p-3 h-100 text-center">
+                      <div class="cyber-cover-wrap mb-3">
+                        <img src="${libro.cover || 'https://via.placeholder.com/200x300'}" class="cyber-img" alt="${libro.titulo}">
+                      </div>
+                      <div class="w-100 min-w-0">
+                        <span class="text-warning d-block mb-1" style="font-size: 10px;">[ CORE_${String(index + 1).padStart(2, '0')} ]</span>
+                        <h6 class="fw-bold text-truncate ${titleClass} text-uppercase m-0" style="font-size: 14px;">${libro.titulo}</h6>
+                        <div class="text-warning fw-bold mt-2" style="font-size: 12px;">
+                          <i class="bi bi-star-fill text-glow-warning"></i> ${parseFloat(libro.puntuacion || 5).toFixed(1)}
+                        </div>
+                      </div>
+                    </div>
+                  </div>`;
+                contenedorCarrusel.innerHTML += slideHTML;
+              });
+            }
+            inicializarSwiperFavoritos();
+          }
+        }
+      }
+
+      if (isCitas) {
+        const response = await fetch("/api/citas");
+        if (!response.ok) throw new Error("API_ERROR");
+        const citas = await response.json();
+
+        const contenedorMagicas = document.getElementById("contenedor-citas-magicas");
+        const contenedorSpicy = document.getElementById("contenedor-citas-spicy");
+
+        if (contenedorMagicas) {
+          contenedorMagicas.innerHTML = "";
+          const citasMagicas = citas.filter(c => c.tipo === "literaria");
+          if (citasMagicas.length === 0) {
+            contenedorMagicas.innerHTML = `<div class="col-12 text-center text-white font-monospace py-4">[ NO_LITERARY_QUOTES_LOADED ]</div>`;
+          } else {
+            citasMagicas.forEach(cita => {
+              const colorTexto = cita.colorTexto || 'white';
+              const textClass = colorTexto === 'white' ? 'text-white' : `text-neon-${colorTexto}`;
+              const colorAutor = cita.colorAutor || 'cyan';
+              const autorClass = colorAutor === 'white' ? 'text-white' : `text-neon-${colorAutor}`;
+              const colorLabel = cita.colorLabel || 'cyan';
+              const labelHex = colorMap[colorLabel] || '#00f0ff';
+              const colorNota = cita.colorNota || 'white';
+              const notaClass = colorNota === 'white' ? 'text-white-50' : `text-neon-${colorNota}`;
+
+              const cardHTML = `
+                <div class="col">
+                  <div class="card h-100 border-0 quote-cyber-card p-4 text-white">
+                    <div class="fs-1 mb-2" style="color: ${labelHex}; text-shadow: 0 0 10px ${labelHex};"><i class="bi bi-quote"></i></div>
+                    <figure class="mb-0">
+                      <blockquote class="blockquote">
+                        <p class="fs-5 fw-bold font-monospace ${textClass}">"${cita.texto}"</p>
+                      </blockquote>
+                      <figcaption class="blockquote-footer mt-3 mb-0 font-monospace" style="font-size: 11px;">
+                        <span class="${notaClass}">${cita.nota}</span> <cite title="Source Title" style="color: ${labelHex}; text-shadow: 0 0 5px ${labelHex}; font-style: normal;">// ${cita.label}</cite>
+                      </figcaption>
+                    </figure>
+                  </div>
+                </div>`;
+              contenedorMagicas.innerHTML += cardHTML;
+            });
+          }
+        }
+
+        if (contenedorSpicy) {
+          contenedorSpicy.innerHTML = "";
+          const citasSpicy = citas.filter(c => c.tipo === "spicy");
+          if (citasSpicy.length === 0) {
+            contenedorSpicy.innerHTML = `<div class="col-12 text-center text-white font-monospace py-4">[ NO_SPICY_QUOTES_LOADED ]</div>`;
+          } else {
+            citasSpicy.forEach(cita => {
+              const colorTexto = cita.colorTexto || 'white';
+              const textClass = colorTexto === 'white' ? 'text-white' : `text-neon-${colorTexto}`;
+              const colorAutor = cita.colorAutor || 'cyan';
+              const autorClass = colorAutor === 'white' ? 'text-white' : `text-neon-${colorAutor}`;
+              const colorLabel = cita.colorLabel || 'magenta';
+              const labelHex = colorMap[colorLabel] || '#ff007f';
+              const colorNota = cita.colorNota || 'white';
+              const notaClass = colorNota === 'white' ? 'text-white-50' : `text-neon-${colorNota}`;
+
+              const cardHTML = `
+                <div class="col">
+                  <div class="card h-100 border-0 quote-spicy-card p-4 text-white">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                      <div class="fs-1" style="color: ${labelHex}; text-shadow: 0 0 10px ${labelHex};"><i class="bi ${cita.label.includes('CLIP') ? 'bi-chat-heart-fill' : 'bi-fire'}"></i></div>
+                      <span class="badge rounded-1 bg-dark font-monospace text-xs" style="background: rgba(0,0,0,0.85) !important; border: 1px solid ${labelHex} !important; color: ${labelHex} !important; text-shadow: 0 0 6px ${labelHex};">[ ${cita.label} ]</span>
+                    </div>
+                    <figure class="mb-0">
+                      <blockquote class="blockquote">
+                        <p class="fs-5 fw-bold font-monospace ${textClass}">"${cita.texto}"</p>
+                      </blockquote>
+                      <figcaption class="blockquote-footer mt-3 mb-0 font-monospace" style="font-size: 11px;">
+                        <span class="${autorClass}">${cita.autor}</span> <cite title="Source Title" class="${notaClass}">// ${cita.nota}</cite>
+                      </figcaption>
+                    </figure>
+                  </div>
+                </div>`;
+              contenedorSpicy.innerHTML += cardHTML;
+            });
+          }
+        }
+      }
+
+      logTerminal.textContent = `> Database sync: COMPLETE [OK]`;
+    } catch (error) {
+      console.error("Error loading library data:", error);
+      logTerminal.textContent = `> ERR: Database read failure.`;
+    }
+  }
+
+  // Color preview system for library modal
+  const colorMap = {
+    white: '#ffffff',
+    cyan: '#00f0ff',
+    magenta: '#ff007f',
+    green: '#3afc13',
+    yellow: '#ffee00',
+    purple: '#a072ff',
+    orange: '#ff8c00',
+    info: '#00f0ff',
+    warning: '#ffee00'
+  };
+
+  function setupColorPreview(selectId, previewId) {
+    const sel = document.getElementById(selectId);
+    const prev = document.getElementById(previewId);
+    if (!sel || !prev) return;
+    const update = () => {
+      const c = colorMap[sel.value] || '#fff';
+      prev.style.color = c;
+      prev.style.borderColor = c;
+      prev.style.textShadow = `0 0 8px ${c}`;
+    };
+    sel.addEventListener('change', update);
+    update();
+  }
+
+  setupColorPreview('lib-color-titulo', 'preview-lib-color-titulo');
+  setupColorPreview('lib-color-autor', 'preview-lib-color-autor');
+  setupColorPreview('lib-color-genero', 'preview-lib-color-genero');
+  setupColorPreview('lib-color-resena', 'preview-lib-color-resena');
+  setupColorPreview('lib-color-puntuacion', 'preview-lib-color-puntuacion');
+  setupColorPreview('lib-color-hype', 'preview-lib-color-hype');
+  setupColorPreview('cita-color-texto', 'preview-cita-color-texto');
+  setupColorPreview('cita-color-autor', 'preview-cita-color-autor');
+  setupColorPreview('cita-color-label', 'preview-cita-color-label');
+  setupColorPreview('cita-color-nota', 'preview-cita-color-nota');
+
+  setupColorPreview('ent-color-nombre', 'preview-ent-color-nombre');
+  setupColorPreview('ent-color-obra', 'preview-ent-color-obra');
+  setupColorPreview('ent-color-resena', 'preview-ent-color-resena');
+  setupColorPreview('ent-color-social', 'preview-ent-color-social');
+
+  setupColorPreview('game-color-titulo', 'preview-game-color-titulo');
+
+  // 5. Function to load interviews dynamically
+  async function cargarEntrevistas() {
+    const container = document.getElementById("contenedor-entrevistas");
+    if (!container) return;
+
+    try {
+      const response = await fetch("/api/entrevistas");
+      if (!response.ok) throw new Error("API_ERROR");
+      const interviews = await response.json();
+
+      container.innerHTML = "";
+      if (interviews.length === 0) {
+        container.innerHTML = `<div class="col-12 text-center text-white-50 font-monospace py-4">[ NO_INTERVIEW_RECORDS_FOUND ]</div>`;
+        return;
+      }
+
+      interviews.forEach(ent => {
+        const colorNombre = ent.colorNombre || 'warning';
+        const nameColorClass = ['cyan','magenta','green','yellow','purple','orange'].includes(colorNombre)
+          ? `text-neon-${colorNombre}`
+          : `text-${colorNombre}`;
+
+        const colorObra = ent.colorObra || 'primary';
+        const obraClass = ['cyan','magenta','green','yellow','purple','orange'].includes(colorObra)
+          ? `text-neon-${colorObra}`
+          : `text-${colorObra}`;
+
+        const colorResumen = ent.colorResumen || 'white';
+        const resumenClass = colorResumen === 'white' ? 'text-light' : `text-neon-${colorResumen}`;
+
+        const colorSocial = ent.colorSocial || 'cyan';
+        const btnSocialClass = `btn-gaming-action-${colorSocial}`;
+
+        // Check YouTube video ID vs full URL
+        let embedUrl = ent.videoUrl;
+        if (embedUrl && !embedUrl.includes("http")) {
+          embedUrl = `https://www.youtube.com/embed/${embedUrl}`;
+        }
+
+        const cardHTML = `
+          <div class="col-xl-11 my-5">
+            <div class="card card-gaming-author border-0 h-100 overflow-hidden">
+              <div class="row g-0 h-100">
+                <!-- Izquierda: Vídeo de YouTube Incrustado -->
+                <div class="col-md-6 video-gaming-container">
+                  <div class="ratio ratio-16x9 h-100 min-h-video">
+                    <iframe src="${embedUrl}" title="Entrevista ${ent.nombre}" allowfullscreen></iframe>
+                  </div>
+                </div>
+
+                <!-- Derecha: Datos del Autor (Estilo Selección de Personaje) -->
+                <div class="col-md-6 d-flex flex-column justify-content-between p-4 bg-black-card position-relative">
+                  <div class="gaming-corner-top"></div>
+
+                  <div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                      <span class="text-neon-cyan small fw-bold tracking-widest">[ SQUAD: ${ent.squad || 'WRITER'} ]</span>
+                      <span class="badge bg-dark border border-secondary text-light-subtle text-xs">LVL ${ent.level || '99'}</span>
+                    </div>
+
+                    <h3 class="${nameColorClass} text-uppercase mb-1 tracking-wide">
+                      ${ent.nombre}
+                    </h3>
+                    <h6 class="${obraClass} mb-3 italic">
+                      Obra: "${ent.obra}"
+                    </h6>
+
+                    <p class="small ${resumenClass} line-height-gaming">
+                      "${ent.resumen}"
+                    </p>
+                  </div>
+
+                  <!-- Red Social / Enlace Estilo Botón de Acción Coaxial -->
+                  <div class="mt-3 pt-3 border-top border-gaming-divider">
+                    <a href="${ent.socialUrl}" target="_blank"
+                      class="btn ${btnSocialClass} w-100 text-uppercase fw-bold rounded-0 d-flex justify-content-between align-items-center px-3">
+                      <span><i class="bi bi-tiktok me-2"></i> ${ent.socialUser}</span>
+                      <i class="bi bi-chevron-right fs-5"></i>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        container.innerHTML += cardHTML;
+      });
+    } catch (error) {
+      console.error("Error loading interviews:", error);
+    }
+  }
+
+  // Function to load games dynamically
+  async function cargarJuegos() {
+    const container = document.getElementById("contenedor-juegos");
+    if (!container) return;
+
+    try {
+      const response = await fetch("/api/juegos");
+      if (!response.ok) throw new Error("API_ERROR");
+      const games = await response.json();
+
+      container.innerHTML = "";
+      if (games.length === 0) {
+        container.innerHTML = `<div class="col-12 text-center text-white-50 font-monospace py-4">[ NO_GAME_RECORDS_FOUND ]</div>`;
+        return;
+      }
+
+      games.forEach(juego => {
+        const colorTitulo = juego.tituloColor || 'magenta';
+        const titleColorClass = ['cyan','magenta','green','yellow','purple','orange'].includes(colorTitulo)
+          ? `text-neon-${colorTitulo}`
+          : `text-${colorTitulo}`;
+
+        const colorBadge = juego.badgeColor || 'cyan';
+        const badgeColorClass = ['cyan','magenta','green','yellow','purple','orange'].includes(colorBadge)
+          ? `text-neon-${colorBadge}`
+          : `text-${colorBadge}`;
+
+        const colorProgress = juego.progressColor || 'magenta';
+        const progressColorClass = ['cyan','magenta','green','yellow','purple','orange'].includes(colorProgress)
+          ? `bg-neon-${colorProgress}`
+          : `bg-${colorProgress}`;
+
+        const defaultCover = "/assets/images/cyberpunk.jpg";
+        const coverImg = juego.imagen || defaultCover;
+
+        const cardHTML = `
+          <div class="col-md-6 col-xl-4">
+            <div class="card card-gaming-hub h-100 border-0 overflow-hidden position-relative">
+              <button class="btn btn-outline-danger font-monospace btn-delete-game" 
+                      data-id="${juego.id}" 
+                      style="position: absolute; top: 10px; left: 10px; z-index: 10; background: rgba(0,0,0,0.85); border-radius: 0; font-size: 0.65rem; padding: 2px 5px; border-color: rgba(220,53,69,0.5);">
+                [ ELIMINAR ]
+              </button>
+
+              <div class="position-relative gaming-img-wrapper">
+                <img src="${coverImg}" class="card-img-top img-gaming-cover" alt="${juego.titulo}" />
+                <span class="badge position-absolute top-0 end-0 m-3 bg-blur-gaming ${badgeColorClass}">${juego.badgeTexto || 'PLAYING'}</span>
+              </div>
+              <div class="card-body p-4 d-flex flex-column justify-content-between">
+                <div>
+                  <h4 class="fw-black ${titleColorClass} text-uppercase mb-2 tracking-wide">
+                    ${juego.titulo}
+                  </h4>
+                  <p class="small text-light mb-4">
+                    ${juego.descripcion}
+                  </p>
+                </div>
+
+                <div class="gaming-stats">
+                  <div class="d-flex justify-content-between small ${titleColorClass} mb-1">
+                    <span>Nivel de Vicio</span>
+                    <span class="${titleColorClass} fw-bold">${juego.vicio || '50'}%</span>
+                  </div>
+                  <div class="progress progress-gaming mb-3">
+                    <div class="progress-bar ${progressColorClass}" role="progressbar" style="width: ${juego.vicio || '50'}%;"></div>
+                  </div>
+
+                  <div class="d-flex justify-content-between text-xs text-light">
+                    <span>Plataforma: <strong class="text-light">${juego.plataforma || 'PC'}</strong></span>
+                    <span>Horas: <strong class="text-light">${juego.horas || '0h'}</strong></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        container.innerHTML += cardHTML;
+      });
+
+      // Bind delete events
+      document.querySelectorAll(".btn-delete-game").forEach(btn => {
+        btn.addEventListener("click", function(e) {
+          e.preventDefault();
+          const gameId = this.getAttribute("data-id");
+          const code = prompt("INGRESE CÓDIGO DE ACCESO DE SEGURIDAD PARA ELIMINAR EL JUEGO:");
+          if (code === "bunker2026") {
+            eliminarJuego(gameId, code);
+          } else if (code !== null) {
+            alert("CÓDIGO DE ACCESO INCORRECTO. ACCESO DENEGADO.");
+          }
+        });
+      });
+
+    } catch (error) {
+      console.error("Error loading games:", error);
+    }
+  }
+
+  // Helper to delete game
+  async function eliminarJuego(id, password) {
+    try {
+      const response = await fetch("/api/juegos/eliminar", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ id, password })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "FAIL_DELETION");
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        console.log(`[SYS]: ${data.message}`);
+        logTerminal.textContent = `> ${data.message}`;
+        cargarJuegos();
+        cargarLogsYVisores();
+      }
+    } catch (error) {
+      console.error("Error deleting game:", error);
+      alert(`ERROR AL ELIMINAR: ${error.message}`);
+      logTerminal.textContent = `> ERR: Purge operation failed on game register.`;
+    }
+  }
+
+  // ============================================================
+  // 📡 SOCIAL FEEDS - Embed/iframe rendering with bouncy badge
+  // ============================================================
+
+  async function cargarRedes() {
+    const instagramContainer = document.getElementById("instagram-feed");
+    const tiktokContainer = document.getElementById("tiktok-feed");
+    const wattpadContainer = document.getElementById("wattpad-feed");
+
+    if (!instagramContainer || !tiktokContainer || !wattpadContainer) return;
+
+    try {
+      const response = await fetch("/api/redes");
+      if (!response.ok) throw new Error("API_ERROR");
+      const data = await response.json();
+
+      const renderFeed = (container, items, networkClass) => {
+        container.innerHTML = "";
+        if (items && items.length > 0) {
+          items.slice(0, 2).forEach((item, index) => {
+            const wrapper = document.createElement("div");
+            wrapper.className = "social-embed-wrapper position-relative mb-3";
+            
+            // Badge "¡NUEVO POST!" on the first (newest) item
+            if (index === 0) {
+              wrapper.innerHTML += `
+                <span class="badge-nuevo-post">
+                  <i class="bi bi-stars me-1"></i>¡NUEVO POST!
+                </span>
+              `;
+            }
+
+            // Render embed HTML or URL card
+            if (item.embedHtml) {
+              const embedContainer = document.createElement("div");
+              embedContainer.className = "embed-content";
+              const normalizedEmbedHtml = item.embedHtml
+                .replace(/min-width\s*:\s*\d+px\s*;?/gi, "min-width:0 !important;")
+                .replace(/max-width\s*:\s*\d+px\s*;?/gi, "max-width:100% !important;");
+              embedContainer.innerHTML = normalizedEmbedHtml;
+              wrapper.appendChild(embedContainer);
+            } else if (item.url) {
+              wrapper.innerHTML += `
+                <a href="${item.url}" target="_blank" class="social-url-card d-block text-decoration-none p-3 ${networkClass}">
+                  <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-box-arrow-up-right text-neon-cyan"></i>
+                    <span class="text-white small font-monospace text-truncate">${item.url}</span>
+                  </div>
+                </a>
+              `;
+            } else {
+              // Fallback for old-format entries (imagen, texto, likes...)
+              wrapper.innerHTML += `
+                <div class="card social-feed-card border-0 text-white font-monospace">
+                  ${item.imagen ? `<div class="social-img-wrapper"><img src="${item.imagen}" alt="Post"></div>` : ''}
+                  <div class="card-body p-3">
+                    ${item.fecha ? `<p class="text-xs text-white-50 mb-2">${item.fecha}</p>` : ''}
+                    ${item.titulo ? `<h6 class="text-warning text-uppercase fw-bold mb-2" style="font-size: 0.85rem;">${item.titulo}</h6>` : ''}
+                    ${item.texto ? `<p class="small text-light mb-3" style="font-size: 0.8rem; line-height: 1.3;">${item.texto}</p>` : ''}
+                  </div>
+                </div>
+              `;
+            }
+            container.appendChild(wrapper);
+          });
+        } else {
+          container.innerHTML = `<div class="text-center text-white-50 font-monospace py-4">[ FEED_EMPTY ]</div>`;
+        }
+      };
+
+      renderFeed(instagramContainer, data.instagram, "url-card-instagram");
+      renderFeed(tiktokContainer, data.tiktok, "url-card-tiktok");
+      renderFeed(wattpadContainer, data.wattpad, "url-card-wattpad");
+
+      // Process embed scripts after DOM injection
+      procesarEmbedsExternos();
+
+    } catch (error) {
+      console.error("Error loading social feeds:", error);
+    }
+  }
+
+  // Load external embed scripts (Instagram, TikTok)
+  function procesarEmbedsExternos() {
+    // Instagram
+    if (document.querySelector('.instagram-media')) {
+      if (window.instgrm) {
+        window.instgrm.Embeds.process();
+      } else {
+        const igScript = document.createElement('script');
+        igScript.src = '//www.instagram.com/embed.js';
+        igScript.async = true;
+        document.body.appendChild(igScript);
+      }
+    }
+    // TikTok
+    if (document.querySelector('.tiktok-embed, [data-tiktok]')) {
+      if (typeof window.tiktokEmbedLoad === 'function') {
+        window.tiktokEmbedLoad();
+      } else if (!document.querySelector('script[src*="tiktok.com/embed"]')) {
+        const tkScript = document.createElement('script');
+        tkScript.src = 'https://www.tiktok.com/embed.js';
+        tkScript.async = true;
+        document.body.appendChild(tkScript);
+      } else {
+        // Force re-processing when embeds are re-rendered dynamically.
+        const tkReloadScript = document.createElement('script');
+        tkReloadScript.src = `https://www.tiktok.com/embed.js?reload=${Date.now()}`;
+        tkReloadScript.async = true;
+        document.body.appendChild(tkReloadScript);
+      }
+    }
+  }
+
+  // ============================================================
+  // 🔐 MODAL REDES SOCIALES - Ctrl + Shift + R
+  // ============================================================
+
+  // Keyboard shortcut
+  document.addEventListener("keydown", (e) => {
+    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "r") {
+      e.preventDefault();
+      const code = prompt("INGRESE CÓDIGO DE ACCESO DE SEGURIDAD DEL BÚNKER (REDES):");
+      if (code === "bunker2026") {
+        const modalEl = document.getElementById("modal-nueva-red");
+        if (modalEl) {
+          const modalInst = bootstrap.Modal.getOrCreateInstance(modalEl);
+          modalInst.show();
+          const passInput = document.getElementById("modal-password-red");
+          if (passInput) passInput.value = code;
+          cargarPreviewPosts();
+        }
+      } else if (code !== null) {
+        alert("CÓDIGO DE ACCESO INCORRECTO. ACCESO DENEGADO.");
+      }
+    }
+  });
+
+  // Content type toggle (Embed <-> URL)
+  document.querySelectorAll('input[name="content-type-red"]').forEach(radio => {
+    radio.addEventListener("change", (e) => {
+      const campoEmbed = document.getElementById("campo-embed");
+      const campoUrl = document.getElementById("campo-url");
+      if (e.target.value === "embed") {
+        campoEmbed.classList.remove("d-none");
+        campoUrl.classList.add("d-none");
+      } else {
+        campoEmbed.classList.add("d-none");
+        campoUrl.classList.remove("d-none");
+      }
+    });
+  });
+
+  // Load current posts preview in modal
+  async function cargarPreviewPosts() {
+    const previewContainer = document.getElementById("red-posts-preview");
+    if (!previewContainer) return;
+
+    try {
+      const response = await fetch("/api/redes");
+      const data = await response.json();
+      
+      let html = '';
+      const redes = ['instagram', 'tiktok', 'wattpad'];
+      const icons = { instagram: 'bi-instagram text-neon-magenta', tiktok: 'bi-tiktok text-neon-cyan', wattpad: 'bi-book-half text-warning' };
+
+      redes.forEach(red => {
+        const posts = data[red] || [];
+        html += `<div class="mb-3">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <i class="bi ${icons[red]}"></i>
+            <span class="text-white text-uppercase fw-bold" style="font-size: 0.75rem;">${red} (${posts.length}/2)</span>
+          </div>`;
+        
+        if (posts.length === 0) {
+          html += `<div class="ps-4 text-white-50" style="font-size: 0.7rem;">[ SIN_POSTS ]</div>`;
+        } else {
+          posts.forEach((post, idx) => {
+            const fecha = post.createdAt ? new Date(post.createdAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A';
+            const preview = post.embedHtml 
+              ? (post.embedHtml.substring(0, 80) + '...') 
+              : (post.url || 'Contenido legacy');
+            html += `
+              <div class="d-flex justify-content-between align-items-start ps-4 mb-2 py-1 border-start border-secondary border-opacity-25">
+                <div style="font-size: 0.7rem; max-width: 80%;">
+                  <div class="text-white">${idx === 0 ? '<span class="badge bg-info bg-opacity-25 text-info me-1" style="font-size: 0.6rem;">ÚLTIMO</span>' : ''}${fecha}</div>
+                  <div class="text-white-50 text-truncate" style="max-width: 350px;">${preview.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+                </div>
+                <button class="btn btn-outline-danger btn-sm px-2 py-0 border-0 delete-post-btn" data-red="${red}" data-id="${post.id}" style="font-size: 0.65rem;">
+                  <i class="bi bi-trash3"></i>
+                </button>
+              </div>`;
+          });
+        }
+        html += `</div>`;
+      });
+
+      previewContainer.innerHTML = html;
+
+      // Attach delete handlers
+      previewContainer.querySelectorAll('.delete-post-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const red = btn.dataset.red;
+          const id = btn.dataset.id;
+          const password = document.getElementById('modal-password-red').value;
+
+          if (!password) {
+            alert('⚠ Introduce el código de acceso primero.');
+            return;
+          }
+
+          if (!confirm(`¿Eliminar este post de ${red.toUpperCase()}?`)) return;
+
+          try {
+            const res = await fetch(`/api/redes/eliminar/${red}/${id}`, {
+              method: 'DELETE',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ password })
+            });
+            const result = await res.json();
+            if (res.ok) {
+              cargarPreviewPosts();
+              cargarRedes();
+            } else {
+              alert('❌ ' + (result.error || 'Error desconocido.'));
+            }
+          } catch (err) {
+            alert('❌ Error de conexión.');
+          }
+        });
+      });
+
+    } catch (error) {
+      previewContainer.innerHTML = '<div class="text-center text-danger py-2">[ ERROR_LOADING ]</div>';
+    }
+  }
+
+  // Form submit handler
+  const formRed = document.getElementById("form-nueva-red");
+  if (formRed) {
+    formRed.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const password = document.getElementById("modal-password-red").value;
+      const red = document.getElementById("red-tipo").value;
+      const contentType = document.querySelector('input[name="content-type-red"]:checked').value;
+
+      let embedHtml = '';
+
+      if (contentType === 'embed') {
+        embedHtml = document.getElementById("red-embed-html").value.trim();
+        if (!embedHtml) {
+          alert('⚠ Pega el código embed/HTML.');
+          return;
+        }
+      } else {
+        const url = document.getElementById("red-url").value.trim();
+        if (!url) {
+          alert('⚠ Introduce la URL del post.');
+          return;
+        }
+        // Wrap URL in an styled anchor card
+        embedHtml = `<a href="${url}" target="_blank" class="social-url-card d-block text-decoration-none p-3">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-box-arrow-up-right"></i>
+            <span class="small font-monospace text-truncate">${url}</span>
+          </div>
+          <div class="mt-2 text-xs opacity-75">Haz click para ver el post →</div>
+        </a>`;
+      }
+
+      if (!password) {
+        alert('⚠ Introduce el código de acceso.');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/redes/nuevo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ red, embedHtml, password })
+        });
+        const result = await res.json();
+        if (res.ok) {
+          // Clear fields
+          document.getElementById("red-embed-html").value = '';
+          document.getElementById("red-url").value = '';
+          // Refresh preview and feed
+          cargarPreviewPosts();
+          cargarRedes();
+          const modalEl = document.getElementById("modal-nueva-red");
+          if (modalEl) {
+            const modalInst = bootstrap.Modal.getInstance(modalEl);
+            if (modalInst) modalInst.hide();
+          }
+          alert('✅ ' + result.message);
+        } else {
+          alert('❌ ' + (result.error || 'Error desconocido.'));
+        }
+      } catch (err) {
+        alert('❌ Error de conexión con el servidor.');
+      }
+    });
+  }
+
+  // Inicialización de logs en carga
+  cargarLogsYVisores(true);
+
+  // Auto-sync del monitor de estado para reflejar cambios hechos en cualquier pestaña/sesión.
+  setInterval(() => {
+    cargarLogsYVisores();
+  }, 8000);
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      cargarLogsYVisores(true);
+    }
+  });
+  cargarEntrevistas();
+  cargarJuegos();
+  cargarRedes();
+
+  // Ejecutamos la carga inicial
+  inicializarMarquesinaEmotes();
+});
