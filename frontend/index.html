@@ -1301,8 +1301,10 @@
                   <select id="lib-estado" class="form-select form-select-sm bg-black border-secondary text-white">
                     <option value="leido">LEÍDO / RESEÑADO</option>
                     <option value="tbr">TBR (EN COLA)</option>
+                    <option value="milibro">MI PROPIO LIBRO (PUBLICADO)</option>
                   </select>
                 </div>
+
 
                 <div class="mb-3">
                   <label class="form-label text-neon-magenta small">&gt; PUNTUACIÓN_SINCRO (1-5)</label>
@@ -1375,11 +1377,24 @@
                   <input type="file" id="lib-cover-file" class="form-control form-control-sm bg-black border-secondary text-white" accept="image/*">
                   <div class="form-text text-white small mt-1">// Opcional: selecciona un archivo de imagen local</div>
                 </div>
-
                 <div class="mb-3">
                   <label class="form-label text-neon-magenta small">&gt; PATH_PORTADA_IMG (MANUAL)</label>
                   <input type="text" id="lib-cover" class="form-control form-control-sm bg-black border-secondary text-white" value="/assets/images/jony.jpg">
                 </div>
+
+
+                <!-- ENLACES DE MI PROPIO LIBRO -->
+                <div class="mb-3 d-none" id="own-book-links-container">
+                  <div class="mb-3">
+                    <label class="form-label text-neon-magenta small">&gt; ENLACE_WATTPAD (Opcional)</label>
+                    <input type="url" id="lib-link-wattpad" class="form-control form-control-sm bg-black border-secondary text-white" placeholder="https://www.wattpad.com/...">
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label text-neon-magenta small">&gt; ENLACE_AMAZON (Opcional)</label>
+                    <input type="url" id="lib-link-amazon" class="form-control form-control-sm bg-black border-secondary text-white" placeholder="https://www.amazon.es/...">
+                  </div>
+                </div>
+
 
                 <!-- CONTROLES DE FAVORITOS Y PODIO -->
                 <div class="form-check mb-3 mt-3">

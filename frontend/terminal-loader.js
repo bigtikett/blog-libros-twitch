@@ -9,6 +9,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let swiperFavoritos = null;
 
+  const ADMIN_SESSION_KEY = "bunker_admin_authenticated";
+  let isAdmin = sessionStorage.getItem(ADMIN_SESSION_KEY) === "1";
+
+
   function setLogsCanvasOpen(isOpen) {
     if (!logsCanvasPanel) return;
     logsCanvasPanel.classList.toggle("is-open", isOpen);
@@ -264,6 +268,16 @@ document.addEventListener("DOMContentLoaded", () => {
       e.preventDefault();
       const code = prompt("INGRESE CÓDIGO DE ACCESO DE SEGURIDAD:");
       if (code === "bunker2026") {
+        sessionStorage.setItem(ADMIN_SESSION_KEY, "1");
+        isAdmin = true;
+
+        // Re-load dynamic views immediately to display delete buttons
+        cargarJuegos();
+        const activeCartridge = document.querySelector("#library-cartridge-selector .cartridge-btn.active");
+        if (activeCartridge) {
+          cargarFicheroBinario(activeCartridge.getAttribute("data-target"), activeCartridge);
+        }
+
         const modalEl = document.getElementById("modal-nuevo-libro");
         if (modalEl) {
           const modalInst = bootstrap.Modal.getOrCreateInstance(modalEl);
@@ -277,6 +291,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   });
+
 
   // Dynamic show/hide podium selector based on favorito checkbox
   const favCheckbox = document.getElementById("lib-favorito");
@@ -292,6 +307,25 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
+
+  // Dynamic show/hide own book links based on estado select
+  const estadoSelect = document.getElementById("lib-estado");
+
+  const ownBookLinksContainer = document.getElementById("own-book-links-container");
+  if (estadoSelect && ownBookLinksContainer) {
+    estadoSelect.addEventListener("change", function() {
+      if (this.value === "milibro") {
+        ownBookLinksContainer.classList.remove("d-none");
+      } else {
+        ownBookLinksContainer.classList.add("d-none");
+        const wattpadInput = document.getElementById("lib-link-wattpad");
+        const amazonInput = document.getElementById("lib-link-amazon");
+        if (wattpadInput) wattpadInput.value = "";
+        if (amazonInput) amazonInput.value = "";
+      }
+    });
+  }
+
 
   // 2. Submit handler for form-nuevo-libro
   const formNuevoLibro = document.getElementById("form-nuevo-libro");
@@ -321,6 +355,8 @@ document.addEventListener("DOMContentLoaded", () => {
           password: document.getElementById("modal-password").value,
           favorito: document.getElementById("lib-favorito").checked,
           podio: document.getElementById("lib-podio").value ? parseInt(document.getElementById("lib-podio").value) : null,
+          linkWattpad: document.getElementById("lib-link-wattpad") ? document.getElementById("lib-link-wattpad").value.trim() : "",
+          linkAmazon: document.getElementById("lib-link-amazon") ? document.getElementById("lib-link-amazon").value.trim() : "",
           coverFileData: coverData,
           coverFileName: fileName
         };
@@ -344,6 +380,7 @@ document.addEventListener("DOMContentLoaded", () => {
               // Reset form and close modal
               formNuevoLibro.reset();
               if (podioContainer) podioContainer.classList.add("d-none");
+              if (ownBookLinksContainer) ownBookLinksContainer.classList.add("d-none");
               const modalEl = document.getElementById("modal-nuevo-libro");
               if (modalEl) {
                 const modalInst = bootstrap.Modal.getInstance(modalEl);
@@ -667,15 +704,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const isTbr = urlPath.includes("tbr.html");
     const isFavoritos = urlPath.includes("favoritos.html");
     const isCitas = urlPath.includes("citas.html");
-    if (!isLeidos && !isTbr && !isFavoritos && !isCitas) return;
+    const isMiLibro = urlPath.includes("milibro.html");
+    if (!isLeidos && !isTbr && !isFavoritos && !isCitas && !isMiLibro) return;
 
     try {
       logTerminal.textContent = `> Syncing library database sector...`;
 
-      if (isLeidos || isTbr || isFavoritos) {
+      if (isLeidos || isTbr || isFavoritos || isMiLibro) {
         const response = await fetch("/api/biblioteca");
         if (!response.ok) throw new Error("API_ERROR");
         const libros = await response.json();
+
 
         if (isLeidos) {
           const contenedorLeidos = document.getElementById("contenedor-leidos");
@@ -741,9 +780,14 @@ document.addEventListener("DOMContentLoaded", () => {
                           POR <span class="${autorClass}">${libro.autor}</span> // GÉNERO: <span class="${generoClass}">${libro.genero || 'CYBERPUNK'}</span>
                         </div>
                       </div>
-                      <div class="${ratingClass} fw-bold fs-5 font-monospace d-flex align-items-center gap-1">
-                        ${starsHTML}
-                        <span class="text-white ms-1" style="font-size: 14px;">${rating.toFixed(1)}</span>
+                      <div class="d-flex align-items-center gap-3">
+                        <div class="${ratingClass} fw-bold fs-5 font-monospace d-flex align-items-center gap-1">
+                          ${starsHTML}
+                          <span class="text-white ms-1" style="font-size: 14px;">${rating.toFixed(1)}</span>
+                        </div>
+                        ${isAdmin ? `
+                          <button type="button" class="btn btn-outline-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-book" data-id="${libro.id}" style="font-size: 0.62rem; padding: 2px 6px;">[ ELIMINAR ]</button>
+                        ` : ''}
                       </div>
                     </div>
                     <hr class="border-secondary border-opacity-25 my-3">
@@ -801,13 +845,16 @@ document.addEventListener("DOMContentLoaded", () => {
             const cardHTML = `
               <div class="col">
                 <div class="card h-100 tbr-cyber-card border-0 shadow-sm overflow-hidden" style="border: 1px solid rgba(255,255,255,0.05) !important;">
-                  <div class="tbr-cover-container">
+                  <div class="tbr-cover-container position-relative">
                     <img src="${libro.cover || '/assets/images/jony.jpg'}" alt="${libro.titulo}">
                     <div class="position-absolute top-0 start-0 m-2">
                       <span class="badge bg-dark font-monospace text-xs" style="background: rgba(0,0,0,0.85) !important; border: 1px solid ${hypeHex} !important; color: ${hypeHex} !important; text-shadow: 0 0 6px ${hypeHex};">
                         ${badgeText}
                       </span>
                     </div>
+                    ${isAdmin ? `
+                      <button type="button" class="btn btn-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-book" data-id="${libro.id}" style="position: absolute; top: 10px; right: 10px; z-index: 10; font-size: 0.62rem; padding: 2px 6px; background: rgba(220,53,69,0.85); border: 1px solid rgba(220,53,69,0.5);">[ ELIMINAR ]</button>
+                    ` : ''}
                   </div>
                   <div class="card-body d-flex flex-column justify-content-between p-3 text-white">
                     <div>
@@ -866,7 +913,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                     <div class="card-body p-2 d-flex flex-column justify-content-between">
                       <div>
-                        <i class="bi bi-award-fill text-info fs-4 d-block mb-1"></i>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                          <i class="bi bi-award-fill text-info fs-4 d-block m-0"></i>
+                          \${isAdmin ? `<button type="button" class="btn btn-outline-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-book" data-id="\${t2.id}" style="font-size: 0.55rem; padding: 1px 4px;">[ X ]</button>` : ''}
+                        </div>
                         <h5 class="fw-bold mb-1 ${t2TitleClass} text-uppercase" style="font-size: 15px;">${t2.titulo}</h5>
                         <p class="text-white small mb-2 font-monospace" style="font-size: 11px;">POR: <span class="${t2AutorClass}">${t2.autor}</span></p>
                         <div class="d-flex flex-wrap gap-1 justify-content-center mb-3">
@@ -904,7 +954,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                     <div class="card-body p-2 d-flex flex-column justify-content-between">
                       <div>
-                        <i class="bi bi-crown-fill text-warning fs-3 d-block mb-1"></i>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                          <i class="bi bi-crown-fill text-warning fs-3 d-block m-0"></i>
+                          \${isAdmin ? `<button type="button" class="btn btn-outline-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-book" data-id="\${t1.id}" style="font-size: 0.55rem; padding: 1px 4px;">[ X ]</button>` : ''}
+                        </div>
                         <h5 class="fw-bold mb-1 ${t1TitleClass} text-uppercase" style="font-size: 17px;">${t1.titulo}</h5>
                         <p class="text-white small mb-2 font-monospace" style="font-size: 11px;">POR: <span class="${t1AutorClass}">${t1.autor}</span></p>
                         <div class="d-flex flex-wrap gap-1 justify-content-center mb-3">
@@ -942,7 +995,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                     <div class="card-body p-2 d-flex flex-column justify-content-between">
                       <div>
-                        <i class="bi bi-award text-danger fs-4 d-block mb-1"></i>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                          <i class="bi bi-award text-danger fs-4 d-block m-0"></i>
+                          \${isAdmin ? `<button type="button" class="btn btn-outline-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-book" data-id="\${t3.id}" style="font-size: 0.55rem; padding: 1px 4px;">[ X ]</button>` : ''}
+                        </div>
                         <h5 class="fw-bold mb-1 ${t3TitleClass} text-uppercase" style="font-size: 15px;">${t3.titulo}</h5>
                         <p class="text-white small mb-2 font-monospace" style="font-size: 11px;">POR: <span class="${t3AutorClass}">${t3.autor}</span></p>
                         <div class="d-flex flex-wrap gap-1 justify-content-center mb-3">
@@ -977,7 +1033,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 const slideHTML = `
                   <div class="swiper-slide">
-                    <div class="cyber-book-card d-flex flex-column align-items-center p-3 h-100 text-center">
+                    <div class="cyber-book-card d-flex flex-column align-items-center p-3 h-100 text-center position-relative">
+                      \${isAdmin ? `
+                        <button type="button" class="btn btn-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-book" data-id="\${libro.id}" style="position: absolute; top: 10px; right: 10px; z-index: 10; font-size: 0.55rem; padding: 1px 4px; background: rgba(220,53,69,0.85); border: 1px solid rgba(220,53,69,0.5);">[ X ]</button>
+                      ` : ''}
                       <div class="cyber-cover-wrap mb-3">
                         <img src="${libro.cover || 'https://via.placeholder.com/200x300'}" class="cyber-img" alt="${libro.titulo}">
                       </div>
@@ -995,8 +1054,90 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             inicializarSwiperFavoritos();
           }
+        } else if (isMiLibro) {
+          const contenedorAdicionales = document.getElementById("mis-libros-adicionales");
+          if (contenedorAdicionales) {
+            contenedorAdicionales.innerHTML = "";
+
+            const misLibros = libros.filter((l) => l.estado === "milibro");
+            misLibros.forEach((libro, index) => {
+              const colors = ["text-neon-magenta", "text-neon-cyan", "text-neon-gold", "text-neon-purple"];
+              const colorClass = colors[index % colors.length];
+
+              const colorTitulo = libro.colorTitulo || 'white';
+              const titleClass = colorTitulo === 'white' ? 'text-white' : `text-neon-${colorTitulo}`;
+
+              const colorAutor = libro.colorAutor || 'purple';
+              const autorClass = `text-neon-${colorAutor}`;
+
+              const colorGenero = libro.colorGenero || 'info';
+              const generoClass = `text-neon-${colorGenero}`;
+
+              const colorResena = libro.colorResena || 'white';
+              const resenaClass = colorResena === 'white' ? 'text-white' : `text-neon-${colorResena}`;
+
+              const wattpadBtn = libro.linkWattpad 
+                ? `<a href="${libro.linkWattpad}" target="_blank" class="btn btn-gradient-launch btn-lg rounded-pill px-4 py-3 shadow font-monospace text-xs text-uppercase fw-bold"><i class="bi bi-book-half me-2"></i> Leer en Wattpad</a>`
+                : "";
+              
+              const amazonBtn = libro.linkAmazon
+                ? `<a href="${libro.linkAmazon}" target="_blank" class="btn btn-amazon-gradient btn-lg rounded-pill px-4 py-3 shadow font-monospace text-xs text-uppercase fw-bold"><i class="bi bi-cart3 me-2"></i> Comprar en Amazon</a>`
+                : "";
+
+              const rowHTML = `
+                <div class="row align-items-center g-5 my-4 position-relative">
+                  \${isAdmin ? `
+                    <div class="position-absolute top-0 end-0 m-3 text-end" style="z-index: 100;">
+                      <button type="button" class="btn btn-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-book" data-id="\${libro.id}" style="font-size: 0.62rem; padding: 2px 6px; background: rgba(220,53,69,0.85); border: 1px solid rgba(220,53,69,0.5);">[ ELIMINAR ]</button>
+                    </div>
+                  ` : ''}
+                  <!-- Columna Izquierda: Portada 3D con halo de luz animado -->
+                  <div class="col-lg-5 text-center pe-lg-5">
+                    <div class="book-container mx-auto">
+                      <div class="book-glow-aura"></div>
+                      <img src="${libro.cover || '/assets/images/jony.jpg'}" class="img-fluid book-cover-3d" alt="${libro.titulo}" />
+                      <div class="book-shadow"></div>
+                    </div>
+                  </div>
+
+                  <!-- Columna Derecha: Sinopsis y HUD de Detalles -->
+                  <div class="col-lg-7">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                      <span class="hud-status-dot"></span>
+                      <span class="badge bg-dark border border-success text-success fw-bold px-3 py-2 rounded-1 text-uppercase tracking-wider text-xs">
+                        [ DIRECT_LINK_ACTIVE // DISPONIBLE ]
+                      </span>
+                    </div>
+
+                    <h2 class="display-3 fw-black mb-1 text-glow neon-flicker-title ${titleClass}">
+                      ${libro.titulo}
+                    </h2>
+
+                    <h5 class="fw-medium mb-4 font-monospace ${autorClass}" style="font-size: 13px">
+                      // SAGA: CYBER_NETWORKS // POR: ${libro.autor} // GÉNERO: <span class="${generoClass}">${libro.genero || 'SCI-FI'}</span>
+                    </h5>
+
+                    <!-- Caja de Sinopsis Cyber-Datapad -->
+                    <div class="cyber-synopsis-box text-white mb-5 font-monospace" style="font-size: 13px; line-height: 1.7">
+                      <p class="m-0 ${resenaClass}">
+                        ${libro.resena || '// No review logged for this sector.'}
+                      </p>
+                    </div>
+
+                    <!-- Botones de Acción HUD -->
+                    <div class="d-flex flex-wrap gap-3 align-items-center">
+                      ${wattpadBtn}
+                      ${amazonBtn}
+                    </div>
+                  </div>
+                </div>
+              `;
+              contenedorAdicionales.innerHTML += rowHTML;
+            });
+          }
         }
       }
+
 
       if (isCitas) {
         const response = await fetch("/api/citas");
@@ -1024,7 +1165,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
               const cardHTML = `
                 <div class="col">
-                  <div class="card h-100 border-0 quote-cyber-card p-4 text-white">
+                  <div class="card h-100 border-0 quote-cyber-card p-4 text-white position-relative">
+                    \${isAdmin ? `
+                      <button type="button" class="btn btn-outline-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-quote" data-id="\${cita.id}" style="position: absolute; top: 10px; right: 10px; z-index: 10; font-size: 0.62rem; padding: 2px 6px;">[ ELIMINAR ]</button>
+                    ` : ''}
                     <div class="fs-1 mb-2" style="color: ${labelHex}; text-shadow: 0 0 10px ${labelHex};"><i class="bi bi-quote"></i></div>
                     <figure class="mb-0">
                       <blockquote class="blockquote">
@@ -1062,7 +1206,12 @@ document.addEventListener("DOMContentLoaded", () => {
                   <div class="card h-100 border-0 quote-spicy-card p-4 text-white">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                       <div class="fs-1" style="color: ${labelHex}; text-shadow: 0 0 10px ${labelHex};"><i class="bi ${cita.label.includes('CLIP') ? 'bi-chat-heart-fill' : 'bi-fire'}"></i></div>
-                      <span class="badge rounded-1 bg-dark font-monospace text-xs" style="background: rgba(0,0,0,0.85) !important; border: 1px solid ${labelHex} !important; color: ${labelHex} !important; text-shadow: 0 0 6px ${labelHex};">[ ${cita.label} ]</span>
+                      <div class="d-flex align-items-center gap-2">
+                        <span class="badge rounded-1 bg-dark font-monospace text-xs" style="background: rgba(0,0,0,0.85) !important; border: 1px solid ${labelHex} !important; color: ${labelHex} !important; text-shadow: 0 0 6px ${labelHex};">[ ${cita.label} ]</span>
+                        \${isAdmin ? `
+                          <button type="button" class="btn btn-outline-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-quote" data-id="\${cita.id}" style="font-size: 0.62rem; padding: 2px 6px;">[ ELIMINAR ]</button>
+                        ` : ''}
+                      </div>
                     </div>
                     <figure class="mb-0">
                       <blockquote class="blockquote">
@@ -1262,11 +1411,13 @@ document.addEventListener("DOMContentLoaded", () => {
         const cardHTML = `
           <div class="col-md-6 col-xl-4">
             <div class="card card-gaming-hub h-100 border-0 overflow-hidden position-relative">
+              \${isAdmin ? `
               <button class="btn btn-outline-danger font-monospace btn-delete-game" 
-                      data-id="${juego.id}" 
+                      data-id="\${juego.id}" 
                       style="position: absolute; top: 10px; left: 10px; z-index: 10; background: rgba(0,0,0,0.85); border-radius: 0; font-size: 0.65rem; padding: 2px 5px; border-color: rgba(220,53,69,0.5);">
                 [ ELIMINAR ]
               </button>
+              ` : ''}
 
               <div class="position-relative gaming-img-wrapper">
                 <img src="${coverImg}" class="card-img-top img-gaming-cover" alt="${juego.titulo}" />
@@ -1307,7 +1458,9 @@ document.addEventListener("DOMContentLoaded", () => {
       document.querySelectorAll(".btn-delete-game").forEach(btn => {
         btn.addEventListener("click", function(e) {
           e.preventDefault();
+          if (!isAdmin) return;
           const gameId = this.getAttribute("data-id");
+          if (!confirm("¿Eliminar este juego del registro?")) return;
           const code = prompt("INGRESE CÓDIGO DE ACCESO DE SEGURIDAD PARA ELIMINAR EL JUEGO:");
           if (code === "bunker2026") {
             eliminarJuego(gameId, code);
@@ -1351,6 +1504,102 @@ document.addEventListener("DOMContentLoaded", () => {
       logTerminal.textContent = `> ERR: Purge operation failed on game register.`;
     }
   }
+
+  // Event delegation for deleting books in the library
+  document.addEventListener("click", async (e) => {
+    const btn = e.target.closest(".btn-delete-book");
+    if (!btn) return;
+    e.preventDefault();
+    if (!isAdmin) return;
+
+    const bookId = btn.getAttribute("data-id");
+    if (!bookId) return;
+
+    if (!confirm("¿Está seguro de que desea eliminar este libro del registro?")) return;
+
+    const code = prompt("INGRESE CÓDIGO DE ACCESO DE SEGURIDAD PARA ELIMINAR EL LIBRO:");
+    if (code === "bunker2026") {
+      try {
+        const response = await fetch("/api/biblioteca/eliminar", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ id: bookId, password: code })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "FAIL_DELETION");
+        }
+
+        const data = await response.json();
+        console.log(`[SYS]: ${data.message}`);
+        logTerminal.textContent = `> ${data.message}`;
+
+        // Re-load current active cartridge in library
+        const activeCartridge = document.querySelector("#library-cartridge-selector .cartridge-btn.active");
+        if (activeCartridge) {
+          cargarFicheroBinario(activeCartridge.getAttribute("data-target"), activeCartridge);
+        }
+        cargarLogsYVisores();
+      } catch (err) {
+        console.error("Error deleting book:", err);
+        alert(`ERROR AL ELIMINAR: ${err.message}`);
+        logTerminal.textContent = `> ERR: Purge operation failed on library register.`;
+      }
+    } else if (code !== null) {
+      alert("CÓDIGO DE ACCESO INCORRECTO. ACCESO DENEGADO.");
+    }
+  });
+
+  // Event delegation for deleting quotes in the library
+  document.addEventListener("click", async (e) => {
+    const btn = e.target.closest(".btn-delete-quote");
+    if (!btn) return;
+    e.preventDefault();
+    if (!isAdmin) return;
+
+    const quoteId = btn.getAttribute("data-id");
+    if (!quoteId) return;
+
+    if (!confirm("¿Está seguro de que desea eliminar esta cita del registro?")) return;
+
+    const code = prompt("INGRESE CÓDIGO DE ACCESO DE SEGURIDAD PARA ELIMINAR LA CITA:");
+    if (code === "bunker2026") {
+      try {
+        const response = await fetch("/api/citas/eliminar", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ id: quoteId, password: code })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "FAIL_DELETION");
+        }
+
+        const data = await response.json();
+        console.log(`[SYS]: ${data.message}`);
+        logTerminal.textContent = `> ${data.message}`;
+
+        // Re-load current active cartridge in library (which should be citations)
+        const activeCartridge = document.querySelector("#library-cartridge-selector .cartridge-btn.active");
+        if (activeCartridge) {
+          cargarFicheroBinario(activeCartridge.getAttribute("data-target"), activeCartridge);
+        }
+        cargarLogsYVisores();
+      } catch (err) {
+        console.error("Error deleting quote:", err);
+        alert(`ERROR AL ELIMINAR: ${err.message}`);
+        logTerminal.textContent = `> ERR: Purge operation failed on quote register.`;
+      }
+    } else if (code !== null) {
+      alert("CÓDIGO DE ACCESO INCORRECTO. ACCESO DENEGADO.");
+    }
+  });
 
   // ============================================================
   // 📡 SOCIAL FEEDS - Embed/iframe rendering with bouncy badge

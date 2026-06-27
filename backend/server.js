@@ -593,6 +593,40 @@ app.post('/api/biblioteca/nuevo', (req, res) => {
   }
 });
 
+app.post('/api/biblioteca/eliminar', (req, res) => {
+  try {
+    const { id, password } = req.body;
+    
+    if (password !== BIBLIOTECA_PASSWORD) {
+      return res.status(401).json({ error: 'Código de acceso incorrecto. Interrupción del sector.' });
+    }
+
+    if (!fs.existsSync(RUTA_BIBLIOTECA)) {
+      return res.status(404).json({ error: 'Sector de base de datos no encontrado.' });
+    }
+
+    let datosActuales = JSON.parse(fs.readFileSync(RUTA_BIBLIOTECA, 'utf-8'));
+    const libroAEliminar = datosActuales.find(l => l.id === id);
+
+    if (!libroAEliminar) {
+      return res.status(404).json({ error: 'Libro no encontrado en el registro.' });
+    }
+
+    datosActuales = datosActuales.filter(l => l.id !== id);
+    fs.writeFileSync(RUTA_BIBLIOTECA, JSON.stringify(datosActuales, null, 2));
+
+    const descLog = `Eliminado libro: ${libroAEliminar.titulo} [OFFLINE]`;
+    const crtDescLog = `El libro "${libroAEliminar.titulo}" ha sido purgado del registro de la biblioteca.`;
+    agregarLog("DATABASE", descLog, crtDescLog, "text-danger");
+
+    res.json({ success: true, message: 'Terminal: Registro de libro eliminado.', id });
+  } catch (error) {
+    console.error("Error eliminando el libro:", error);
+    res.status(500).json({ error: 'Fallo en la purga del bloque de datos.' });
+  }
+});
+
+
 
 // ========================================================
 // 🖳 FUNCIÓN AUXILIAR: AGREGA REGISTROS DE ACTIVIDAD (LOGS)
@@ -664,6 +698,40 @@ app.post('/api/citas/nuevo', (req, res) => {
     res.status(500).json({ error: 'Fallo en la escritura del bloque de datos.' });
   }
 });
+
+app.post('/api/citas/eliminar', (req, res) => {
+  try {
+    const { id, password } = req.body;
+    
+    if (password !== BIBLIOTECA_PASSWORD) {
+      return res.status(401).json({ error: 'Código de acceso incorrecto. Interrupción del sector.' });
+    }
+
+    if (!fs.existsSync(RUTA_CITAS)) {
+      return res.status(404).json({ error: 'Sector de base de datos no encontrado.' });
+    }
+
+    let datosActuales = JSON.parse(fs.readFileSync(RUTA_CITAS, 'utf-8'));
+    const citaAEliminar = datosActuales.find(c => c.id === id);
+
+    if (!citaAEliminar) {
+      return res.status(404).json({ error: 'Cita no encontrada en el registro.' });
+    }
+
+    datosActuales = datosActuales.filter(c => c.id !== id);
+    fs.writeFileSync(RUTA_CITAS, JSON.stringify(datosActuales, null, 2));
+
+    const descLog = `Eliminada cita de: ${citaAEliminar.autor} [OFFLINE]`;
+    const crtDescLog = `La cita de "${citaAEliminar.autor}" ha sido purgada del registro de citas.`;
+    agregarLog("CITAS", descLog, crtDescLog, "text-danger");
+
+    res.json({ success: true, message: 'Terminal: Registro de cita eliminado.', id });
+  } catch (error) {
+    console.error("Error eliminando la cita:", error);
+    res.status(500).json({ error: 'Fallo en la purga del bloque de datos.' });
+  }
+});
+
 
 // ========================================================
 // 🖳 ENDPOINT PARA LEER LOS LOGS DE ACTIVIDAD (GET)
