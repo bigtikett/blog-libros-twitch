@@ -1592,66 +1592,115 @@ document.addEventListener("DOMContentLoaded", () => {
   // Form submit handler
   const formRed = document.getElementById("form-nueva-red");
   if (formRed) {
-    formRed.addEventListener("submit", async (e) => {
+    formRed.addEventListener("submit", function (e) {
       e.preventDefault();
+
       const password = document.getElementById("modal-password-red").value;
       const red = document.getElementById("red-tipo").value;
       const contentType = document.querySelector('input[name="content-type-red"]:checked').value;
 
-      let embedHtml = '';
+      const fileInput = document.getElementById("red-image-file");
+      const file = fileInput ? fileInput.files[0] : null;
 
-      if (contentType === 'embed') {
-        embedHtml = document.getElementById("red-embed-html").value.trim();
-        if (!embedHtml) {
-          alert('⚠ Pega el código embed/HTML.');
-          return;
-        }
-      } else {
-        const url = document.getElementById("red-url").value.trim();
-        if (!url) {
-          alert('⚠ Introduce la URL del post.');
-          return;
-        }
-        // Wrap URL in an styled anchor card
-        embedHtml = `<a href="${url}" target="_blank" class="social-url-card d-block text-decoration-none p-3">
-          <div class="d-flex align-items-center gap-2">
-            <i class="bi bi-box-arrow-up-right"></i>
-            <span class="small font-monospace text-truncate">${url}</span>
-          </div>
-          <div class="mt-2 text-xs opacity-75">Haz click para ver el post →</div>
-        </a>`;
-      }
+      const submitData = async (imageData = null, imageFileName = null) => {
+        let embedHtml = '';
 
-      if (!password) {
-        alert('⚠ Introduce el código de acceso.');
-        return;
-      }
-
-      try {
-        const res = await fetch('/api/redes/nuevo', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ red, embedHtml, password })
-        });
-        const result = await res.json();
-        if (res.ok) {
-          // Clear fields
-          document.getElementById("red-embed-html").value = '';
-          document.getElementById("red-url").value = '';
-          // Refresh preview and feed
-          cargarPreviewPosts();
-          cargarRedes();
-          const modalEl = document.getElementById("modal-nueva-red");
-          if (modalEl) {
-            const modalInst = bootstrap.Modal.getInstance(modalEl);
-            if (modalInst) modalInst.hide();
+        if (contentType === 'embed') {
+          embedHtml = document.getElementById("red-embed-html").value.trim();
+          if (!embedHtml) {
+            alert('⚠ Pega el código embed/HTML.');
+            return;
           }
-          alert('✅ ' + result.message);
         } else {
-          alert('❌ ' + (result.error || 'Error desconocido.'));
+          const url = document.getElementById("red-url").value.trim();
+          const imageUrlText = document.getElementById("red-image-url").value.trim();
+          
+          if (!url) {
+            alert('⚠ Introduce la URL del post.');
+            return;
+          }
+
+          // Si hay archivo, usamos el placeholder para que el backend lo reemplace.
+          // Si no, usamos el texto de la URL de imagen (si hay).
+          let imageUrl = '';
+          if (file) {
+            imageUrl = '__IMAGE_PLACEHOLDER__';
+          } else if (imageUrlText) {
+            imageUrl = imageUrlText;
+          }
+
+          let imageHtml = '';
+          if (imageUrl) {
+            imageHtml = `<div class="social-post-image-wrapper mb-2" style="max-height: 250px; overflow: hidden; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1);">
+              <img src="${imageUrl}" alt="Post preview" class="img-fluid w-100" style="object-fit: cover; max-height: 250px;">
+            </div>`;
+          }
+
+          // Wrap URL in an styled anchor card with image preview above
+          embedHtml = `<a href="${url}" target="_blank" class="social-url-card d-block text-decoration-none p-3">
+            ${imageHtml}
+            <div class="d-flex align-items-center gap-2">
+              <i class="bi bi-box-arrow-up-right text-neon-cyan"></i>
+              <span class="small font-monospace text-truncate text-white-50">${url}</span>
+            </div>
+            <div class="mt-2 text-xs text-neon-cyan">Haz click para ver el post →</div>
+          </a>`;
         }
-      } catch (err) {
-        alert('❌ Error de conexión con el servidor.');
+
+        if (!password) {
+          alert('⚠ Introduce el código de acceso.');
+          return;
+        }
+
+        try {
+          const res = await fetch('/api/redes/nuevo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              red, 
+              embedHtml, 
+              password, 
+              imageFileData: imageData, 
+              imageFileName: imageFileName 
+            })
+          });
+          const result = await res.json();
+          if (res.ok) {
+            // Clear fields
+            document.getElementById("red-embed-html").value = '';
+            document.getElementById("red-url").value = '';
+            if (fileInput) fileInput.value = '';
+            document.getElementById("red-image-url").value = '';
+
+            // Refresh preview and feed
+            cargarPreviewPosts();
+            cargarRedes();
+            const modalEl = document.getElementById("modal-nueva-red");
+            if (modalEl) {
+              const modalInst = bootstrap.Modal.getInstance(modalEl);
+              if (modalInst) modalInst.hide();
+            }
+            alert('✅ ' + result.message);
+          } else {
+            alert('❌ ' + (result.error || 'Error desconocido.'));
+          }
+        } catch (err) {
+          alert('❌ Error de conexión con el servidor.');
+        }
+      };
+
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (event) {
+          submitData(event.target.result, file.name);
+        };
+        reader.onerror = function (error) {
+          console.error("Error reading file:", error);
+          alert("Error leyendo el archivo de imagen.");
+        };
+        reader.readAsDataURL(file);
+      } else {
+        submitData();
       }
     });
   }

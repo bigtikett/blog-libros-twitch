@@ -1241,7 +1241,7 @@ app.get('/api/redes', (req, res) => {
 // ========================================================
 app.post('/api/redes/nuevo', (req, res) => {
   try {
-    const { red, embedHtml, password } = req.body;
+    const { red, embedHtml, password, imageFileData, imageFileName } = req.body;
 
     if (password !== BIBLIOTECA_PASSWORD) {
       return res.status(401).json({ error: 'Contraseña incorrecta.' });
@@ -1257,7 +1257,29 @@ app.post('/api/redes/nuevo', (req, res) => {
     }
 
     // Limpiar etiquetas <script> por seguridad
-    const cleanEmbed = embedHtml.replace(/<script[\s\S]*?<\/script>/gi, '');
+    let cleanEmbed = embedHtml.replace(/<script[\s\S]*?<\/script>/gi, '');
+
+    // Procesar la subida del archivo si viene en base64
+    if (imageFileData && imageFileName) {
+      const base64Data = imageFileData.replace(/^data:image\/\w+;base64,/, "");
+      const buffer = Buffer.from(base64Data, 'base64');
+      
+      const dirFavoritos = IMG_FAVORITOS_DIR;
+      if (!fs.existsSync(dirFavoritos)) {
+        fs.mkdirSync(dirFavoritos, { recursive: true });
+      }
+      
+      const extension = path.extname(imageFileName) || '.jpg';
+      const nombreLimpio = path.basename(imageFileName, extension).replace(/[^a-z0-9]/gi, '_').toLowerCase();
+      const nombreArchivo = `${Date.now()}-${nombreLimpio}${extension}`;
+      const rutaFisica = path.join(dirFavoritos, nombreArchivo);
+      
+      fs.writeFileSync(rutaFisica, buffer);
+      
+      // Reemplazar el placeholder de la imagen con la ruta estática
+      const relativePath = `/img/favoritos/${nombreArchivo}`;
+      cleanEmbed = cleanEmbed.replace(/__IMAGE_PLACEHOLDER__/g, relativePath);
+    }
 
     if (!fs.existsSync(RUTA_REDES)) {
       fs.writeFileSync(RUTA_REDES, JSON.stringify({ instagram: [], tiktok: [], wattpad: [] }));

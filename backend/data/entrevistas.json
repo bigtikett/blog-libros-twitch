@@ -1,32 +1,3 @@
 [
-  {
-    "id": "entrevista-1",
-    "nombre": "Nombre_Autor",
-    "colorNombre": "warning",
-    "obra": "Tu Novela Favorita",
-    "colorObra": "primary",
-    "resumen": "Hablamos sobre cómo sobrevivir al bloqueo de escritor, el hype de sus personajes en BookTok y los secretos oscuros de su próximo lanzamiento.",
-    "colorResumen": "white",
-    "videoUrl": "https://www.youtube.com/embed/dQw4w9WgXcQ",
-    "squad": "WRITER",
-    "level": "99",
-    "socialUser": "@UserTok",
-    "socialUrl": "https://tiktok.com",
-    "colorSocial": "cyan"
-  },
-  {
-    "id": "entrevista-2",
-    "nombre": "Nombre_Autor_2",
-    "colorNombre": "warning",
-    "obra": "Tu Novela Favorita 2",
-    "colorObra": "primary",
-    "resumen": "Hablamos sobre cómo sobrevivir al bloqueo de escritor, el hype de sus personajes en BookTok y los secretos oscuros de su próximo lanzamiento.",
-    "colorResumen": "white",
-    "videoUrl": "https://www.youtube.com/embed/dQw4w9WgXcQ",
-    "squad": "WRITER",
-    "level": "99",
-    "socialUser": "@UserTok",
-    "socialUrl": "https://tiktok.com",
-    "colorSocial": "cyan"
-  }
+  
 ]
