@@ -4633,4 +4633,42 @@ body.matrix-active > *:not(#matrix-landing-overlay) {
   100% {
     transform: rotate(-360deg);
   }
+}
+
+/* Banner de Cookies Cyberpunk */
+.cookie-banner-wrapper {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  max-width: 420px;
+  z-index: 9999;
+  background: rgba(10, 5, 20, 0.95);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.15), inset 0 0 10px rgba(0, 240, 255, 0.1);
+  backdrop-filter: blur(10px);
+  animation: cookie-fade-in 0.5s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+}
+.cookie-banner-wrapper .cookie-banner-content {
+  border-left: 3px solid #ff007f;
+}
+
+@keyframes cookie-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsividad para móviles */
+@media (max-width: 576px) {
+  .cookie-banner-wrapper {
+    left: 15px;
+    right: 15px;
+    bottom: 15px;
+    max-width: calc(100% - 30px);
+  }
 }/*# sourceMappingURL=style.css.map */

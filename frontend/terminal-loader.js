@@ -1724,4 +1724,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Ejecutamos la carga inicial
   inicializarMarquesinaEmotes();
+
+  // 🍪 Gestión del Banner de Cookies Cyberpunk
+  const cookieBanner = document.getElementById("cookie-banner");
+  const acceptCookiesBtn = document.getElementById("accept-cookies");
+  if (cookieBanner && acceptCookiesBtn) {
+    if (!localStorage.getItem("cookieConsent")) {
+      // Retrasar la aparición del banner 1.5s para que no interrumpa el efecto de carga inicial
+      setTimeout(() => {
+        cookieBanner.classList.remove("d-none");
+      }, 1500);
+    }
+    acceptCookiesBtn.addEventListener("click", () => {
+      localStorage.setItem("cookieConsent", "accepted");
+      cookieBanner.classList.add("d-none");
+    });
+  }
 });
