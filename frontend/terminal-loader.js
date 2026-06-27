@@ -915,7 +915,7 @@ document.addEventListener("DOMContentLoaded", () => {
                       <div>
                         <div class="d-flex justify-content-between align-items-center mb-1">
                           <i class="bi bi-award-fill text-info fs-4 d-block m-0"></i>
-                          \${isAdmin ? `<button type="button" class="btn btn-outline-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-book" data-id="\${t2.id}" style="font-size: 0.55rem; padding: 1px 4px;">[ X ]</button>` : ''}
+                          ${isAdmin ? `<button type="button" class="btn btn-outline-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-book" data-id="${t2.id}" style="font-size: 0.55rem; padding: 1px 4px;">[ X ]</button>` : ''}
                         </div>
                         <h5 class="fw-bold mb-1 ${t2TitleClass} text-uppercase" style="font-size: 15px;">${t2.titulo}</h5>
                         <p class="text-white small mb-2 font-monospace" style="font-size: 11px;">POR: <span class="${t2AutorClass}">${t2.autor}</span></p>
@@ -956,7 +956,7 @@ document.addEventListener("DOMContentLoaded", () => {
                       <div>
                         <div class="d-flex justify-content-between align-items-center mb-1">
                           <i class="bi bi-crown-fill text-warning fs-3 d-block m-0"></i>
-                          \${isAdmin ? `<button type="button" class="btn btn-outline-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-book" data-id="\${t1.id}" style="font-size: 0.55rem; padding: 1px 4px;">[ X ]</button>` : ''}
+                          ${isAdmin ? `<button type="button" class="btn btn-outline-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-book" data-id="${t1.id}" style="font-size: 0.55rem; padding: 1px 4px;">[ X ]</button>` : ''}
                         </div>
                         <h5 class="fw-bold mb-1 ${t1TitleClass} text-uppercase" style="font-size: 17px;">${t1.titulo}</h5>
                         <p class="text-white small mb-2 font-monospace" style="font-size: 11px;">POR: <span class="${t1AutorClass}">${t1.autor}</span></p>
@@ -997,7 +997,7 @@ document.addEventListener("DOMContentLoaded", () => {
                       <div>
                         <div class="d-flex justify-content-between align-items-center mb-1">
                           <i class="bi bi-award text-danger fs-4 d-block m-0"></i>
-                          \${isAdmin ? `<button type="button" class="btn btn-outline-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-book" data-id="\${t3.id}" style="font-size: 0.55rem; padding: 1px 4px;">[ X ]</button>` : ''}
+                          ${isAdmin ? `<button type="button" class="btn btn-outline-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-book" data-id="${t3.id}" style="font-size: 0.55rem; padding: 1px 4px;">[ X ]</button>` : ''}
                         </div>
                         <h5 class="fw-bold mb-1 ${t3TitleClass} text-uppercase" style="font-size: 15px;">${t3.titulo}</h5>
                         <p class="text-white small mb-2 font-monospace" style="font-size: 11px;">POR: <span class="${t3AutorClass}">${t3.autor}</span></p>
@@ -1034,8 +1034,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 const slideHTML = `
                   <div class="swiper-slide">
                     <div class="cyber-book-card d-flex flex-column align-items-center p-3 h-100 text-center position-relative">
-                      \${isAdmin ? `
-                        <button type="button" class="btn btn-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-book" data-id="\${libro.id}" style="position: absolute; top: 10px; right: 10px; z-index: 10; font-size: 0.55rem; padding: 1px 4px; background: rgba(220,53,69,0.85); border: 1px solid rgba(220,53,69,0.5);">[ X ]</button>
+                      ${isAdmin ? `
+                        <button type="button" class="btn btn-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-book" data-id="${libro.id}" style="position: absolute; top: 10px; right: 10px; z-index: 10; font-size: 0.55rem; padding: 1px 4px; background: rgba(220,53,69,0.85); border: 1px solid rgba(220,53,69,0.5);">[ X ]</button>
                       ` : ''}
                       <div class="cyber-cover-wrap mb-3">
                         <img src="${libro.cover || 'https://via.placeholder.com/200x300'}" class="cyber-img" alt="${libro.titulo}">
@@ -1086,9 +1086,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
               const rowHTML = `
                 <div class="row align-items-center g-5 my-4 position-relative">
-                  \${isAdmin ? `
+                  ${isAdmin ? `
                     <div class="position-absolute top-0 end-0 m-3 text-end" style="z-index: 100;">
-                      <button type="button" class="btn btn-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-book" data-id="\${libro.id}" style="font-size: 0.62rem; padding: 2px 6px; background: rgba(220,53,69,0.85); border: 1px solid rgba(220,53,69,0.5);">[ ELIMINAR ]</button>
+                      <button type="button" class="btn btn-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-book" data-id="${libro.id}" style="font-size: 0.62rem; padding: 2px 6px; background: rgba(220,53,69,0.85); border: 1px solid rgba(220,53,69,0.5);">[ ELIMINAR ]</button>
                     </div>
                   ` : ''}
                   <!-- Columna Izquierda: Portada 3D con halo de luz animado -->
@@ -1166,8 +1166,8 @@ document.addEventListener("DOMContentLoaded", () => {
               const cardHTML = `
                 <div class="col">
                   <div class="card h-100 border-0 quote-cyber-card p-4 text-white position-relative">
-                    \${isAdmin ? `
-                      <button type="button" class="btn btn-outline-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-quote" data-id="\${cita.id}" style="position: absolute; top: 10px; right: 10px; z-index: 10; font-size: 0.62rem; padding: 2px 6px;">[ ELIMINAR ]</button>
+                    ${isAdmin ? `
+                      <button type="button" class="btn btn-outline-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-quote" data-id="${cita.id}" style="position: absolute; top: 10px; right: 10px; z-index: 10; font-size: 0.62rem; padding: 2px 6px;">[ ELIMINAR ]</button>
                     ` : ''}
                     <div class="fs-1 mb-2" style="color: ${labelHex}; text-shadow: 0 0 10px ${labelHex};"><i class="bi bi-quote"></i></div>
                     <figure class="mb-0">
@@ -1208,8 +1208,8 @@ document.addEventListener("DOMContentLoaded", () => {
                       <div class="fs-1" style="color: ${labelHex}; text-shadow: 0 0 10px ${labelHex};"><i class="bi ${cita.label.includes('CLIP') ? 'bi-chat-heart-fill' : 'bi-fire'}"></i></div>
                       <div class="d-flex align-items-center gap-2">
                         <span class="badge rounded-1 bg-dark font-monospace text-xs" style="background: rgba(0,0,0,0.85) !important; border: 1px solid ${labelHex} !important; color: ${labelHex} !important; text-shadow: 0 0 6px ${labelHex};">[ ${cita.label} ]</span>
-                        \${isAdmin ? `
-                          <button type="button" class="btn btn-outline-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-quote" data-id="\${cita.id}" style="font-size: 0.62rem; padding: 2px 6px;">[ ELIMINAR ]</button>
+                        ${isAdmin ? `
+                          <button type="button" class="btn btn-outline-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-quote" data-id="${cita.id}" style="font-size: 0.62rem; padding: 2px 6px;">[ ELIMINAR ]</button>
                         ` : ''}
                       </div>
                     </div>
@@ -1411,9 +1411,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const cardHTML = `
           <div class="col-md-6 col-xl-4">
             <div class="card card-gaming-hub h-100 border-0 overflow-hidden position-relative">
-              \${isAdmin ? `
+              ${isAdmin ? `
               <button class="btn btn-outline-danger font-monospace btn-delete-game" 
-                      data-id="\${juego.id}" 
+                      data-id="${juego.id}" 
                       style="position: absolute; top: 10px; left: 10px; z-index: 10; background: rgba(0,0,0,0.85); border-radius: 0; font-size: 0.65rem; padding: 2px 5px; border-color: rgba(220,53,69,0.5);">
                 [ ELIMINAR ]
               </button>
