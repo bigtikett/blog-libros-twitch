@@ -3462,6 +3462,16 @@
   /* Animación de latido neón */
   animation: footer-glow-latido 3s ease-in-out infinite alternate;
 }
+.cyber-footer .footer-legal-link {
+  font-size: 0.75rem;
+  transition: all 0.25s ease-in-out;
+  opacity: 0.8;
+}
+.cyber-footer .footer-legal-link:hover {
+  color: #fff !important;
+  opacity: 1;
+  text-shadow: 0 0 8px #ff007f;
+}
 
 .cyber-footer-border-anim {
   position: absolute;
