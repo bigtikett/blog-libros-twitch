@@ -308,22 +308,43 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Dynamic show/hide own book links based on estado select
+  // Dynamic show/hide own book links and rating fields based on estado select
   const estadoSelect = document.getElementById("lib-estado");
-
   const ownBookLinksContainer = document.getElementById("own-book-links-container");
-  if (estadoSelect && ownBookLinksContainer) {
-    estadoSelect.addEventListener("change", function() {
-      if (this.value === "milibro") {
-        ownBookLinksContainer.classList.remove("d-none");
-      } else {
-        ownBookLinksContainer.classList.add("d-none");
-        const wattpadInput = document.getElementById("lib-link-wattpad");
-        const amazonInput = document.getElementById("lib-link-amazon");
-        if (wattpadInput) wattpadInput.value = "";
-        if (amazonInput) amazonInput.value = "";
+  const wrapperPuntuacion = document.getElementById("wrapper-puntuacion");
+  const inputPuntuacion = document.getElementById("lib-puntuacion");
+
+  if (estadoSelect) {
+    const handleEstadoChange = (val) => {
+      // Toggle own book links
+      if (ownBookLinksContainer) {
+        if (val === "milibro") {
+          ownBookLinksContainer.classList.remove("d-none");
+        } else {
+          ownBookLinksContainer.classList.add("d-none");
+          const wattpadInput = document.getElementById("lib-link-wattpad");
+          const amazonInput = document.getElementById("lib-link-amazon");
+          if (wattpadInput) wattpadInput.value = "";
+          if (amazonInput) amazonInput.value = "";
+        }
       }
+      // Toggle rating fields (TBR doesn't need ratings)
+      if (wrapperPuntuacion && inputPuntuacion) {
+        if (val === "tbr") {
+          wrapperPuntuacion.classList.add("d-none");
+          inputPuntuacion.removeAttribute("required");
+        } else {
+          wrapperPuntuacion.classList.remove("d-none");
+          inputPuntuacion.setAttribute("required", "");
+        }
+      }
+    };
+
+    estadoSelect.addEventListener("change", function() {
+      handleEstadoChange(this.value);
     });
+    // Run on init
+    handleEstadoChange(estadoSelect.value);
   }
 
 
@@ -345,7 +366,7 @@ document.addEventListener("DOMContentLoaded", () => {
           genero: document.getElementById("lib-genero").value.toUpperCase(),
           colorGenero: document.getElementById("lib-color-genero") ? document.getElementById("lib-color-genero").value : "info",
           estado: document.getElementById("lib-estado").value,
-          puntuacion: parseFloat(document.getElementById("lib-puntuacion").value) || 5,
+          puntuacion: document.getElementById("lib-estado").value === "tbr" ? null : (parseFloat(document.getElementById("lib-puntuacion").value) || 5),
           colorPuntuacion: document.getElementById("lib-color-puntuacion") ? document.getElementById("lib-color-puntuacion").value : "yellow",
           hype: parseInt(document.getElementById("lib-hype").value) || 90,
           colorHype: document.getElementById("lib-color-hype") ? document.getElementById("lib-color-hype").value : "yellow",
