@@ -46,6 +46,106 @@ const dbPool = DATABASE_URL
   : null;
 
 let musicDbReady = false;
+let collectionsDbReady = false;
+
+async function ensureCollectionsDbReady() {
+  if (!dbPool) {
+    return false;
+  }
+  if (collectionsDbReady) {
+    return true;
+  }
+
+  try {
+    // Crear tabla si no existe
+    await dbPool.query(`
+      CREATE TABLE IF NOT EXISTS site_collections (
+        key TEXT PRIMARY KEY,
+        data JSONB NOT NULL DEFAULT '[]'::jsonb
+      );
+    `);
+
+    // Sembrar automáticamente si la clave no existe
+    const collections = [
+      { key: 'biblioteca', path: RUTA_BIBLIOTECA, default: [] },
+      { key: 'citas', path: RUTA_CITAS, default: [] },
+      { key: 'logs', path: RUTA_LOGS, default: [] },
+      { key: 'series', path: RUTA_SERIES, default: [] },
+      { key: 'peliculas', path: RUTA_PELICULAS, default: [] },
+      { key: 'personajes', path: RUTA_PERSONAJES, default: [] },
+      { key: 'entrevistas', path: RUTA_ENTREVISTAS, default: [] },
+      { key: 'juegos', path: RUTA_JUEGOS, default: [] },
+      { key: 'redes', path: RUTA_REDES, default: { instagram: [], tiktok: [], wattpad: [] } }
+    ];
+
+    for (const col of collections) {
+      const checkRes = await dbPool.query('SELECT 1 FROM site_collections WHERE key = $1', [col.key]);
+      if (checkRes.rowCount === 0) {
+        let initialData = col.default;
+        if (fs.existsSync(col.path)) {
+          try {
+            const raw = fs.readFileSync(col.path, 'utf-8');
+            initialData = JSON.parse(raw);
+          } catch (e) {
+            console.error(`Error reading initial JSON for ${col.key}:`, e);
+          }
+        }
+        await dbPool.query(
+          'INSERT INTO site_collections (key, data) VALUES ($1, $2) ON CONFLICT (key) DO NOTHING',
+          [col.key, JSON.stringify(initialData)]
+        );
+      }
+    }
+
+    collectionsDbReady = true;
+    return true;
+  } catch (err) {
+    console.error('Error initializing collections database table:', err);
+    return false;
+  }
+}
+
+async function getCollection(key, fallbackFilePath, defaultVal = []) {
+  const useDb = await ensureCollectionsDbReady();
+  if (useDb) {
+    try {
+      const res = await dbPool.query('SELECT data FROM site_collections WHERE key = $1', [key]);
+      if (res.rows.length > 0) {
+        return res.rows[0].data;
+      }
+    } catch (err) {
+      console.error(`Error getting collection ${key} from DB, falling back to disk:`, err);
+    }
+  }
+
+  // Fallback a archivo local
+  if (!fs.existsSync(fallbackFilePath)) {
+    fs.writeFileSync(fallbackFilePath, JSON.stringify(defaultVal, null, 2));
+  }
+  const raw = fs.readFileSync(fallbackFilePath, 'utf-8');
+  return JSON.parse(raw);
+}
+
+async function saveCollection(key, data, fallbackFilePath) {
+  const useDb = await ensureCollectionsDbReady();
+  if (useDb) {
+    try {
+      await dbPool.query(
+        'INSERT INTO site_collections (key, data) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET data = $2',
+        [key, JSON.stringify(data)]
+      );
+    } catch (err) {
+      console.error(`Error saving collection ${key} to DB:`, err);
+    }
+  }
+
+  // Siempre escribir en local para desarrollo/seguridad
+  try {
+    fs.writeFileSync(fallbackFilePath, JSON.stringify(data, null, 2));
+  } catch (err) {
+    console.error(`Error writing fallback file ${fallbackFilePath}:`, err);
+  }
+}
 
 function slugifySegment(value, fallback = 'item') {
   const normalized = String(value || '')
@@ -503,16 +603,18 @@ app.get('/api/health', (req, res) => {
 });
 
 // 1. ENDPOINT PARA LEER LOS LIBROS (FETCH GET)
-app.get('/api/biblioteca', (req, res) => {
-  if (!fs.existsSync(RUTA_BIBLIOTECA)) {
-    fs.writeFileSync(RUTA_BIBLIOTECA, JSON.stringify([])); // Crea el archivo vacío si no existe
+app.get('/api/biblioteca', async (req, res) => {
+  try {
+    const datos = await getCollection('biblioteca', RUTA_BIBLIOTECA, []);
+    res.json(datos);
+  } catch (error) {
+    console.error("Error leyendo biblioteca:", error);
+    res.status(500).json({ error: "Fallo al leer biblioteca." });
   }
-  const datos = fs.readFileSync(RUTA_BIBLIOTECA, 'utf-8');
-  res.json(JSON.parse(datos));
 });
 
 // 2. ENDPOINT PARA AÑADIR UN NUEVO LIBRO (FETCH POST)
-app.post('/api/biblioteca/nuevo', (req, res) => {
+app.post('/api/biblioteca/nuevo', async (req, res) => {
   try {
     const nuevoLibro = req.body; // Captura los datos del formulario de la web
     
@@ -522,9 +624,7 @@ app.post('/api/biblioteca/nuevo', (req, res) => {
     }
 
     // Leemos lo que ya hay guardado
-    const datosActuales = fs.existsSync(RUTA_BIBLIOTECA) 
-      ? JSON.parse(fs.readFileSync(RUTA_BIBLIOTECA, 'utf-8')) 
-      : [];
+    const datosActuales = await getCollection('biblioteca', RUTA_BIBLIOTECA, []);
     
     // Procesamos la subida del archivo si viene en base64
     if (nuevoLibro.coverFileData && nuevoLibro.coverFileName) {
@@ -568,8 +668,8 @@ app.post('/api/biblioteca/nuevo', (req, res) => {
     // Lo sumamos a la lista
     datosActuales.push(nuevoLibro);
     
-    // Guardamos el archivo actualizado en el disco duro
-    fs.writeFileSync(RUTA_BIBLIOTECA, JSON.stringify(datosActuales, null, 2));
+    // Guardamos el archivo actualizado en el disco duro / DB
+    await saveCollection('biblioteca', datosActuales, RUTA_BIBLIOTECA);
     
     // Registramos la acción en el log visor
     let descLog = "";
@@ -584,7 +684,7 @@ app.post('/api/biblioteca/nuevo', (req, res) => {
       descLog = `Inyectado nuevo libro: ${nuevoLibro.titulo} por ${nuevoLibro.autor} [ONLINE]`;
       crtDescLog = `El bloque de lectura del sector "${nuevoLibro.titulo}" ha sido indexado con éxito en la biblioteca.`;
     }
-    agregarLog(nuevoLibro.favorito ? "FAVORITOS" : "DATABASE", descLog, crtDescLog, colorLog);
+    await agregarLog(nuevoLibro.favorito ? "FAVORITOS" : "DATABASE", descLog, crtDescLog, colorLog);
 
     res.json({ success: true, message: 'Terminal: Registro de datos de lectura indexado.' });
   } catch (error) {
@@ -593,7 +693,7 @@ app.post('/api/biblioteca/nuevo', (req, res) => {
   }
 });
 
-app.post('/api/biblioteca/eliminar', (req, res) => {
+app.post('/api/biblioteca/eliminar', async (req, res) => {
   try {
     const { id, password } = req.body;
     
@@ -601,11 +701,7 @@ app.post('/api/biblioteca/eliminar', (req, res) => {
       return res.status(401).json({ error: 'Código de acceso incorrecto. Interrupción del sector.' });
     }
 
-    if (!fs.existsSync(RUTA_BIBLIOTECA)) {
-      return res.status(404).json({ error: 'Sector de base de datos no encontrado.' });
-    }
-
-    let datosActuales = JSON.parse(fs.readFileSync(RUTA_BIBLIOTECA, 'utf-8'));
+    let datosActuales = await getCollection('biblioteca', RUTA_BIBLIOTECA, []);
     const libroAEliminar = datosActuales.find(l => l.id === id);
 
     if (!libroAEliminar) {
@@ -613,11 +709,11 @@ app.post('/api/biblioteca/eliminar', (req, res) => {
     }
 
     datosActuales = datosActuales.filter(l => l.id !== id);
-    fs.writeFileSync(RUTA_BIBLIOTECA, JSON.stringify(datosActuales, null, 2));
+    await saveCollection('biblioteca', datosActuales, RUTA_BIBLIOTECA);
 
     const descLog = `Eliminado libro: ${libroAEliminar.titulo} [OFFLINE]`;
     const crtDescLog = `El libro "${libroAEliminar.titulo}" ha sido purgado del registro de la biblioteca.`;
-    agregarLog("DATABASE", descLog, crtDescLog, "text-danger");
+    await agregarLog("DATABASE", descLog, crtDescLog, "text-danger");
 
     res.json({ success: true, message: 'Terminal: Registro de libro eliminado.', id });
   } catch (error) {
@@ -631,11 +727,9 @@ app.post('/api/biblioteca/eliminar', (req, res) => {
 // ========================================================
 // 🖳 FUNCIÓN AUXILIAR: AGREGA REGISTROS DE ACTIVIDAD (LOGS)
 // ========================================================
-function agregarLog(tag, desc, crtDesc, color = 'text-white') {
+async function agregarLog(tag, desc, crtDesc, color = 'text-white') {
   try {
-    const datosActuales = fs.existsSync(RUTA_LOGS) 
-      ? JSON.parse(fs.readFileSync(RUTA_LOGS, 'utf-8')) 
-      : [];
+    const datosActuales = await getCollection('logs', RUTA_LOGS, []);
 
     const nuevoLog = {
       id: `log-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
@@ -651,7 +745,7 @@ function agregarLog(tag, desc, crtDesc, color = 'text-white') {
     // Mantener un historial circular de máximo 20 entradas en el archivo
     const logsRecortados = datosActuales.slice(-20);
 
-    fs.writeFileSync(RUTA_LOGS, JSON.stringify(logsRecortados, null, 2));
+    await saveCollection('logs', logsRecortados, RUTA_LOGS);
   } catch (error) {
     console.error("Error agregando log:", error);
   }
@@ -660,15 +754,17 @@ function agregarLog(tag, desc, crtDesc, color = 'text-white') {
 // ========================================================
 // ✒️ ENDPOINTS PARA FRASES / CITAS (GET / POST)
 // ========================================================
-app.get('/api/citas', (req, res) => {
-  if (!fs.existsSync(RUTA_CITAS)) {
-    fs.writeFileSync(RUTA_CITAS, JSON.stringify([]));
+app.get('/api/citas', async (req, res) => {
+  try {
+    const datos = await getCollection('citas', RUTA_CITAS, []);
+    res.json(datos);
+  } catch (error) {
+    console.error("Error leyendo citas:", error);
+    res.status(500).json({ error: "Fallo al leer citas." });
   }
-  const datos = fs.readFileSync(RUTA_CITAS, 'utf-8');
-  res.json(JSON.parse(datos));
 });
 
-app.post('/api/citas/nuevo', (req, res) => {
+app.post('/api/citas/nuevo', async (req, res) => {
   try {
     const nuevaCita = req.body;
     
@@ -676,21 +772,19 @@ app.post('/api/citas/nuevo', (req, res) => {
       return res.status(401).json({ error: 'Código de acceso incorrecto. Interrupción del sector.' });
     }
 
-    const datosActuales = fs.existsSync(RUTA_CITAS) 
-      ? JSON.parse(fs.readFileSync(RUTA_CITAS, 'utf-8')) 
-      : [];
+    const datosActuales = await getCollection('citas', RUTA_CITAS, []);
     
     nuevaCita.id = `cita-${Date.now()}`;
     
     delete nuevaCita.password;
 
     datosActuales.push(nuevaCita);
-    fs.writeFileSync(RUTA_CITAS, JSON.stringify(datosActuales, null, 2));
+    await saveCollection('citas', datosActuales, RUTA_CITAS);
 
     // Registramos la acción en el log visor
     const descLog = `Inyectada nueva cita de ${nuevaCita.autor} [ONLINE]`;
     const crtDescLog = `Inyectada nueva frase del sector "${nuevaCita.autor}" en la base de datos de transmisiones.`;
-    agregarLog("CITAS", descLog, crtDescLog, "text-neon-magenta");
+    await agregarLog("CITAS", descLog, crtDescLog, "text-neon-magenta");
 
     res.json({ success: true, message: 'Terminal: Registro de datos de cita indexado.' });
   } catch (error) {
@@ -699,7 +793,7 @@ app.post('/api/citas/nuevo', (req, res) => {
   }
 });
 
-app.post('/api/citas/eliminar', (req, res) => {
+app.post('/api/citas/eliminar', async (req, res) => {
   try {
     const { id, password } = req.body;
     
@@ -707,11 +801,7 @@ app.post('/api/citas/eliminar', (req, res) => {
       return res.status(401).json({ error: 'Código de acceso incorrecto. Interrupción del sector.' });
     }
 
-    if (!fs.existsSync(RUTA_CITAS)) {
-      return res.status(404).json({ error: 'Sector de base de datos no encontrado.' });
-    }
-
-    let datosActuales = JSON.parse(fs.readFileSync(RUTA_CITAS, 'utf-8'));
+    let datosActuales = await getCollection('citas', RUTA_CITAS, []);
     const citaAEliminar = datosActuales.find(c => c.id === id);
 
     if (!citaAEliminar) {
@@ -719,11 +809,11 @@ app.post('/api/citas/eliminar', (req, res) => {
     }
 
     datosActuales = datosActuales.filter(c => c.id !== id);
-    fs.writeFileSync(RUTA_CITAS, JSON.stringify(datosActuales, null, 2));
+    await saveCollection('citas', datosActuales, RUTA_CITAS);
 
     const descLog = `Eliminada cita de: ${citaAEliminar.autor} [OFFLINE]`;
     const crtDescLog = `La cita de "${citaAEliminar.autor}" ha sido purgada del registro de citas.`;
-    agregarLog("CITAS", descLog, crtDescLog, "text-danger");
+    await agregarLog("CITAS", descLog, crtDescLog, "text-danger");
 
     res.json({ success: true, message: 'Terminal: Registro de cita eliminado.', id });
   } catch (error) {
@@ -736,12 +826,14 @@ app.post('/api/citas/eliminar', (req, res) => {
 // ========================================================
 // 🖳 ENDPOINT PARA LEER LOS LOGS DE ACTIVIDAD (GET)
 // ========================================================
-app.get('/api/logs', (req, res) => {
-  if (!fs.existsSync(RUTA_LOGS)) {
-    fs.writeFileSync(RUTA_LOGS, JSON.stringify([]));
+app.get('/api/logs', async (req, res) => {
+  try {
+    const datos = await getCollection('logs', RUTA_LOGS, []);
+    res.json(datos);
+  } catch (error) {
+    console.error("Error leyendo logs:", error);
+    res.status(500).json({ error: "Fallo al leer logs." });
   }
-  const datos = fs.readFileSync(RUTA_LOGS, 'utf-8');
-  res.json(JSON.parse(datos));
 });
 
 
@@ -901,15 +993,17 @@ app.post('/api/playlist/rebase-urls', async (req, res) => {
 // ========================================================
 // 📺 ENDPOINTS PARA SERIES (GET / POST)
 // ========================================================
-app.get('/api/series', (req, res) => {
-  if (!fs.existsSync(RUTA_SERIES)) {
-    fs.writeFileSync(RUTA_SERIES, JSON.stringify([]));
+app.get('/api/series', async (req, res) => {
+  try {
+    const datos = await getCollection('series', RUTA_SERIES, []);
+    res.json(datos);
+  } catch (error) {
+    console.error("Error leyendo series:", error);
+    res.status(500).json({ error: "Fallo al leer series." });
   }
-  const datos = fs.readFileSync(RUTA_SERIES, 'utf-8');
-  res.json(JSON.parse(datos));
 });
 
-app.post('/api/series/nuevo', (req, res) => {
+app.post('/api/series/nuevo', async (req, res) => {
   try {
     const nuevaSerie = req.body;
     
@@ -917,9 +1011,7 @@ app.post('/api/series/nuevo', (req, res) => {
       return res.status(401).json({ error: 'Código de acceso incorrecto. Interrupción del sector.' });
     }
 
-    const datosActuales = fs.existsSync(RUTA_SERIES) 
-      ? JSON.parse(fs.readFileSync(RUTA_SERIES, 'utf-8')) 
-      : [];
+    const datosActuales = await getCollection('series', RUTA_SERIES, []);
     
     if (nuevaSerie.coverFileData && nuevaSerie.coverFileName) {
       const base64Data = nuevaSerie.coverFileData.replace(/^data:image\/\w+;base64,/, "");
@@ -946,11 +1038,11 @@ app.post('/api/series/nuevo', (req, res) => {
     delete nuevaSerie.password;
 
     datosActuales.push(nuevaSerie);
-    fs.writeFileSync(RUTA_SERIES, JSON.stringify(datosActuales, null, 2));
+    await saveCollection('series', datosActuales, RUTA_SERIES);
 
     const descLog = `Inyectada nueva serie: ${nuevaSerie.titulo} [ONLINE]`;
     const crtDescLog = `La serie "${nuevaSerie.titulo}" ha sido indexada en el registro de favoritos.`;
-    agregarLog("FAVORITOS", descLog, crtDescLog, "text-neon-cyan");
+    await agregarLog("FAVORITOS", descLog, crtDescLog, "text-neon-cyan");
 
     res.json({ success: true, message: 'Terminal: Registro de serie indexado.' });
   } catch (error) {
@@ -959,7 +1051,7 @@ app.post('/api/series/nuevo', (req, res) => {
   }
 });
 
-app.post('/api/series/eliminar', (req, res) => {
+app.post('/api/series/eliminar', async (req, res) => {
   try {
     const { id, password } = req.body;
 
@@ -967,9 +1059,7 @@ app.post('/api/series/eliminar', (req, res) => {
       return res.status(401).json({ error: 'Código de acceso incorrecto. Interrupción del sector.' });
     }
 
-    let datosActuales = fs.existsSync(RUTA_SERIES)
-      ? JSON.parse(fs.readFileSync(RUTA_SERIES, 'utf-8'))
-      : [];
+    let datosActuales = await getCollection('series', RUTA_SERIES, []);
 
     const serieAEliminar = datosActuales.find(s => s.id === id);
     if (!serieAEliminar) {
@@ -977,11 +1067,11 @@ app.post('/api/series/eliminar', (req, res) => {
     }
 
     datosActuales = datosActuales.filter(s => s.id !== id);
-    fs.writeFileSync(RUTA_SERIES, JSON.stringify(datosActuales, null, 2));
+    await saveCollection('series', datosActuales, RUTA_SERIES);
 
     const descLog = `Eliminada serie: ${serieAEliminar.titulo} [OFFLINE]`;
     const crtDescLog = `La serie "${serieAEliminar.titulo}" fue purgada del registro de favoritos.`;
-    agregarLog('FAVORITOS', descLog, crtDescLog, 'text-danger');
+    await agregarLog('FAVORITOS', descLog, crtDescLog, 'text-danger');
 
     res.json({ success: true, message: 'Terminal: Registro de serie eliminado.', id });
   } catch (error) {
@@ -993,15 +1083,17 @@ app.post('/api/series/eliminar', (req, res) => {
 // ========================================================
 // 🎬 ENDPOINTS PARA PELÍCULAS (GET / POST)
 // ========================================================
-app.get('/api/peliculas', (req, res) => {
-  if (!fs.existsSync(RUTA_PELICULAS)) {
-    fs.writeFileSync(RUTA_PELICULAS, JSON.stringify([]));
+app.get('/api/peliculas', async (req, res) => {
+  try {
+    const datos = await getCollection('peliculas', RUTA_PELICULAS, []);
+    res.json(datos);
+  } catch (error) {
+    console.error("Error leyendo peliculas:", error);
+    res.status(500).json({ error: "Fallo al leer peliculas." });
   }
-  const datos = fs.readFileSync(RUTA_PELICULAS, 'utf-8');
-  res.json(JSON.parse(datos));
 });
 
-app.post('/api/peliculas/nuevo', (req, res) => {
+app.post('/api/peliculas/nuevo', async (req, res) => {
   try {
     const nuevaPelicula = req.body;
     
@@ -1009,9 +1101,7 @@ app.post('/api/peliculas/nuevo', (req, res) => {
       return res.status(401).json({ error: 'Código de acceso incorrecto. Interrupción del sector.' });
     }
 
-    const datosActuales = fs.existsSync(RUTA_PELICULAS) 
-      ? JSON.parse(fs.readFileSync(RUTA_PELICULAS, 'utf-8')) 
-      : [];
+    const datosActuales = await getCollection('peliculas', RUTA_PELICULAS, []);
     
     if (nuevaPelicula.coverFileData && nuevaPelicula.coverFileName) {
       const base64Data = nuevaPelicula.coverFileData.replace(/^data:image\/\w+;base64,/, "");
@@ -1038,11 +1128,11 @@ app.post('/api/peliculas/nuevo', (req, res) => {
     delete nuevaPelicula.password;
 
     datosActuales.push(nuevaPelicula);
-    fs.writeFileSync(RUTA_PELICULAS, JSON.stringify(datosActuales, null, 2));
+    await saveCollection('peliculas', datosActuales, RUTA_PELICULAS);
 
     const descLog = `Inyectada nueva película: ${nuevaPelicula.titulo} [ONLINE]`;
     const crtDescLog = `La película "${nuevaPelicula.titulo}" ha sido indexada en el registro de favoritos.`;
-    agregarLog("FAVORITOS", descLog, crtDescLog, "text-neon-magenta");
+    await agregarLog("FAVORITOS", descLog, crtDescLog, "text-neon-magenta");
 
     res.json({ success: true, message: 'Terminal: Registro de película indexado.', movie: nuevaPelicula });
   } catch (error) {
@@ -1051,7 +1141,7 @@ app.post('/api/peliculas/nuevo', (req, res) => {
   }
 });
 
-app.post('/api/peliculas/eliminar', (req, res) => {
+app.post('/api/peliculas/eliminar', async (req, res) => {
   try {
     const { id, password } = req.body;
 
@@ -1059,9 +1149,7 @@ app.post('/api/peliculas/eliminar', (req, res) => {
       return res.status(401).json({ error: 'Código de acceso incorrecto. Interrupción del sector.' });
     }
 
-    let datosActuales = fs.existsSync(RUTA_PELICULAS)
-      ? JSON.parse(fs.readFileSync(RUTA_PELICULAS, 'utf-8'))
-      : [];
+    let datosActuales = await getCollection('peliculas', RUTA_PELICULAS, []);
 
     const peliculaAEliminar = datosActuales.find(p => p.id === id);
     if (!peliculaAEliminar) {
@@ -1069,11 +1157,11 @@ app.post('/api/peliculas/eliminar', (req, res) => {
     }
 
     datosActuales = datosActuales.filter(p => p.id !== id);
-    fs.writeFileSync(RUTA_PELICULAS, JSON.stringify(datosActuales, null, 2));
+    await saveCollection('peliculas', datosActuales, RUTA_PELICULAS);
 
     const descLog = `Eliminada película: ${peliculaAEliminar.titulo} [OFFLINE]`;
     const crtDescLog = `La película "${peliculaAEliminar.titulo}" fue purgada del registro de favoritos.`;
-    agregarLog('FAVORITOS', descLog, crtDescLog, 'text-danger');
+    await agregarLog('FAVORITOS', descLog, crtDescLog, 'text-danger');
 
     res.json({ success: true, message: 'Terminal: Registro de película eliminado.', id });
   } catch (error) {
@@ -1085,15 +1173,17 @@ app.post('/api/peliculas/eliminar', (req, res) => {
 // ========================================================
 // 👤 ENDPOINTS PARA PERSONAJES (GET / POST)
 // ========================================================
-app.get('/api/personajes', (req, res) => {
-  if (!fs.existsSync(RUTA_PERSONAJES)) {
-    fs.writeFileSync(RUTA_PERSONAJES, JSON.stringify([]));
+app.get('/api/personajes', async (req, res) => {
+  try {
+    const datos = await getCollection('personajes', RUTA_PERSONAJES, []);
+    res.json(datos);
+  } catch (error) {
+    console.error("Error leyendo personajes:", error);
+    res.status(500).json({ error: "Fallo al leer personajes." });
   }
-  const datos = fs.readFileSync(RUTA_PERSONAJES, 'utf-8');
-  res.json(JSON.parse(datos));
 });
 
-app.post('/api/personajes/nuevo', (req, res) => {
+app.post('/api/personajes/nuevo', async (req, res) => {
   try {
     const nuevoPersonaje = req.body;
     
@@ -1101,9 +1191,7 @@ app.post('/api/personajes/nuevo', (req, res) => {
       return res.status(401).json({ error: 'Código de acceso incorrecto. Interrupción del sector.' });
     }
 
-    const datosActuales = fs.existsSync(RUTA_PERSONAJES) 
-      ? JSON.parse(fs.readFileSync(RUTA_PERSONAJES, 'utf-8')) 
-      : [];
+    const datosActuales = await getCollection('personajes', RUTA_PERSONAJES, []);
     
     if (nuevoPersonaje.coverFileData && nuevoPersonaje.coverFileName) {
       const base64Data = nuevoPersonaje.coverFileData.replace(/^data:image\/\w+;base64,/, "");
@@ -1134,11 +1222,11 @@ app.post('/api/personajes/nuevo', (req, res) => {
     delete nuevoPersonaje.password;
 
     datosActuales.push(nuevoPersonaje);
-    fs.writeFileSync(RUTA_PERSONAJES, JSON.stringify(datosActuales, null, 2));
+    await saveCollection('personajes', datosActuales, RUTA_PERSONAJES);
 
     const descLog = `Inyectada nueva ficha de personaje: ${nuevoPersonaje.nombre} [ONLINE]`;
     const crtDescLog = `El personaje "${nuevoPersonaje.nombre}" ha sido indexado en el registro de sujetos clasificados.`;
-    agregarLog("FAVORITOS", descLog, crtDescLog, "text-warning");
+    await agregarLog("FAVORITOS", descLog, crtDescLog, "text-warning");
 
     res.json({ success: true, message: 'Terminal: Registro de personaje indexado.', personaje: nuevoPersonaje });
   } catch (error) {
@@ -1147,7 +1235,7 @@ app.post('/api/personajes/nuevo', (req, res) => {
   }
 });
 
-app.post('/api/personajes/eliminar', (req, res) => {
+app.post('/api/personajes/eliminar', async (req, res) => {
   try {
     const { id, password } = req.body;
 
@@ -1155,9 +1243,7 @@ app.post('/api/personajes/eliminar', (req, res) => {
       return res.status(401).json({ error: 'Código de acceso incorrecto. Interrupción del sector.' });
     }
 
-    let datosActuales = fs.existsSync(RUTA_PERSONAJES)
-      ? JSON.parse(fs.readFileSync(RUTA_PERSONAJES, 'utf-8'))
-      : [];
+    let datosActuales = await getCollection('personajes', RUTA_PERSONAJES, []);
 
     const personajeAEliminar = datosActuales.find(p => p.id === id);
     if (!personajeAEliminar) {
@@ -1165,11 +1251,11 @@ app.post('/api/personajes/eliminar', (req, res) => {
     }
 
     datosActuales = datosActuales.filter(p => p.id !== id);
-    fs.writeFileSync(RUTA_PERSONAJES, JSON.stringify(datosActuales, null, 2));
+    await saveCollection('personajes', datosActuales, RUTA_PERSONAJES);
 
     const descLog = `Eliminado personaje: ${personajeAEliminar.nombre} [OFFLINE]`;
     const crtDescLog = `El personaje "${personajeAEliminar.nombre}" fue purgado del registro de sujetos clasificados.`;
-    agregarLog('FAVORITOS', descLog, crtDescLog, 'text-danger');
+    await agregarLog('FAVORITOS', descLog, crtDescLog, 'text-danger');
 
     res.json({ success: true, message: 'Terminal: Registro de personaje eliminado.', id });
   } catch (error) {
@@ -1181,15 +1267,17 @@ app.post('/api/personajes/eliminar', (req, res) => {
 // ========================================================
 // 🎙️ ENDPOINTS PARA ENTREVISTAS (GET / POST)
 // ========================================================
-app.get('/api/entrevistas', (req, res) => {
-  if (!fs.existsSync(RUTA_ENTREVISTAS)) {
-    fs.writeFileSync(RUTA_ENTREVISTAS, JSON.stringify([]));
+app.get('/api/entrevistas', async (req, res) => {
+  try {
+    const datos = await getCollection('entrevistas', RUTA_ENTREVISTAS, []);
+    res.json(datos);
+  } catch (error) {
+    console.error("Error leyendo entrevistas:", error);
+    res.status(500).json({ error: "Fallo al leer entrevistas." });
   }
-  const datos = fs.readFileSync(RUTA_ENTREVISTAS, 'utf-8');
-  res.json(JSON.parse(datos));
 });
 
-app.post('/api/entrevistas/nuevo', (req, res) => {
+app.post('/api/entrevistas/nuevo', async (req, res) => {
   try {
     const nuevaEntrevista = req.body;
     
@@ -1197,20 +1285,18 @@ app.post('/api/entrevistas/nuevo', (req, res) => {
       return res.status(401).json({ error: 'Código de acceso incorrecto. Interrupción del sector.' });
     }
 
-    const datosActuales = fs.existsSync(RUTA_ENTREVISTAS) 
-      ? JSON.parse(fs.readFileSync(RUTA_ENTREVISTAS, 'utf-8')) 
-      : [];
+    const datosActuales = await getCollection('entrevistas', RUTA_ENTREVISTAS, []);
 
     nuevaEntrevista.id = `entrevista-${Date.now()}`;
     
     delete nuevaEntrevista.password;
 
     datosActuales.push(nuevaEntrevista);
-    fs.writeFileSync(RUTA_ENTREVISTAS, JSON.stringify(datosActuales, null, 2));
+    await saveCollection('entrevistas', datosActuales, RUTA_ENTREVISTAS);
 
     const descLog = `Inyectada nueva entrevista: ${nuevaEntrevista.nombre} [ONLINE]`;
     const crtDescLog = `La entrevista con "${nuevaEntrevista.nombre}" ha sido indexada en el registro del Búnker.`;
-    agregarLog("FAVORITOS", descLog, crtDescLog, "text-warning");
+    await agregarLog("FAVORITOS", descLog, crtDescLog, "text-warning");
 
     res.json({ success: true, message: 'Terminal: Registro de entrevista indexado.', entrevista: nuevaEntrevista });
   } catch (error) {
@@ -1222,15 +1308,17 @@ app.post('/api/entrevistas/nuevo', (req, res) => {
 // ========================================================
 // 🎮 ENDPOINTS PARA JUEGOS (GET / POST / ELIMINAR)
 // ========================================================
-app.get('/api/juegos', (req, res) => {
-  if (!fs.existsSync(RUTA_JUEGOS)) {
-    fs.writeFileSync(RUTA_JUEGOS, JSON.stringify([]));
+app.get('/api/juegos', async (req, res) => {
+  try {
+    const datos = await getCollection('juegos', RUTA_JUEGOS, []);
+    res.json(datos);
+  } catch (error) {
+    console.error("Error leyendo juegos:", error);
+    res.status(500).json({ error: "Fallo al leer juegos." });
   }
-  const datos = fs.readFileSync(RUTA_JUEGOS, 'utf-8');
-  res.json(JSON.parse(datos));
 });
 
-app.post('/api/juegos/nuevo', (req, res) => {
+app.post('/api/juegos/nuevo', async (req, res) => {
   try {
     const nuevoJuego = req.body;
     
@@ -1238,20 +1326,18 @@ app.post('/api/juegos/nuevo', (req, res) => {
       return res.status(401).json({ error: 'Código de acceso incorrecto. Interrupción del sector.' });
     }
 
-    const datosActuales = fs.existsSync(RUTA_JUEGOS) 
-      ? JSON.parse(fs.readFileSync(RUTA_JUEGOS, 'utf-8')) 
-      : [];
+    const datosActuales = await getCollection('juegos', RUTA_JUEGOS, []);
 
     nuevoJuego.id = `juego-${Date.now()}`;
     
     delete nuevoJuego.password;
 
     datosActuales.push(nuevoJuego);
-    fs.writeFileSync(RUTA_JUEGOS, JSON.stringify(datosActuales, null, 2));
+    await saveCollection('juegos', datosActuales, RUTA_JUEGOS);
 
     const descLog = `Inyectado nuevo juego: ${nuevoJuego.titulo} [ONLINE]`;
     const crtDescLog = `El juego "${nuevoJuego.titulo}" ha sido indexada en el registro del Búnker.`;
-    agregarLog("GAMING", descLog, crtDescLog, "text-neon-cyan");
+    await agregarLog("GAMING", descLog, crtDescLog, "text-neon-cyan");
 
     res.json({ success: true, message: 'Terminal: Registro de juego indexado.', juego: nuevoJuego });
   } catch (error) {
@@ -1260,7 +1346,7 @@ app.post('/api/juegos/nuevo', (req, res) => {
   }
 });
 
-app.post('/api/juegos/eliminar', (req, res) => {
+app.post('/api/juegos/eliminar', async (req, res) => {
   try {
     const { id, password } = req.body;
     
@@ -1268,11 +1354,7 @@ app.post('/api/juegos/eliminar', (req, res) => {
       return res.status(401).json({ error: 'Código de acceso incorrecto. Interrupción del sector.' });
     }
 
-    if (!fs.existsSync(RUTA_JUEGOS)) {
-      return res.status(404).json({ error: 'Sector de base de datos no encontrado.' });
-    }
-
-    let datosActuales = JSON.parse(fs.readFileSync(RUTA_JUEGOS, 'utf-8'));
+    let datosActuales = await getCollection('juegos', RUTA_JUEGOS, []);
     const juegoAEliminar = datosActuales.find(j => j.id === id);
 
     if (!juegoAEliminar) {
@@ -1280,11 +1362,11 @@ app.post('/api/juegos/eliminar', (req, res) => {
     }
 
     datosActuales = datosActuales.filter(j => j.id !== id);
-    fs.writeFileSync(RUTA_JUEGOS, JSON.stringify(datosActuales, null, 2));
+    await saveCollection('juegos', datosActuales, RUTA_JUEGOS);
 
     const descLog = `Eliminado juego: ${juegoAEliminar.titulo} [OFFLINE]`;
     const crtDescLog = `El juego "${juegoAEliminar.titulo}" ha sido purgado del registro del Búnker.`;
-    agregarLog("GAMING", descLog, crtDescLog, "text-danger");
+    await agregarLog("GAMING", descLog, crtDescLog, "text-danger");
 
     res.json({ success: true, message: 'Terminal: Registro de juego eliminado.', id });
   } catch (error) {
@@ -1296,18 +1378,20 @@ app.post('/api/juegos/eliminar', (req, res) => {
 // ========================================================
 // 📡 ENDPOINTS PARA REDES SOCIALES (GET)
 // ========================================================
-app.get('/api/redes', (req, res) => {
-  if (!fs.existsSync(RUTA_REDES)) {
-    fs.writeFileSync(RUTA_REDES, JSON.stringify({ instagram: [], tiktok: [], wattpad: [] }));
+app.get('/api/redes', async (req, res) => {
+  try {
+    const datos = await getCollection('redes', RUTA_REDES, { instagram: [], tiktok: [], wattpad: [] });
+    res.json(datos);
+  } catch (error) {
+    console.error("Error leyendo redes:", error);
+    res.status(500).json({ error: "Fallo al leer redes." });
   }
-  const datos = fs.readFileSync(RUTA_REDES, 'utf-8');
-  res.json(JSON.parse(datos));
 });
 
 // ========================================================
 // 📡 ENDPOINTS PARA REDES SOCIALES (POST / DELETE)
 // ========================================================
-app.post('/api/redes/nuevo', (req, res) => {
+app.post('/api/redes/nuevo', async (req, res) => {
   try {
     const { red, embedHtml, password, imageFileData, imageFileName } = req.body;
 
@@ -1349,11 +1433,7 @@ app.post('/api/redes/nuevo', (req, res) => {
       cleanEmbed = cleanEmbed.replace(/__IMAGE_PLACEHOLDER__/g, relativePath);
     }
 
-    if (!fs.existsSync(RUTA_REDES)) {
-      fs.writeFileSync(RUTA_REDES, JSON.stringify({ instagram: [], tiktok: [], wattpad: [] }));
-    }
-
-    const datos = JSON.parse(fs.readFileSync(RUTA_REDES, 'utf-8'));
+    const datos = await getCollection('redes', RUTA_REDES, { instagram: [], tiktok: [], wattpad: [] });
 
     const nuevoPost = {
       id: `${red}-${Date.now()}`,
@@ -1368,7 +1448,7 @@ app.post('/api/redes/nuevo', (req, res) => {
       datos[red] = datos[red].slice(0, 2);
     }
 
-    fs.writeFileSync(RUTA_REDES, JSON.stringify(datos, null, 2));
+    await saveCollection('redes', datos, RUTA_REDES);
 
     const descLog = `Inyectado nuevo post en ${red.toUpperCase()} [ONLINE]`;
     const crtDescLog = `El sector ${red.toUpperCase()} recibió una nueva publicación y el feed fue resincronizado.`;
@@ -1377,7 +1457,7 @@ app.post('/api/redes/nuevo', (req, res) => {
       : red === 'tiktok'
         ? 'text-neon-cyan'
         : 'text-warning';
-    agregarLog('REDES', descLog, crtDescLog, colorLog);
+    await agregarLog('REDES', descLog, crtDescLog, colorLog);
 
     res.json({ success: true, message: `Post añadido a ${red.toUpperCase()}.` });
   } catch (error) {
@@ -1386,7 +1466,7 @@ app.post('/api/redes/nuevo', (req, res) => {
   }
 });
 
-app.delete('/api/redes/eliminar/:red/:id', (req, res) => {
+app.delete('/api/redes/eliminar/:red/:id', async (req, res) => {
   try {
     const { red, id } = req.params;
     const { password } = req.body;
@@ -1400,11 +1480,7 @@ app.delete('/api/redes/eliminar/:red/:id', (req, res) => {
       return res.status(400).json({ error: 'Red no válida. Usa: instagram, tiktok o wattpad.' });
     }
 
-    if (!fs.existsSync(RUTA_REDES)) {
-      return res.status(404).json({ error: 'Archivo de redes no encontrado.' });
-    }
-
-    const datos = JSON.parse(fs.readFileSync(RUTA_REDES, 'utf-8'));
+    const datos = await getCollection('redes', RUTA_REDES, { instagram: [], tiktok: [], wattpad: [] });
 
     const index = datos[red].findIndex(post => post.id === id);
     if (index === -1) {
@@ -1413,11 +1489,11 @@ app.delete('/api/redes/eliminar/:red/:id', (req, res) => {
 
     const [postEliminado] = datos[red].splice(index, 1);
 
-    fs.writeFileSync(RUTA_REDES, JSON.stringify(datos, null, 2));
+    await saveCollection('redes', datos, RUTA_REDES);
 
     const descLog = `Eliminado post de ${red.toUpperCase()} [OFFLINE]`;
     const crtDescLog = `Un registro del sector ${red.toUpperCase()} fue purgado (${postEliminado?.id || id}).`;
-    agregarLog('REDES', descLog, crtDescLog, 'text-danger');
+    await agregarLog('REDES', descLog, crtDescLog, 'text-danger');
 
     res.json({ success: true, message: `Post eliminado de ${red.toUpperCase()}.` });
   } catch (error) {
