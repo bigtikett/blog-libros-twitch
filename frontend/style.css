@@ -3567,6 +3567,9 @@
   border-color: #5865f2;
   background: rgba(88, 101, 242, 0.12);
 }
+.social-connector {
+  /* Conector Email */
+}
 .social-connector.connector-email:hover {
   color: #fff !important;
   border-color: #ffaa00;
@@ -4634,7 +4637,6 @@ body.matrix-active > *:not(#matrix-landing-overlay) {
     transform: rotate(-360deg);
   }
 }
-
 /* Banner de Cookies Cyberpunk */
 .cookie-banner-wrapper {
   position: fixed;
@@ -4662,7 +4664,6 @@ body.matrix-active > *:not(#matrix-landing-overlay) {
     transform: translateY(0);
   }
 }
-
 /* Responsividad para móviles */
 @media (max-width: 576px) {
   .cookie-banner-wrapper {
@@ -4671,4 +4672,29 @@ body.matrix-active > *:not(#matrix-landing-overlay) {
     bottom: 15px;
     max-width: calc(100% - 30px);
   }
+}
+/* Contenedor del icono dentro del H4 */
+.log-cyber-icon {
+  width: auto;
+  height: 1.7rem; /* Ajusta la altura para que coincida perfectamente con el H4 */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* La imagen del datapad de la nave */
+.log-cyber-icon img {
+  height: 100%;
+  width: auto;
+  -o-object-fit: contain;
+     object-fit: contain; /* Evita que el datapad se deforme o se aplaste */
+  /* Efecto de retroiluminación cyberpunk sutil por defecto */
+  filter: drop-shadow(0 0 3px rgba(0, 240, 255, 0.4));
+  transition: filter 0.2s ease, transform 0.2s ease;
+}
+
+/* ⚡ REACCIÓN HOVER: Al pasar el ratón por el H4, el icono se ilumina a tope */
+h4:hover .log-cyber-icon img {
+  filter: drop-shadow(0 0 8px #00f0ff) brightness(1.2); /* Brillo neón azul */
+  transform: scale(1.05); /* Crece un pelín de forma reactiva */
 }/*# sourceMappingURL=style.css.map */
