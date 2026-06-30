@@ -1,3 +1,29 @@
 [
-  
+  {
+    "linkWattpad": "",
+    "colorTitulo": "white",
+    "titulo": "TESTIMG",
+    "cover": "/img/biblioteca/1782858259605-test.png",
+    "colorResena": "white",
+    "favorito": false,
+    "puntuacion": "5",
+    "colorGenero": "info",
+    "hype": "90",
+    "podio": null,
+    "estado": "leidos",
+    "colorPuntuacion": "yellow",
+    "genero": "TEST",
+    "resena": "x",
+    "colorAutor": "yellow",
+    "linkAmazon": "",
+    "autor": "TEST",
+    "colorHype": "yellow",
+    "id": "libro-1782858259606"
+  },
+  {
+    "id": "persist-check",
+    "titulo": "PERSISTENCIA",
+    "autor": "TEST",
+    "cover": "/assets/images/jony.jpg"
+  }
 ]

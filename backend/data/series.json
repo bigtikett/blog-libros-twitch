@@ -1,3 +1,7 @@
 [
-  
+  {
+    "id": "series-check",
+    "titulo": "PERSIST_TEST",
+    "cover": "/assets/images/jony.jpg"
+  }
 ]

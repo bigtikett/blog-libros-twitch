@@ -1,4 +1,7 @@
 [
- 
-  
+  {
+    "id": "peliculas-check",
+    "titulo": "PERSIST_TEST",
+    "cover": "/assets/images/jony.jpg"
+  }
 ]

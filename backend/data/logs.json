@@ -142,5 +142,13 @@
     "desc": "Eliminado personaje: TONY MONTANA [OFFLINE]",
     "crtDesc": "El personaje \"TONY MONTANA\" fue purgado del registro de sujetos clasificados.",
     "color": "text-danger"
+  },
+  {
+    "id": "log-1782858259613-780",
+    "fecha": "2026-06-30",
+    "tag": "DATABASE",
+    "desc": "Inyectado nuevo libro: TESTIMG por TEST [ONLINE]",
+    "crtDesc": "El bloque de lectura del sector \"TESTIMG\" ha sido indexado con éxito en la biblioteca.",
+    "color": "text-neon-cyan"
   }
 ]

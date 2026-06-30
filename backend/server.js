@@ -7,6 +7,9 @@ import cors from 'cors';
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
 import dns from 'dns';
+import { buildPublicAssetUrl } from './utils/public-url.js';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { buildStorageKey, buildStoragePublicUrl } from './utils/r2-storage.js';
 
 dns.setDefaultResultOrder('ipv4first');
 dotenv.config();
@@ -37,6 +40,23 @@ const RUTA_REDES = path.join(DATA_DIR, 'redes.json');
 const DATABASE_URL = process.env.DATABASE_URL || '';
 const DATABASE_SSL = (process.env.DATABASE_SSL || 'true').toLowerCase() === 'true';
 const AUDIO_PUBLIC_BASE_URL = (process.env.AUDIO_PUBLIC_BASE_URL || '').trim().replace(/\/+$/, '');
+const IMAGE_PUBLIC_BASE_URL = (process.env.IMAGE_PUBLIC_BASE_URL || '').trim().replace(/\/+$/, '');
+const R2_ENDPOINT = (process.env.R2_ENDPOINT || '').trim();
+const R2_ACCESS_KEY_ID = (process.env.R2_ACCESS_KEY_ID || '').trim();
+const R2_SECRET_ACCESS_KEY = (process.env.R2_SECRET_ACCESS_KEY || '').trim();
+const R2_BUCKET_NAME = (process.env.R2_BUCKET_NAME || '').trim();
+const R2_PUBLIC_BASE_URL = (process.env.R2_PUBLIC_BASE_URL || '').trim().replace(/\/+$/, '');
+
+const r2Client = R2_ENDPOINT && R2_ACCESS_KEY_ID && R2_SECRET_ACCESS_KEY && R2_BUCKET_NAME
+  ? new S3Client({
+      region: 'auto',
+      endpoint: R2_ENDPOINT,
+      credentials: {
+        accessKeyId: R2_ACCESS_KEY_ID,
+        secretAccessKey: R2_SECRET_ACCESS_KEY,
+      },
+    })
+  : null;
 
 const dbPool = DATABASE_URL
   ? new Pool({
@@ -628,24 +648,25 @@ app.post('/api/biblioteca/nuevo', async (req, res) => {
     
     // Procesamos la subida del archivo si viene en base64
     if (nuevoLibro.coverFileData && nuevoLibro.coverFileName) {
-      const base64Data = nuevoLibro.coverFileData.replace(/^data:image\/\w+;base64,/, "");
+      const base64Data = nuevoLibro.coverFileData.replace(/^data:image\/\w+;base64,/, '');
       const buffer = Buffer.from(base64Data, 'base64');
-      
-      const dirPortadas = IMG_BIBLIOTECA_DIR;
-      if (!fs.existsSync(dirPortadas)) {
-        fs.mkdirSync(dirPortadas, { recursive: true });
+      const contentType = nuevoLibro.coverFileData.match(/^data:(image\/\w+);base64,/)?.[1] || 'image/jpeg';
+
+      if (r2Client) {
+        const objectKey = buildStorageKey(nuevoLibro.coverFileName, 'books');
+        await r2Client.send(new PutObjectCommand({
+          Bucket: R2_BUCKET_NAME,
+          Key: objectKey,
+          Body: buffer,
+          ContentType: contentType,
+          ACL: 'public-read'
+        }));
+
+        const publicUrl = buildStoragePublicUrl(R2_PUBLIC_BASE_URL || IMAGE_PUBLIC_BASE_URL, objectKey);
+        nuevoLibro.cover = publicUrl;
+      } else {
+        nuevoLibro.cover = nuevoLibro.coverFileData;
       }
-      
-      // Sanitizamos el nombre de archivo y le añadimos timestamp para evitar colisiones
-      const extension = path.extname(nuevoLibro.coverFileName) || '.jpg';
-      const nombreLimpio = path.basename(nuevoLibro.coverFileName, extension).replace(/[^a-z0-9]/gi, '_').toLowerCase();
-      const nombreArchivo = `${Date.now()}-${nombreLimpio}${extension}`;
-      const rutaFisica = path.join(dirPortadas, nombreArchivo);
-      
-      fs.writeFileSync(rutaFisica, buffer);
-      
-      // Guardamos la ruta estática
-      nuevoLibro.cover = `/img/biblioteca/${nombreArchivo}`;
     }
 
     // Asignamos un ID único basado en el tiempo para que no se repitan
@@ -1014,21 +1035,35 @@ app.post('/api/series/nuevo', async (req, res) => {
     const datosActuales = await getCollection('series', RUTA_SERIES, []);
     
     if (nuevaSerie.coverFileData && nuevaSerie.coverFileName) {
-      const base64Data = nuevaSerie.coverFileData.replace(/^data:image\/\w+;base64,/, "");
+      const base64Data = nuevaSerie.coverFileData.replace(/^data:image\/\w+;base64,/, '');
       const buffer = Buffer.from(base64Data, 'base64');
-      
-      const dirFavoritos = IMG_FAVORITOS_DIR;
-      if (!fs.existsSync(dirFavoritos)) {
-        fs.mkdirSync(dirFavoritos, { recursive: true });
+      const contentType = nuevaSerie.coverFileData.match(/^data:(image\/\w+);base64,/)?.[1] || 'image/jpeg';
+
+      if (r2Client) {
+        const objectKey = buildStorageKey(nuevaSerie.coverFileName, 'series');
+        await r2Client.send(new PutObjectCommand({
+          Bucket: R2_BUCKET_NAME,
+          Key: objectKey,
+          Body: buffer,
+          ContentType: contentType,
+          ACL: 'public-read'
+        }));
+
+        nuevaSerie.cover = buildStoragePublicUrl(R2_PUBLIC_BASE_URL || IMAGE_PUBLIC_BASE_URL, objectKey);
+      } else {
+        const dirFavoritos = IMG_FAVORITOS_DIR;
+        if (!fs.existsSync(dirFavoritos)) {
+          fs.mkdirSync(dirFavoritos, { recursive: true });
+        }
+
+        const extension = path.extname(nuevaSerie.coverFileName) || '.jpg';
+        const nombreLimpio = path.basename(nuevaSerie.coverFileName, extension).replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        const nombreArchivo = `${Date.now()}-${nombreLimpio}${extension}`;
+        const rutaFisica = path.join(dirFavoritos, nombreArchivo);
+
+        fs.writeFileSync(rutaFisica, buffer);
+        nuevaSerie.cover = `/img/favoritos/${nombreArchivo}`;
       }
-      
-      const extension = path.extname(nuevaSerie.coverFileName) || '.jpg';
-      const nombreLimpio = path.basename(nuevaSerie.coverFileName, extension).replace(/[^a-z0-9]/gi, '_').toLowerCase();
-      const nombreArchivo = `${Date.now()}-${nombreLimpio}${extension}`;
-      const rutaFisica = path.join(dirFavoritos, nombreArchivo);
-      
-      fs.writeFileSync(rutaFisica, buffer);
-      nuevaSerie.cover = `/img/favoritos/${nombreArchivo}`;
     }
 
     nuevaSerie.id = `serie-${Date.now()}`;
@@ -1104,21 +1139,35 @@ app.post('/api/peliculas/nuevo', async (req, res) => {
     const datosActuales = await getCollection('peliculas', RUTA_PELICULAS, []);
     
     if (nuevaPelicula.coverFileData && nuevaPelicula.coverFileName) {
-      const base64Data = nuevaPelicula.coverFileData.replace(/^data:image\/\w+;base64,/, "");
+      const base64Data = nuevaPelicula.coverFileData.replace(/^data:image\/\w+;base64,/, '');
       const buffer = Buffer.from(base64Data, 'base64');
-      
-      const dirFavoritos = IMG_FAVORITOS_DIR;
-      if (!fs.existsSync(dirFavoritos)) {
-        fs.mkdirSync(dirFavoritos, { recursive: true });
+      const contentType = nuevaPelicula.coverFileData.match(/^data:(image\/\w+);base64,/)?.[1] || 'image/jpeg';
+
+      if (r2Client) {
+        const objectKey = buildStorageKey(nuevaPelicula.coverFileName, 'peliculas');
+        await r2Client.send(new PutObjectCommand({
+          Bucket: R2_BUCKET_NAME,
+          Key: objectKey,
+          Body: buffer,
+          ContentType: contentType,
+          ACL: 'public-read'
+        }));
+
+        nuevaPelicula.cover = buildStoragePublicUrl(R2_PUBLIC_BASE_URL || IMAGE_PUBLIC_BASE_URL, objectKey);
+      } else {
+        const dirFavoritos = IMG_FAVORITOS_DIR;
+        if (!fs.existsSync(dirFavoritos)) {
+          fs.mkdirSync(dirFavoritos, { recursive: true });
+        }
+
+        const extension = path.extname(nuevaPelicula.coverFileName) || '.jpg';
+        const nombreLimpio = path.basename(nuevaPelicula.coverFileName, extension).replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        const nombreArchivo = `${Date.now()}-${nombreLimpio}${extension}`;
+        const rutaFisica = path.join(dirFavoritos, nombreArchivo);
+
+        fs.writeFileSync(rutaFisica, buffer);
+        nuevaPelicula.cover = `/img/favoritos/${nombreArchivo}`;
       }
-      
-      const extension = path.extname(nuevaPelicula.coverFileName) || '.jpg';
-      const nombreLimpio = path.basename(nuevaPelicula.coverFileName, extension).replace(/[^a-z0-9]/gi, '_').toLowerCase();
-      const nombreArchivo = `${Date.now()}-${nombreLimpio}${extension}`;
-      const rutaFisica = path.join(dirFavoritos, nombreArchivo);
-      
-      fs.writeFileSync(rutaFisica, buffer);
-      nuevaPelicula.cover = `/img/favoritos/${nombreArchivo}`;
     }
 
     nuevaPelicula.id = `pelicula-${Date.now()}`;
@@ -1194,21 +1243,35 @@ app.post('/api/personajes/nuevo', async (req, res) => {
     const datosActuales = await getCollection('personajes', RUTA_PERSONAJES, []);
     
     if (nuevoPersonaje.coverFileData && nuevoPersonaje.coverFileName) {
-      const base64Data = nuevoPersonaje.coverFileData.replace(/^data:image\/\w+;base64,/, "");
+      const base64Data = nuevoPersonaje.coverFileData.replace(/^data:image\/\w+;base64,/, '');
       const buffer = Buffer.from(base64Data, 'base64');
-      
-      const dirFavoritos = IMG_FAVORITOS_DIR;
-      if (!fs.existsSync(dirFavoritos)) {
-        fs.mkdirSync(dirFavoritos, { recursive: true });
+      const contentType = nuevoPersonaje.coverFileData.match(/^data:(image\/\w+);base64,/)?.[1] || 'image/jpeg';
+
+      if (r2Client) {
+        const objectKey = buildStorageKey(nuevoPersonaje.coverFileName, 'personajes');
+        await r2Client.send(new PutObjectCommand({
+          Bucket: R2_BUCKET_NAME,
+          Key: objectKey,
+          Body: buffer,
+          ContentType: contentType,
+          ACL: 'public-read'
+        }));
+
+        nuevoPersonaje.cover = buildStoragePublicUrl(R2_PUBLIC_BASE_URL || IMAGE_PUBLIC_BASE_URL, objectKey);
+      } else {
+        const dirFavoritos = IMG_FAVORITOS_DIR;
+        if (!fs.existsSync(dirFavoritos)) {
+          fs.mkdirSync(dirFavoritos, { recursive: true });
+        }
+
+        const extension = path.extname(nuevoPersonaje.coverFileName) || '.jpg';
+        const nombreLimpio = path.basename(nuevoPersonaje.coverFileName, extension).replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        const nombreArchivo = `${Date.now()}-${nombreLimpio}${extension}`;
+        const rutaFisica = path.join(dirFavoritos, nombreArchivo);
+
+        fs.writeFileSync(rutaFisica, buffer);
+        nuevoPersonaje.cover = `/img/favoritos/${nombreArchivo}`;
       }
-      
-      const extension = path.extname(nuevoPersonaje.coverFileName) || '.jpg';
-      const nombreLimpio = path.basename(nuevoPersonaje.coverFileName, extension).replace(/[^a-z0-9]/gi, '_').toLowerCase();
-      const nombreArchivo = `${Date.now()}-${nombreLimpio}${extension}`;
-      const rutaFisica = path.join(dirFavoritos, nombreArchivo);
-      
-      fs.writeFileSync(rutaFisica, buffer);
-      nuevoPersonaje.cover = `/img/favoritos/${nombreArchivo}`;
     }
 
     nuevoPersonaje.id = `personaje-${Date.now()}`;
