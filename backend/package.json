@@ -1,6 +1,6 @@
 {
   "name": "blog-libros-twitch",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "",
   "main": "server.js",
   "type": "module",
@@ -11,7 +11,10 @@
     "health:prod": "powershell -ExecutionPolicy Bypass -File ./scripts/prod-healthcheck.ps1",
     "version:patch": "npm version patch --no-git-tag-version",
     "version:minor": "npm version minor --no-git-tag-version",
-    "version:major": "npm version major --no-git-tag-version"
+    "version:major": "npm version major --no-git-tag-version",
+    "release:patch": "node ./scripts/release.mjs patch",
+    "release:minor": "node ./scripts/release.mjs minor",
+    "release:major": "node ./scripts/release.mjs major"
   },
   "keywords": [],
   "author": "",
