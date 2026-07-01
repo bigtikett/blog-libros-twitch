@@ -399,6 +399,30 @@
         justify-content: center;
       }
     }
+
+    /* Ensure title links in favorites footer stay visible and clickable */
+    #favoritos-footer .fav-datapad-card h4 > a.fav-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 1.05rem;
+      line-height: 1.2;
+      opacity: 1 !important;
+      visibility: visible !important;
+      text-decoration: none !important;
+    }
+
+    #favoritos-footer .fav-datapad-card h4 > a.fav-link.fav-link-magenta {
+      color: #ff33cc !important;
+    }
+
+    #favoritos-footer .fav-datapad-card h4 > a.fav-link.fav-link-cyan {
+      color: #66ffff !important;
+    }
+
+    #favoritos-footer .fav-datapad-card h4 > a.fav-link.fav-link-warning {
+      color: #ffed4e !important;
+    }
   </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
