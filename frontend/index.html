@@ -1399,7 +1399,7 @@
         <div class="modal-header border-bottom border-secondary border-opacity-25 bg-black-25">
           <h5 class="modal-title text-neon-cyan font-orbitron">[ INJECT_READ_DATA ]</h5>
           <span id="index-admin-indicator-lib" class="small fw-bold text-danger">[ ADMIN: OFF ]</span>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <!-- Password field unified at the top of the modal content -->
         <div class="px-4 pt-3 pb-2 border-bottom border-secondary border-opacity-10 bg-black-25">
@@ -1747,7 +1747,7 @@
         <div class="modal-header border-bottom border-secondary border-opacity-25 bg-black-25">
           <h5 class="modal-title text-neon-cyan font-orbitron">[ INJECT_INTERVIEW_RECORD ]</h5>
           <span id="index-admin-indicator-ent" class="small fw-bold text-danger">[ ADMIN: OFF ]</span>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="px-4 pt-3 pb-2 border-bottom border-secondary border-opacity-10 bg-black-25">
           <label class="form-label text-neon-magenta small">&gt; CÓDIGO_SISTEMA (PASSWORD)</label>
@@ -1889,7 +1889,7 @@
         <div class="modal-header border-bottom border-secondary border-opacity-25 bg-black-25">
           <h5 class="modal-title text-neon-cyan font-orbitron">[ INJECT_GAME_RECORD ]</h5>
           <span id="index-admin-indicator-game" class="small fw-bold text-danger">[ ADMIN: OFF ]</span>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="px-4 pt-3 pb-2 border-bottom border-secondary border-opacity-10 bg-black-25">
           <label class="form-label text-neon-magenta small">&gt; CÓDIGO_SISTEMA (PASSWORD)</label>
@@ -2007,7 +2007,7 @@
         <div class="modal-header border-bottom border-secondary border-opacity-25 bg-black-25">
           <h5 class="modal-title text-neon-cyan font-orbitron">[ INJECT_SOCIAL_EMBED ]</h5>
           <span id="index-admin-indicator-red" class="small fw-bold text-danger">[ ADMIN: OFF ]</span>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <!-- Password field -->
         <div class="px-4 pt-3 pb-2 border-bottom border-secondary border-opacity-25">
@@ -2080,6 +2080,70 @@
             <h6 class="text-neon-cyan font-orbitron mb-3 small">[ CURRENT_POSTS ]</h6>
             <div id="red-posts-preview" class="text-white-50 small">
               <!-- Populated dynamically -->
+              <div class="text-center py-2">[ LOADING... ]</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Secreto de Inyección de Emotes (Se abre con Ctrl + Shift + M) -->
+  <div class="modal fade" id="modal-nuevo-emote" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content bg-dark border border-secondary border-opacity-50 text-white font-monospace bitacora-skin-modal">
+        <div class="modal-header border-bottom border-secondary border-opacity-25 bg-black-25">
+          <h5 class="modal-title text-neon-cyan font-orbitron">[ INJECT_EMOTE_RECORD ]</h5>
+          <span id="index-admin-indicator-emote" class="small fw-bold text-danger">[ ADMIN: OFF ]</span>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="px-4 pt-3 pb-2 border-bottom border-secondary border-opacity-25">
+          <label class="form-label text-xs text-white-50 text-uppercase">> ACCESS_CODE</label>
+          <input type="password" id="modal-password-emote" class="form-control form-control-sm bg-black border-secondary text-white" placeholder="••••••••" required>
+        </div>
+        <div class="modal-body" style="max-height: 65vh; overflow-y: auto;">
+          <form id="form-nuevo-emote" autocomplete="off">
+            <div class="mb-3">
+              <label class="form-label text-neon-magenta small">&gt; ID_EDITAR (OPCIONAL)</label>
+              <input type="text" id="emote-id-editar" class="form-control form-control-sm bg-black border-secondary text-white" placeholder="emote-123... (si lo rellenas, edita)">
+              <div id="emote-edit-mode-badge" class="form-text small mt-1 text-warning d-none">[ MODO EDICION ACTIVO ]</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label text-neon-magenta small">&gt; ARCHIVO_ICONO</label>
+              <input type="text" id="emote-file" class="form-control form-control-sm bg-black border-secondary text-white" placeholder="ranihappy.jfif" required>
+              <div class="form-text text-white-50 small mt-1">// Nombre de archivo dentro de /assets/icons/</div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-6">
+                <label class="form-label text-neon-magenta small">&gt; ETIQUETA_RAREZA</label>
+                <input type="text" id="emote-rarity" class="form-control form-control-sm bg-black border-secondary text-white text-uppercase" placeholder="EPIC" required>
+              </div>
+              <div class="col-6">
+                <label class="form-label text-neon-magenta small">&gt; CLASE_COLOR_BADGE</label>
+                <select id="emote-color" class="form-select form-select-sm bg-black border-secondary text-white">
+                  <option value="bg-neon-cyan">bg-neon-cyan</option>
+                  <option value="bg-neon-magenta">bg-neon-magenta</option>
+                  <option value="btn-purple">btn-purple</option>
+                  <option value="bg-purple">bg-purple</option>
+                  <option value="bg-dark">bg-dark</option>
+                  <option value="bg-warning">bg-warning</option>
+                  <option value="bg-gold">bg-gold</option>
+                  <option value="bg-info">bg-info</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="d-flex gap-2 mt-2">
+              <button type="button" class="btn btn-sm w-50 font-orbitron btn-close-admin-mode bitacora-modal-btn bitacora-modal-btn-danger" data-modal-id="modal-nuevo-emote">[ CERRAR MODO ADMIN ]</button>
+              <button type="submit" class="btn btn-sm w-50 font-orbitron bitacora-modal-btn">[ INJECT_EMOTE_RECORD ]</button>
+            </div>
+          </form>
+
+          <div class="mt-4 pt-3 border-top border-secondary border-opacity-25">
+            <h6 class="text-neon-cyan font-orbitron mb-3 small">[ CURRENT_EMOTES ]</h6>
+            <div id="emote-inventory-preview" class="text-white-50 small">
               <div class="text-center py-2">[ LOADING... ]</div>
             </div>
           </div>

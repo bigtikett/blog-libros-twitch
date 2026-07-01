@@ -22,7 +22,8 @@
       "index-admin-indicator-lib",
       "index-admin-indicator-ent",
       "index-admin-indicator-game",
-      "index-admin-indicator-red"
+      "index-admin-indicator-red",
+      "index-admin-indicator-emote"
     ];
 
     indicatorIds.forEach((id) => {
@@ -55,7 +56,7 @@
     sessionStorage.setItem(ADMIN_SESSION_KEY, "1");
     isAdmin = true;
 
-    ["modal-password", "modal-password-entrevista", "modal-password-juego", "modal-password-red"].forEach((id) => {
+    ["modal-password", "modal-password-entrevista", "modal-password-juego", "modal-password-red", "modal-password-emote"].forEach((id) => {
       const passInput = document.getElementById(id);
       if (passInput) passInput.value = ACCESS_CODE;
     });
@@ -77,7 +78,7 @@
     sessionStorage.removeItem(ADMIN_SESSION_KEY);
     isAdmin = false;
 
-    ["modal-password", "modal-password-entrevista", "modal-password-juego", "modal-password-red"].forEach((id) => {
+    ["modal-password", "modal-password-entrevista", "modal-password-juego", "modal-password-red", "modal-password-emote"].forEach((id) => {
       const passInput = document.getElementById(id);
       if (passInput) passInput.value = "";
     });
@@ -177,7 +178,7 @@
     document.querySelectorAll(".modal-backdrop.fallback-modal-backdrop").forEach((el) => el.remove());
   }
 
-  ["modal-password", "modal-password-entrevista", "modal-password-juego", "modal-password-red"].forEach((id) => {
+  ["modal-password", "modal-password-entrevista", "modal-password-juego", "modal-password-red", "modal-password-emote"].forEach((id) => {
     const passInput = document.getElementById(id);
     if (!passInput) return;
     passInput.addEventListener("input", () => {
@@ -218,7 +219,8 @@
     { inputId: "cita-id-editar", badgeId: "cita-edit-mode-badge", formId: "form-nueva-cita", createLabel: "[ INJECT_QUOTE_RECORD ]" },
     { inputId: "ent-id-editar", badgeId: "ent-edit-mode-badge", formId: "form-nueva-entrevista", createLabel: "[ INJECT_INTERVIEW_RECORD ]" },
     { inputId: "game-id-editar", badgeId: "game-edit-mode-badge", formId: "form-nuevo-juego", createLabel: "[ INJECT_GAME_RECORD ]" },
-    { inputId: "red-id-editar", badgeId: "red-edit-mode-badge", formId: "form-nueva-red", createLabel: "[ INJECT_POST ]" }
+    { inputId: "red-id-editar", badgeId: "red-edit-mode-badge", formId: "form-nueva-red", createLabel: "[ INJECT_POST ]" },
+    { inputId: "emote-id-editar", badgeId: "emote-edit-mode-badge", formId: "form-nuevo-emote", createLabel: "[ INJECT_EMOTE_RECORD ]" }
   ];
 
   function setEditModeUIState(config) {
@@ -464,12 +466,11 @@
   }
 
   // ðŸ¸ CARGA DINÃMICA DE EMOTES DESDE ASSETS/ICONS
-  function inicializarMarquesinaEmotes() {
+  async function inicializarMarquesinaEmotes() {
     const container = document.getElementById('emotes-marquee-container');
     if (!container) return;
 
-    // Lista fija de iconos leÃ­da del directorio assets/icons
-    const emotes = [
+    let emotes = [
       { file: 'ranidk.jfif', rarity: 'SUB', color: 'bg-neon-cyan' },
       { file: 'ranifire.jfif', rarity: 'HOT', color: 'bg-neon-magenta' },
       { file: 'ranihappy.jfif', rarity: 'EPIC', color: 'btn-purple' },
@@ -488,6 +489,23 @@
       { file: 'yaiplay.jfif', rarity: 'GAMER', color: 'bg-info' },
       { file: 'yaiwow.jfif', rarity: 'STREAMER', color: 'bg-gold' }
     ];
+
+    try {
+      const response = await fetch('/api/emotes');
+      if (response.ok) {
+        const data = await response.json();
+        if (Array.isArray(data) && data.length) {
+          emotes = data.map((entry) => ({
+            id: entry.id,
+            file: String(entry.file || entry.image || '').trim(),
+            rarity: String(entry.rarity || 'SUB').trim().toUpperCase(),
+            color: String(entry.color || 'bg-neon-cyan').trim()
+          })).filter((entry) => entry.file);
+        }
+      }
+    } catch (error) {
+      console.warn('No se pudo leer emotes desde API, usando fallback local.', error);
+    }
 
     // Dividimos los emotes en dos filas/cintas para darle contra-ritmo
     const midPoint = Math.ceil(emotes.length / 2);
@@ -522,6 +540,44 @@
       ${crearFilaHTML(fila1, true)}
       ${crearFilaHTML(fila2, false)}
     `;
+  }
+
+  async function cargarPreviewEmotes() {
+    const preview = document.getElementById('emote-inventory-preview');
+    if (!preview) return;
+
+    try {
+      const response = await fetch('/api/emotes');
+      if (!response.ok) throw new Error('NO_EMOTES');
+      const data = await response.json();
+      const emotes = Array.isArray(data) ? data : [];
+
+      if (!emotes.length) {
+        preview.innerHTML = '<div class="text-center py-2">[ INVENTARIO_VACÍO ]</div>';
+        return;
+      }
+
+      preview.innerHTML = emotes.map((emote, index) => {
+        const id = String(emote.id || `emote-${index}`);
+        const file = String(emote.file || emote.image || '').trim();
+        const rarity = String(emote.rarity || 'SUB').trim().toUpperCase();
+        const color = String(emote.color || 'bg-neon-cyan').trim();
+        return `
+          <div class="d-flex justify-content-between align-items-center gap-2 py-1 border-bottom border-secondary border-opacity-10">
+            <div class="d-flex align-items-center gap-2" style="min-width: 0;">
+              <img src="assets/icons/${file}" alt="${file}" style="width: 28px; height: 28px; object-fit: cover; border:1px solid rgba(255,255,255,.2); border-radius:4px;">
+              <span class="text-white-50 text-truncate" style="max-width: 200px;">${file}</span>
+              <span class="badge-rarity ${color}">${rarity}</span>
+            </div>
+            <div class="d-flex align-items-center gap-1">
+              <button type="button" class="btn btn-outline-info btn-sm rounded-0 text-uppercase font-monospace btn-edit-emote" data-id="${id}" style="font-size:0.6rem; padding:2px 6px;">[ EDITAR ]</button>
+              <button type="button" class="btn btn-outline-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-emote" data-id="${id}" style="font-size:0.6rem; padding:2px 6px;">[ ELIMINAR ]</button>
+            </div>
+          </div>`;
+      }).join('');
+    } catch (error) {
+      preview.innerHTML = '<div class="text-center text-danger py-2">[ ERROR_LOADING ]</div>';
+    }
   }
 
   // --- LIBRARY DATABASE LOGIC (FETCH GET/POST & MODAL CONTROLS) ---
@@ -927,6 +983,14 @@
       requestAdminAccess(
         () => openAdminModal("modal-nuevo-juego", "modal-password-juego"),
         "INGRESE CÓDIGO DE ACCESO DE SEGURIDAD DEL BÚNKER (GAMING):"
+      );
+    }
+
+    if (matchesAdminShortcut(e, "m")) {
+      e.preventDefault();
+      requestAdminAccess(
+        () => openAdminModal("modal-nuevo-emote", "modal-password-emote", () => cargarPreviewEmotes()),
+        "INGRESE CÓDIGO DE ACCESO DE SEGURIDAD DEL BÚNKER (EMOTES):"
       );
     }
   });
@@ -2214,6 +2278,31 @@
     }
   }
 
+  async function cargarEmoteParaEditar(id) {
+    const response = await fetch('/api/emotes');
+    if (!response.ok) throw new Error('No se pudo leer emotes');
+    const emotes = await response.json();
+    const emote = (Array.isArray(emotes) ? emotes : []).find(item => String(item.id || '') === String(id));
+    if (!emote) throw new Error('Emote no encontrado');
+
+    const setVal = (elId, value) => {
+      const el = document.getElementById(elId);
+      if (el) el.value = value ?? '';
+    };
+
+    setVal('emote-id-editar', emote.id || '');
+    setVal('emote-file', emote.file || emote.image || '');
+    setVal('emote-rarity', emote.rarity || 'SUB');
+    setVal('emote-color', emote.color || 'bg-neon-cyan');
+    setEditModeBadgeState('emote-id-editar', 'emote-edit-mode-badge');
+
+    const modalEl = document.getElementById('modal-nuevo-emote');
+    if (modalEl) {
+      showModalSafe(modalEl);
+      cargarPreviewEmotes();
+    }
+  }
+
   document.addEventListener("click", async (e) => {
     const btn = e.target.closest(".btn-edit-book");
     if (!btn || !isAdmin) return;
@@ -2224,6 +2313,51 @@
       await cargarLibroParaEditar(id);
     } catch (error) {
       alert(`ERROR AL CARGAR LIBRO: ${error.message}`);
+    }
+  });
+
+  document.addEventListener('click', async (e) => {
+    const editBtn = e.target.closest('.btn-edit-emote');
+    const deleteBtn = e.target.closest('.btn-delete-emote');
+
+    if (editBtn && isAdmin) {
+      e.preventDefault();
+      const id = editBtn.getAttribute('data-id');
+      if (!id) return;
+      try {
+        await cargarEmoteParaEditar(id);
+      } catch (error) {
+        alert(`ERROR AL CARGAR EMOTE: ${error.message}`);
+      }
+      return;
+    }
+
+    if (deleteBtn && isAdmin) {
+      e.preventDefault();
+      const id = deleteBtn.getAttribute('data-id');
+      if (!id) return;
+      if (!confirm('¿Eliminar este emote del inventario?')) return;
+
+      const password = document.getElementById('modal-password-emote')?.value || '';
+      if (!password) {
+        alert('⚠ Introduce el código de acceso primero.');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/emotes/eliminar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, password })
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'Error eliminando emote');
+
+        await cargarPreviewEmotes();
+        await inicializarMarquesinaEmotes();
+      } catch (error) {
+        alert(`ERROR AL ELIMINAR EMOTE: ${error.message}`);
+      }
     }
   });
 
@@ -2632,6 +2766,55 @@
     });
   }
 
+  const formNuevoEmote = document.getElementById('form-nuevo-emote');
+  if (formNuevoEmote) {
+    formNuevoEmote.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const id = (document.getElementById('emote-id-editar')?.value || '').trim();
+      const file = (document.getElementById('emote-file')?.value || '').trim();
+      const rarity = (document.getElementById('emote-rarity')?.value || '').trim().toUpperCase();
+      const color = (document.getElementById('emote-color')?.value || 'bg-neon-cyan').trim();
+      const password = document.getElementById('modal-password-emote')?.value || '';
+
+      if (!file || !rarity || !password) {
+        alert('⚠ Completa archivo, rareza y password.');
+        return;
+      }
+
+      const payload = {
+        id: id || undefined,
+        image: file,
+        file,
+        rarity,
+        color,
+        password
+      };
+
+      const endpoint = id ? '/api/emotes/editar' : '/api/emotes/nuevo';
+
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'Error guardando emote');
+
+        formNuevoEmote.reset();
+        const inputEdit = document.getElementById('emote-id-editar');
+        if (inputEdit) inputEdit.value = '';
+        setEditModeBadgeState('emote-id-editar', 'emote-edit-mode-badge');
+
+        await cargarPreviewEmotes();
+        await inicializarMarquesinaEmotes();
+      } catch (error) {
+        alert(`ERROR: ${error.message}`);
+      }
+    });
+  }
+
   // InicializaciÃ³n de logs en carga
   cargarLogsYVisores(true);
 
@@ -2648,6 +2831,7 @@
   cargarEntrevistas();
   cargarJuegos();
   cargarRedes();
+  cargarPreviewEmotes();
 
   // Ejecutamos la carga inicial
   inicializarMarquesinaEmotes();

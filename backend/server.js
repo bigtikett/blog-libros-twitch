@@ -75,6 +75,7 @@ const RUTA_ENTREVISTAS = path.join(DATA_DIR, 'entrevistas.json');
 const RUTA_JUEGOS = path.join(DATA_DIR, 'juegos.json');
 const RUTA_REDES = path.join(DATA_DIR, 'redes.json');
 const RUTA_BITACORA = path.join(DATA_DIR, 'bitacora.json');
+const RUTA_EMOTES = path.join(DATA_DIR, 'emotes.json');
 const DATABASE_URL = process.env.DATABASE_URL || '';
 const DATABASE_SSL = (process.env.DATABASE_SSL || 'true').toLowerCase() === 'true';
 const AUDIO_PUBLIC_BASE_URL = (process.env.AUDIO_PUBLIC_BASE_URL || '').trim().replace(/\/+$/, '');
@@ -84,6 +85,26 @@ const R2_ACCESS_KEY_ID = (process.env.R2_ACCESS_KEY_ID || '').trim();
 const R2_SECRET_ACCESS_KEY = (process.env.R2_SECRET_ACCESS_KEY || '').trim();
 const R2_BUCKET_NAME = (process.env.R2_BUCKET_NAME || '').trim();
 const R2_PUBLIC_BASE_URL = (process.env.R2_PUBLIC_BASE_URL || '').trim().replace(/\/+$/, '');
+
+const DEFAULT_EMOTES = [
+  { file: 'ranidk.jfif', rarity: 'SUB', color: 'bg-neon-cyan' },
+  { file: 'ranifire.jfif', rarity: 'HOT', color: 'bg-neon-magenta' },
+  { file: 'ranihappy.jfif', rarity: 'EPIC', color: 'btn-purple' },
+  { file: 'raniking.jfif', rarity: 'VIP', color: 'bg-purple' },
+  { file: 'ranimad.jfif', rarity: 'ANGRY', color: 'bg-dark' },
+  { file: 'raniok.jfif', rarity: 'SUB', color: 'bg-neon-cyan' },
+  { file: 'ranireading.jfif', rarity: 'COZY', color: 'bg-neon-cyan' },
+  { file: 'ranisketch.jfif', rarity: 'ART', color: 'bg-warning' },
+  { file: 'ranite.jfif', rarity: 'COZY', color: 'bg-neon-cyan' },
+  { file: 'raniwow.jfif', rarity: 'EPIC', color: 'btn-purple' },
+  { file: 'raniwtf.jfif', rarity: 'WTF', color: 'bg-neon-magenta' },
+  { file: 'yaiangry.jfif', rarity: 'STREAMER', color: 'bg-gold' },
+  { file: 'yaicat.jfif', rarity: 'COZY', color: 'bg-neon-cyan' },
+  { file: 'yailol.jfif', rarity: 'STREAMER', color: 'bg-gold' },
+  { file: 'yaipalm.jfif', rarity: 'EXCL', color: 'bg-neon-magenta' },
+  { file: 'yaiplay.jfif', rarity: 'GAMER', color: 'bg-info' },
+  { file: 'yaiwow.jfif', rarity: 'STREAMER', color: 'bg-gold' }
+];
 
 const r2Client = R2_ENDPOINT && R2_ACCESS_KEY_ID && R2_SECRET_ACCESS_KEY && R2_BUCKET_NAME
   ? new S3Client({
@@ -134,7 +155,8 @@ async function ensureCollectionsDbReady() {
       { key: 'entrevistas', path: RUTA_ENTREVISTAS, default: [] },
       { key: 'juegos', path: RUTA_JUEGOS, default: [] },
       { key: 'redes', path: RUTA_REDES, default: { instagram: [], tiktok: [], wattpad: [] } },
-      { key: 'bitacora', path: RUTA_BITACORA, default: [] }
+      { key: 'bitacora', path: RUTA_BITACORA, default: [] },
+      { key: 'emotes', path: RUTA_EMOTES, default: DEFAULT_EMOTES }
     ];
 
     for (const col of collections) {
@@ -2188,6 +2210,127 @@ app.delete('/api/redes/eliminar/:red/:id', async (req, res) => {
   } catch (error) {
     console.error('Error eliminando post de redes:', error);
     res.status(500).json({ error: 'Fallo al eliminar el post.' });
+  }
+});
+
+// ========================================================
+// 🐸 ENDPOINTS PARA EMOTES INVENTORY (GET / POST / EDITAR / ELIMINAR)
+// ========================================================
+app.get('/api/emotes', async (req, res) => {
+  try {
+    const datos = await getCollection('emotes', RUTA_EMOTES, DEFAULT_EMOTES);
+    const salida = Array.isArray(datos) ? datos : [];
+    res.json(salida);
+  } catch (error) {
+    console.error('Error leyendo emotes:', error);
+    res.status(500).json({ error: 'Fallo al leer inventario de emotes.' });
+  }
+});
+
+app.post('/api/emotes/nuevo', async (req, res) => {
+  try {
+    const payload = req.body || {};
+    if (payload.password !== BIBLIOTECA_PASSWORD) {
+      return res.status(401).json({ error: 'Código de acceso incorrecto. Interrupción del sector.' });
+    }
+
+    const image = String(payload.image || payload.file || '').trim();
+    const rarity = String(payload.rarity || 'SUB').trim().toUpperCase();
+    const color = String(payload.color || 'bg-neon-cyan').trim();
+    if (!image) {
+      return res.status(400).json({ error: 'Debes indicar imagen/ruta del emote.' });
+    }
+
+    const datosActuales = await getCollection('emotes', RUTA_EMOTES, DEFAULT_EMOTES);
+    const nuevoEmote = {
+      id: `emote-${Date.now()}`,
+      image,
+      file: image,
+      rarity,
+      color
+    };
+
+    datosActuales.push(nuevoEmote);
+    await saveCollection('emotes', datosActuales, RUTA_EMOTES);
+    await agregarLog('FAVORITOS', `Inyectado emote: ${rarity} [ONLINE]`, `Nuevo emote registrado en el inventario visual (${nuevoEmote.id}).`, 'text-neon-cyan');
+
+    res.json({ success: true, message: 'Emote registrado en inventario.', emote: nuevoEmote });
+  } catch (error) {
+    console.error('Error guardando emote:', error);
+    res.status(500).json({ error: 'Fallo al guardar emote.' });
+  }
+});
+
+app.post('/api/emotes/editar', async (req, res) => {
+  try {
+    const payload = req.body || {};
+    const { id, password } = payload;
+
+    if (password !== BIBLIOTECA_PASSWORD) {
+      return res.status(401).json({ error: 'Código de acceso incorrecto. Interrupción del sector.' });
+    }
+    if (!id) {
+      return res.status(400).json({ error: 'ID de emote requerido para editar.' });
+    }
+
+    const datosActuales = await getCollection('emotes', RUTA_EMOTES, DEFAULT_EMOTES);
+    const index = datosActuales.findIndex((entry) => String(entry.id || '') === String(id));
+    if (index === -1) {
+      return res.status(404).json({ error: 'Emote no encontrado.' });
+    }
+
+    const base = datosActuales[index] || {};
+    const image = String(payload.image || payload.file || base.image || base.file || '').trim();
+    const rarity = String(payload.rarity || base.rarity || 'SUB').trim().toUpperCase();
+    const color = String(payload.color || base.color || 'bg-neon-cyan').trim();
+
+    const actualizado = {
+      ...base,
+      ...payload,
+      id: String(id),
+      image,
+      file: image,
+      rarity,
+      color
+    };
+    delete actualizado.password;
+
+    datosActuales[index] = actualizado;
+    await saveCollection('emotes', datosActuales, RUTA_EMOTES);
+    await agregarLog('FAVORITOS', `Editado emote: ${id} [UPDATE]`, `Registro de emote actualizado (${id}).`, 'text-warning');
+
+    res.json({ success: true, message: 'Emote actualizado.', emote: actualizado });
+  } catch (error) {
+    console.error('Error editando emote:', error);
+    res.status(500).json({ error: 'Fallo al editar emote.' });
+  }
+});
+
+app.post('/api/emotes/eliminar', async (req, res) => {
+  try {
+    const { id, password } = req.body || {};
+
+    if (password !== BIBLIOTECA_PASSWORD) {
+      return res.status(401).json({ error: 'Código de acceso incorrecto. Interrupción del sector.' });
+    }
+    if (!id) {
+      return res.status(400).json({ error: 'ID de emote requerido para eliminar.' });
+    }
+
+    const datosActuales = await getCollection('emotes', RUTA_EMOTES, DEFAULT_EMOTES);
+    const emoteAEliminar = datosActuales.find((entry) => String(entry.id || '') === String(id));
+    if (!emoteAEliminar) {
+      return res.status(404).json({ error: 'Emote no encontrado.' });
+    }
+
+    const actualizados = datosActuales.filter((entry) => String(entry.id || '') !== String(id));
+    await saveCollection('emotes', actualizados, RUTA_EMOTES);
+    await agregarLog('FAVORITOS', `Eliminado emote: ${id} [OFFLINE]`, `Emote purgado del inventario visual (${id}).`, 'text-danger');
+
+    res.json({ success: true, message: 'Emote eliminado del inventario.', id });
+  } catch (error) {
+    console.error('Error eliminando emote:', error);
+    res.status(500).json({ error: 'Fallo al eliminar emote.' });
   }
 });
 
