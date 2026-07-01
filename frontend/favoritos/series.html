@@ -10,8 +10,11 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <!-- Archivo de estilos personalizados -->
   <link rel="stylesheet" href="../style.min.css">
+  <link rel="stylesheet" href="admin-modal-shared.css">
 </head>
 <body class="section-favorites min-vh-100 py-5">
+
+  <button type="button" id="open-admin-panel-serie" class="fav-admin-trigger"><i class="bi bi-shield-lock"></i> Panel admin</button>
 
   <div class="container text-white">
     
@@ -164,6 +167,7 @@
         0% { top: -10%; }
         100% { top: 110%; }
       }
+
     </style>
 
     <div id="detalle-favorito">
@@ -329,8 +333,8 @@
             </div>
 
             <div class="d-flex gap-2 mt-2">
-              <button type="button" class="btn btn-outline-warning btn-sm w-50 font-orbitron btn-deactivate-admin-modal">[ CERRAR MODO ADMIN ]</button>
-              <button type="submit" class="btn btn-outline-info btn-sm w-50 font-orbitron">[ INJECT_SERIES_RECORD ]</button>
+              <button type="button" class="btn btn-sm w-50 font-orbitron btn-deactivate-admin-modal btn-close-admin-mode bitacora-modal-btn bitacora-modal-btn-danger">[ CERRAR MODO ADMIN ]</button>
+              <button type="submit" class="btn btn-sm w-50 font-orbitron bitacora-modal-btn">[ INJECT_SERIES_RECORD ]</button>
             </div>
           </form>
         </div>
@@ -346,6 +350,7 @@
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const container = document.getElementById("contenedor-series");
+      const btnOpenAdminSerie = document.getElementById("open-admin-panel-serie");
       const ACCESS_CODE = "bunker2026";
       const ADMIN_SESSION_KEY = "bunker_admin_authenticated";
       let isAdmin = sessionStorage.getItem(ADMIN_SESSION_KEY) === "1";
@@ -658,6 +663,12 @@
           requestAccessAndOpenSerieModal();
         }
       });
+
+      if (btnOpenAdminSerie) {
+        btnOpenAdminSerie.addEventListener("click", () => {
+          requestAccessAndOpenSerieModal();
+        });
+      }
 
       async function eliminarSerie(id, password) {
         const response = await fetch('/api/series/eliminar', {

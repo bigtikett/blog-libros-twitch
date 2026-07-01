@@ -2610,6 +2610,28 @@
    📂 ESTILOS PARA LAS PÁGINAS DE ARCHIVO INTERNAS (SERIES/PELIS)
    ======================================================== */
 /* 🎬 ENLACES CON CONTRASTE POR CATEGORÍA EN FAVORITOS */
+.fav-title-link {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 2px;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  text-decoration: none !important;
+  font-weight: 500;
+  position: relative;
+}
+.fav-title-link::before {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  transition: width 0.3s ease;
+}
+.fav-title-link:hover::before {
+  width: 100%;
+}
+
 .fav-link {
   display: inline-block;
   padding: 4px 8px;
@@ -2633,6 +2655,66 @@
 }
 
 /* Colores específicos por categoría */
+.fav-title-magenta {
+  color: #ff0066;
+  background: rgba(255, 0, 102, 0.05);
+}
+.fav-title-magenta::before {
+  background: #ff0066;
+  box-shadow: 0 0 10px rgba(255, 0, 102, 0.4);
+}
+.fav-title-magenta:hover {
+  color: #ff33cc;
+  background: rgba(255, 0, 102, 0.15);
+  text-shadow: 0 0 15px rgba(255, 0, 102, 0.6);
+  transform: translateX(4px);
+}
+
+.fav-title-cyan {
+  color: #00f0ff;
+  background: rgba(0, 240, 255, 0.05);
+}
+.fav-title-cyan::before {
+  background: #00f0ff;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+}
+.fav-title-cyan:hover {
+  color: #66ffff;
+  background: rgba(0, 240, 255, 0.15);
+  text-shadow: 0 0 15px rgba(0, 240, 255, 0.6);
+  transform: translateX(4px);
+}
+
+.fav-title-warning {
+  color: #ffc107;
+  background: rgba(255, 193, 7, 0.05);
+}
+.fav-title-warning::before {
+  background: #ffc107;
+  box-shadow: 0 0 10px rgba(255, 193, 7, 0.4);
+}
+.fav-title-warning:hover {
+  color: #ffed4e;
+  background: rgba(255, 193, 7, 0.15);
+  text-shadow: 0 0 15px rgba(255, 193, 7, 0.6);
+  transform: translateX(4px);
+}
+
+.fav-title-purple {
+  color: #a072ff;
+  background: rgba(160, 114, 255, 0.05);
+}
+.fav-title-purple::before {
+  background: #a072ff;
+  box-shadow: 0 0 10px rgba(160, 114, 255, 0.4);
+}
+.fav-title-purple:hover {
+  color: #d4b3ff;
+  background: rgba(160, 114, 255, 0.15);
+  text-shadow: 0 0 15px rgba(160, 114, 255, 0.6);
+  transform: translateX(4px);
+}
+
 .fav-link-magenta {
   color: #ff0066;
   background: rgba(255, 0, 102, 0.05);

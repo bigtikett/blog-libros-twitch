@@ -6,17 +6,17 @@ document.addEventListener("DOMContentLoaded", () => {
   const configuracionFavoritos = [
     {
       url: "/api/series",
-      selectorFooter: "#favoritos-footer .fav-list .fav-link-magenta",
+      selectorFooter: "#favoritos-footer .fav-link-magenta",
       key: "titulo"
     },
     {
       url: "/api/peliculas",
-      selectorFooter: "#favoritos-footer .fav-list .fav-link-cyan",
+      selectorFooter: "#favoritos-footer .fav-link-cyan",
       key: "titulo"
     },
     {
       url: "/api/personajes",
-      selectorFooter: "#favoritos-footer .fav-list .fav-link-warning",
+      selectorFooter: "#favoritos-footer .fav-link-warning",
       key: "nombre"
     }
   ];
@@ -33,13 +33,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const titulosReales = items.map(item => item[config.key]);
 
       enlacesFooter.forEach((enlace, index) => {
-        const itemContenedor = enlace.closest("li");
-
         if (titulosReales[index]) {
           enlace.innerHTML = `<i class="bi bi-chevron-right"></i> ${titulosReales[index]}`;
-          if (itemContenedor) itemContenedor.style.display = "";
+          if (enlace.parentElement) enlace.parentElement.style.display = "";
         } else {
-          if (itemContenedor) itemContenedor.style.display = "none";
+          if (enlace.parentElement) enlace.parentElement.style.display = "none";
         }
       });
 

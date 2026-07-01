@@ -267,7 +267,7 @@
       height: 1.7rem;
       border: 1px solid rgba(0, 240, 255, 0.35);
       border-radius: 0;
-      background-color: rgba(0, 0, 0, 0.24);
+      background-color: rgb(255, 0, 0);
       box-shadow: inset 0 0 8px rgba(0, 240, 255, 0.1);
       opacity: 0.88;
       transition: 0.2s ease;
@@ -400,29 +400,7 @@
       }
     }
 
-    /* Ensure title links in favorites footer stay visible and clickable */
-    #favoritos-footer .fav-datapad-card h4 > a.fav-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-      font-size: 1.05rem;
-      line-height: 1.2;
-      opacity: 1 !important;
-      visibility: visible !important;
-      text-decoration: none !important;
-    }
-
-    #favoritos-footer .fav-datapad-card h4 > a.fav-link.fav-link-magenta {
-      color: #ff33cc !important;
-    }
-
-    #favoritos-footer .fav-datapad-card h4 > a.fav-link.fav-link-cyan {
-      color: #66ffff !important;
-    }
-
-    #favoritos-footer .fav-datapad-card h4 > a.fav-link.fav-link-warning {
-      color: #ffed4e !important;
-    }
+    
   </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1220,7 +1198,7 @@
                 <span class="text-neon-magenta fw-bold tracking-wider text-lg font-monospace ">DATA_FILE_01</span>
                 <i class="bi bi-tv display-6 text-neon-magenta"></i>
               </div>
-              <h4 class="fw-black text-uppercase tracking-wide mb-2"><a href="/favoritos/series.html" class="fav-link fav-link-magenta">📺 SERIES</a> </h4>
+              <h4 class="fw-black text-uppercase tracking-wide mb-2"><a href="/favoritos/series.html" class="fav-title-link fav-title-magenta">📺 SERIES</a> </h4>
               <p class="small text-white mb-3">Las producciones que me marcaron de por vida. Mundos distópicos, ciencia
                 ficción o historias de las que no sales igual.</p>
               <ul class="list-unstyled fav-list small">
@@ -1253,7 +1231,7 @@
                 <span class="text-neon-cyan fw-bold tracking-wider text-lg font-monospace">DATA_FILE_02</span>
                 <i class="bi bi-film display-6 text-neon-cyan"></i>
               </div>
-              <h4 class="fw-black text-uppercase tracking-wide mb-2"><a href="/favoritos/peliculas.html" class="fav-link fav-link-cyan" >🎬 PELÍCULAS</a></h4>
+              <h4 class="fw-black text-uppercase tracking-wide mb-2"><a href="/favoritos/peliculas.html" class="fav-title-link fav-title-cyan" >🎬 PELÍCULAS</a></h4>
               <p class="small text-white mb-3">Historias inolvidables y direcciones de arte que me obsesionan
                 visualmente.</p>
               <ul class="list-unstyled fav-list small">
@@ -1287,7 +1265,7 @@
                 <span class="text-warning fw-bold tracking-wider text-lg font-monospace">DATA_FILE_03</span>
                 <i class="bi bi-person-badge display-6 text-warning"></i>
               </div>
-              <h4 class="fw-black text-uppercase tracking-wide mb-2"><a href="/favoritos/personajes.html" class="fav-link fav-link-warning">👤 PERSONAJES</a></h4>
+              <h4 class="fw-black text-uppercase tracking-wide mb-2"><a href="/favoritos/personajes.html" class="fav-title-link fav-title-warning">👤 PERSONAJES</a></h4>
               <p class="small text-white mb-3">Esos seres de ficción que se ganaron un rincón eterno en mi corazón.</p>
               <ul class="list-unstyled fav-list small">
                 <li><a href="/favoritos/personajes.html" class="fav-link fav-link-warning text-decoration-none"><i
@@ -1315,7 +1293,7 @@
 <h4 class="fw-black text-uppercase tracking-wide mb-1 d-inline-flex align-items-center gap-2">
   
   
-  <a href="/favoritos/bitacora.html" class="fav-link fav-link-purple"><span class="log-cyber-icon">
+  <a href="/favoritos/bitacora.html" class="fav-title-link fav-title-purple"><span class="log-cyber-icon">
     <img src="/assets/images/bitacora.webp" alt="Icono Diario Bitácora">
   </span> CUADERNO DE BITÁCORA</a>
 </h4> 
