@@ -8,7 +8,15 @@ const __dirname = path.dirname(__filename);
 const backendDir = path.resolve(__dirname, '..');
 const packageJsonPath = path.join(backendDir, 'package.json');
 
-const bumpType = (process.argv[2] || 'patch').trim().toLowerCase();
+const args = process.argv.slice(2);
+
+if (args.includes('--help') || args.includes('-h')) {
+  console.log('Uso: node ./scripts/release.mjs [patch|minor|major]');
+  console.log('Ejemplo: npm run release:patch');
+  process.exit(0);
+}
+
+const bumpType = (args[0] || 'patch').trim().toLowerCase();
 const allowed = new Set(['patch', 'minor', 'major']);
 
 if (!allowed.has(bumpType)) {
