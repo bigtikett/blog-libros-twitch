@@ -29,6 +29,111 @@
   text-shadow: 0 0 10px rgba(255, 140, 0, 0.5);
 }
 
+.text-neon-red {
+  color: #ff2b2b;
+  text-shadow: 0 0 10px rgba(255, 43, 43, 0.55);
+}
+
+.text-neon-blue {
+  color: #1f6fff;
+  text-shadow: 0 0 10px rgba(31, 111, 255, 0.55);
+}
+
+.text-neon-gray {
+  color: #b8bcc6;
+  text-shadow: 0 0 8px rgba(184, 188, 198, 0.35);
+}
+
+.text-neon-brown,
+.text-neon-black {
+  color: #ffffff;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.35);
+}
+
+.bg-neon-red {
+  background-color: #ff2b2b !important;
+  box-shadow: 0 0 10px rgba(255, 43, 43, 0.55);
+}
+
+.bg-neon-blue {
+  background-color: #1f6fff !important;
+  box-shadow: 0 0 10px rgba(31, 111, 255, 0.55);
+}
+
+.bg-neon-gray {
+  background-color: #b8bcc6 !important;
+  box-shadow: 0 0 8px rgba(184, 188, 198, 0.35);
+}
+
+.bg-neon-brown,
+.bg-neon-black {
+  background-color: #ffffff !important;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.35);
+}
+
+.border-red {
+  border-color: #ff2b2b !important;
+}
+
+.border-blue {
+  border-color: #1f6fff !important;
+}
+
+.border-gray {
+  border-color: #b8bcc6 !important;
+}
+
+.border-brown,
+.border-black {
+  border-color: #ffffff !important;
+}
+
+.btn-gaming-action-red {
+  border: 1px solid rgba(255, 43, 43, 0.55);
+  color: #ff2b2b;
+}
+
+.btn-gaming-action-blue {
+  border: 1px solid rgba(31, 111, 255, 0.55);
+  color: #1f6fff;
+}
+
+.btn-gaming-action-gray {
+  border: 1px solid rgba(184, 188, 198, 0.55);
+  color: #b8bcc6;
+}
+
+.btn-gaming-action-brown,
+.btn-gaming-action-black {
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  color: #ffffff;
+}
+
+.tag-red {
+  background: rgba(255, 43, 43, 0.1);
+  color: #ff2b2b;
+  border-color: rgba(255, 43, 43, 0.35);
+}
+
+.tag-blue {
+  background: rgba(31, 111, 255, 0.1);
+  color: #1f6fff;
+  border-color: rgba(31, 111, 255, 0.35);
+}
+
+.tag-gray {
+  background: rgba(184, 188, 198, 0.12);
+  color: #b8bcc6;
+  border-color: rgba(184, 188, 198, 0.35);
+}
+
+.tag-brown,
+.tag-black {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
 .bg-neon-cyan {
   background-color: #00f0ff !important;
   box-shadow: 0 0 10px #00f0ff;
@@ -3636,6 +3741,49 @@
   border-radius: 4px !important;
   transition: all 0.25s ease-in-out !important;
   margin-right: 12px;
+}
+
+/* ========================================================
+   🧩 SKIN GLOBAL DE MODALES (ESTILO BITACORA)
+   ======================================================== */
+.bitacora-skin-modal {
+  border: 1px solid rgba(0, 240, 255, 0.34) !important;
+  border-radius: 12px !important;
+  background: linear-gradient(145deg, rgba(8, 16, 34, 0.98), rgba(24, 10, 38, 0.96)) !important;
+  box-shadow: 0 0 24px rgba(0, 240, 255, 0.15) !important;
+  overflow: hidden;
+}
+
+.bitacora-skin-modal .modal-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14) !important;
+  background: transparent !important;
+  font-family: "Orbitron", sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #00f0ff;
+}
+
+.bitacora-skin-modal .modal-body {
+  background: transparent;
+}
+
+.bitacora-skin-modal .form-control,
+.bitacora-skin-modal .form-select,
+.bitacora-skin-modal textarea {
+  border-color: rgba(0, 240, 255, 0.22) !important;
+  background: rgba(6, 12, 24, 0.78) !important;
+  color: #eaf7ff !important;
+}
+
+.bitacora-skin-modal .form-control:focus,
+.bitacora-skin-modal .form-select:focus,
+.bitacora-skin-modal textarea:focus {
+  border-color: rgba(0, 240, 255, 0.6) !important;
+  box-shadow: 0 0 0 0.2rem rgba(0, 240, 255, 0.12) !important;
+}
+
+.bitacora-skin-modal .btn-close {
+  opacity: 0.85;
 }
 
 /* Cyan Tab (Book) */

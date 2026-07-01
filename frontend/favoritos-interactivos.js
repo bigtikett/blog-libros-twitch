@@ -50,47 +50,4 @@ document.addEventListener("DOMContentLoaded", () => {
   configuracionFavoritos.forEach(seccion => {
     sincronizarSeccion(seccion);
   });
-
-
-// ==========================================
-// MODULE 2: ENLACE DINÁMICO CON BACKEND API
-// ==========================================
-async function sincronizarAlbumesFooter() {
-  try {
-    const enlacesMusica = document.querySelectorAll("#favoritos-footer .fav-link-purple");
-    if (enlacesMusica.length === 0) return;
-
-    const response = await fetch("/api/playlist");
-    if (!response.ok) throw new Error("Fallo al conectar con /api/playlist");
-    
-    const playlist = await response.json();
-
-    let albumesReales = [];
-    if (Array.isArray(playlist)) {
-      // Recorremos la raíz de la playlist y extraemos directamente el título principal
-      playlist.forEach(album => {
-        if (album.title) {
-          albumesReales.push(album.title);
-        }
-      });
-    }
-
-    // Inyectamos los nombres de los álbumes raíces en los enlaces morados del footer
-    enlacesMusica.forEach((enlace, index) => {
-      if (albumesReales[index]) {
-        enlace.innerHTML = `<i class="bi bi-chevron-right"></i> ${albumesReales[index]}`;
-        if (enlace.parentElement) enlace.parentElement.style.display = "";
-      } else {
-        if (enlace.parentElement) enlace.parentElement.style.display = "none";
-      }
-    });
-
-  } catch (error) {
-    console.warn("[SYSTEM_ERROR] Fallo al sincronizar álbumes desde API:", error);
-  }
-}
-
-
-// Ejecutar carga de álbumes desde el servidor
-sincronizarAlbumesFooter();
 })

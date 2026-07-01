@@ -176,9 +176,10 @@
   <!-- Modal Secreto de Inyección de Series (Se abre con Ctrl + Shift + B) -->
   <div class="modal fade" id="modal-nueva-serie" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
-      <div class="modal-content bg-dark border border-secondary border-opacity-50 text-white font-monospace">
+      <div class="modal-content bg-dark border border-secondary border-opacity-50 text-white font-monospace bitacora-skin-modal">
         <div class="modal-header border-bottom border-secondary border-opacity-25 bg-black-25">
           <h5 class="modal-title text-neon-cyan font-orbitron">[ INJECT_SERIES_RECORD ]</h5>
+          <span id="serie-admin-indicator" class="small fw-bold text-danger">[ ADMIN: OFF ]</span>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="px-4 pt-3 pb-2 border-bottom border-secondary border-opacity-10 bg-black-25">
@@ -187,6 +188,11 @@
         </div>
         <div class="modal-body" style="max-height: 65vh; overflow-y: auto;">
           <form id="form-nueva-serie" class="p-2">
+            <div class="mb-3">
+              <label class="form-label text-neon-magenta small">&gt; ID_EDITAR (OPCIONAL)</label>
+              <input type="text" id="serie-id-editar" class="form-control form-control-sm bg-black border-secondary text-white" placeholder="serie-123... (si lo rellenas, edita)">
+              <div id="serie-edit-mode-badge" class="form-text small mt-1 text-warning d-none">[ MODO EDICION ACTIVO ]</div>
+            </div>
             <div class="mb-3">
               <label class="form-label text-neon-magenta small">&gt; TÍTULO_DE_LA_SERIE</label>
               <input type="text" id="serie-titulo" class="form-control form-control-sm bg-black border-secondary text-white text-uppercase" placeholder="ARCANE" required>
@@ -322,7 +328,10 @@
               <input type="text" id="serie-cover" class="form-control form-control-sm bg-black border-secondary text-white" value="/assets/images/arkane.jpeg">
             </div>
 
-            <button type="submit" class="btn btn-outline-info btn-sm w-100 mt-2 font-orbitron">[ INJECT_SERIES_RECORD ]</button>
+            <div class="d-flex gap-2 mt-2">
+              <button type="button" class="btn btn-outline-warning btn-sm w-50 font-orbitron btn-deactivate-admin-modal">[ CERRAR MODO ADMIN ]</button>
+              <button type="submit" class="btn btn-outline-info btn-sm w-50 font-orbitron">[ INJECT_SERIES_RECORD ]</button>
+            </div>
           </form>
         </div>
       </div>
@@ -337,13 +346,235 @@
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const container = document.getElementById("contenedor-series");
+      const ACCESS_CODE = "bunker2026";
       const ADMIN_SESSION_KEY = "bunker_admin_authenticated";
       let isAdmin = sessionStorage.getItem(ADMIN_SESSION_KEY) === "1";
+      const serieAdminIndicator = document.getElementById('serie-admin-indicator');
+      let lastSerieAdminState = isAdmin;
+
+      function updateSerieAdminIndicator() {
+        if (!serieAdminIndicator) return;
+        serieAdminIndicator.textContent = isAdmin ? '[ ADMIN: ON ]' : '[ ADMIN: OFF ]';
+        serieAdminIndicator.className = 'small fw-bold';
+        serieAdminIndicator.style.color = isAdmin ? '#4cffb2' : '#ff6f8f';
+        serieAdminIndicator.style.textShadow = isAdmin
+          ? '0 0 8px rgba(76,255,178,0.65), 0 0 14px rgba(76,255,178,0.35)'
+          : '0 0 8px rgba(255,111,143,0.6), 0 0 14px rgba(255,111,143,0.3)';
+        serieAdminIndicator.style.transition = 'color 0.22s ease, text-shadow 0.22s ease';
+
+        if (isAdmin && !lastSerieAdminState && typeof serieAdminIndicator.animate === 'function') {
+          serieAdminIndicator.animate(
+            [
+              { opacity: 0.35, transform: 'scale(0.96)' },
+              { opacity: 1, transform: 'scale(1.08)' },
+              { opacity: 1, transform: 'scale(1)' }
+            ],
+            { duration: 220, easing: 'ease-out' }
+          );
+        }
+
+        lastSerieAdminState = isAdmin;
+      }
 
       function activarModoAdmin() {
         sessionStorage.setItem(ADMIN_SESSION_KEY, "1");
         isAdmin = true;
+        const passInput = document.getElementById("modal-password");
+        if (passInput) passInput.value = ACCESS_CODE;
+        updateSerieAdminIndicator();
       }
+
+      function desactivarModoAdmin() {
+        sessionStorage.removeItem(ADMIN_SESSION_KEY);
+        isAdmin = false;
+        const passInput = document.getElementById("modal-password");
+        if (passInput) passInput.value = '';
+        updateSerieAdminIndicator();
+        cargarSeries();
+      }
+
+      function openSerieModal() {
+        const modalEl = document.getElementById("modal-nueva-serie");
+        if (!modalEl) return;
+        const modalInst = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modalInst.show();
+        const passInput = document.getElementById("modal-password");
+        if (passInput && isAdmin) passInput.value = ACCESS_CODE;
+      }
+
+      function requestAccessAndOpenSerieModal() {
+        if (isAdmin) {
+          openSerieModal();
+          return;
+        }
+
+        const code = prompt("INGRESE CÓDIGO DE ACCESO DE SEGURIDAD:");
+        if (code === ACCESS_CODE) {
+          activarModoAdmin();
+          openSerieModal();
+          cargarSeries();
+        } else if (code !== null) {
+          alert("CÓDIGO DE ACCESO INCORRECTO. ACCESO DENEGADO.");
+        }
+      }
+
+      updateSerieAdminIndicator();
+
+      const seriePasswordInput = document.getElementById("modal-password");
+      if (seriePasswordInput) {
+        seriePasswordInput.addEventListener('input', () => {
+          if (seriePasswordInput.value === ACCESS_CODE && !isAdmin) {
+            activarModoAdmin();
+            cargarSeries();
+          }
+        });
+      }
+
+      const SECRET_MODAL_EXTRA_COLORS = [
+        { value: 'red', label: 'RED (POTENTE)' },
+        { value: 'blue', label: 'BLUE (FUERTE)' },
+        { value: 'gray', label: 'GRAY (LEGIBLE)' },
+        { value: 'brown', label: 'BROWN (MARRON)' },
+        { value: 'black', label: 'BLACK (NEGRO)' }
+      ];
+
+      function expandSecretModalColorOptions() {
+        const modal = document.getElementById('modal-nueva-serie');
+        if (!modal) return;
+        const colorSelects = modal.querySelectorAll('select[id*="color"]');
+        colorSelects.forEach((select) => {
+          SECRET_MODAL_EXTRA_COLORS.forEach((opt) => {
+            const exists = Array.from(select.options).some((o) => o.value === opt.value);
+            if (!exists) {
+              select.add(new Option(opt.label, opt.value));
+            }
+          });
+        });
+      }
+
+      expandSecretModalColorOptions();
+
+      function isHexColor(value) {
+        return /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(String(value || '').trim());
+      }
+
+      function normalizeHex(value) {
+        const raw = String(value || '').trim();
+        if (!isHexColor(raw)) return '';
+        if (raw.length === 4) {
+          return `#${raw[1]}${raw[1]}${raw[2]}${raw[2]}${raw[3]}${raw[3]}`.toUpperCase();
+        }
+        return raw.toUpperCase();
+      }
+
+      function ensureCustomColorOption(select, hexValue) {
+        const hex = normalizeHex(hexValue);
+        if (!select || !hex) return;
+        const existing = Array.from(select.options).find((o) => o.value.toUpperCase() === hex);
+        if (!existing) {
+          select.add(new Option(`CUSTOM (${hex})`, hex));
+        }
+      }
+
+      function enhanceModalColorPickers() {
+        const modal = document.getElementById('modal-nueva-serie');
+        if (!modal) return;
+        const colorSelects = modal.querySelectorAll('select[id*="color"]');
+        colorSelects.forEach((select) => {
+          if (select.dataset.paletteEnhanced === '1') return;
+          select.dataset.paletteEnhanced = '1';
+
+          if (isHexColor(select.value)) {
+            ensureCustomColorOption(select, select.value);
+          }
+
+          const paletteBtn = document.createElement('button');
+          paletteBtn.type = 'button';
+          paletteBtn.className = 'btn btn-outline-light btn-sm mt-2 rounded-0 font-monospace';
+          paletteBtn.style.fontSize = '0.65rem';
+          paletteBtn.innerHTML = '[ 🎨 PALETA ] <span class="palette-swatch" aria-hidden="true" style="display:inline-block;width:11px;height:11px;margin-left:6px;border:1px solid rgba(255,255,255,0.65);vertical-align:middle;"></span>';
+
+          const swatchEl = paletteBtn.querySelector('.palette-swatch');
+
+          const resolveSwatchColor = (value) => {
+            const key = String(value || '').trim().toLowerCase();
+            if (isHexColor(key)) return normalizeHex(key);
+            if (key === 'black' || key === 'brown') return '#FFFFFF';
+            const quickMap = {
+              white: '#FFFFFF',
+              cyan: '#00F0FF',
+              magenta: '#FF007F',
+              green: '#3AFC13',
+              yellow: '#FFEE00',
+              purple: '#A072FF',
+              orange: '#FF8C00',
+              red: '#FF2B2B',
+              blue: '#1F6FFF',
+              gray: '#B8BCC6'
+            };
+            return quickMap[key] || '#00F0FF';
+          };
+
+          const syncSwatch = () => {
+            if (!swatchEl) return;
+            swatchEl.style.backgroundColor = resolveSwatchColor(select.value);
+          };
+
+          const nativePicker = document.createElement('input');
+          nativePicker.type = 'color';
+          nativePicker.className = 'd-none';
+          nativePicker.value = '#00f0ff';
+
+          paletteBtn.addEventListener('click', () => {
+            const current = isHexColor(select.value) ? normalizeHex(select.value) : '#00f0ff';
+            nativePicker.value = current;
+            nativePicker.click();
+          });
+
+          nativePicker.addEventListener('input', () => {
+            const picked = normalizeHex(nativePicker.value);
+            if (!picked) return;
+            ensureCustomColorOption(select, picked);
+            select.value = picked;
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+          });
+
+          select.addEventListener('change', syncSwatch);
+          syncSwatch();
+
+          select.insertAdjacentElement('afterend', paletteBtn);
+          paletteBtn.insertAdjacentElement('afterend', nativePicker);
+        });
+      }
+
+      enhanceModalColorPickers();
+
+      function syncSerieEditModeBadge() {
+        const editInput = document.getElementById('serie-id-editar');
+        const badge = document.getElementById('serie-edit-mode-badge');
+        const form = document.getElementById('form-nueva-serie');
+        const submitBtn = form ? form.querySelector('button[type="submit"]') : null;
+        if (!editInput) return;
+
+        const isEditMode = !!(editInput.value || '').trim();
+        if (badge) {
+          badge.classList.toggle('d-none', !isEditMode);
+        }
+
+        if (submitBtn) {
+          if (!submitBtn.dataset.createLabel) {
+            submitBtn.dataset.createLabel = '[ INJECT_SERIES_RECORD ]';
+          }
+          submitBtn.textContent = isEditMode ? '[ GUARDAR CAMBIOS ]' : submitBtn.dataset.createLabel;
+        }
+      }
+
+      const serieEditInput = document.getElementById('serie-id-editar');
+      if (serieEditInput) {
+        serieEditInput.addEventListener('input', syncSerieEditModeBadge);
+        serieEditInput.addEventListener('change', syncSerieEditModeBadge);
+      }
+      syncSerieEditModeBadge();
 
       // 1. Cargar series desde el backend
       async function cargarSeries() {
@@ -401,7 +632,7 @@
                       <h3 class="h4 fw-black text-uppercase ${titleClass} m-0 titulo-favorito">${serie.titulo}</h3>
                       <div class="d-flex align-items-center gap-2">
                         <span class="badge ${badgeClass} text-xs font-monospace">⭐️ <span class="${scoreClass}">${serie.puntuacion || '10/10'}</span></span>
-                        ${isAdmin ? `<button type="button" class="btn btn-outline-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-serie" data-id="${serie.id}" style="font-size: 0.62rem; padding: 2px 6px;">[ ELIMINAR ]</button>` : ''}
+                        ${isAdmin ? `<button type="button" class="btn btn-outline-info btn-sm rounded-0 text-uppercase font-monospace btn-edit-serie" data-id="${serie.id}" style="font-size: 0.62rem; padding: 2px 6px;">[ EDITAR ]</button><button type="button" class="btn btn-outline-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-serie" data-id="${serie.id}" style="font-size: 0.62rem; padding: 2px 6px;">[ ELIMINAR ]</button>` : ''}
                       </div>
                     </div>
                     <span class="text-xs ${generoClass} d-block font-monospace mb-2 mt-1">GEN: ${serie.genero || 'ANIMACIÓN / CYBERPUNK'}</span>
@@ -424,20 +655,7 @@
       document.addEventListener("keydown", (e) => {
         if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "b") {
           e.preventDefault();
-          const code = prompt("INGRESE CÓDIGO DE ACCESO DE SEGURIDAD:");
-          if (code === "bunker2026") {
-            activarModoAdmin();
-            const modalEl = document.getElementById("modal-nueva-serie");
-            if (modalEl) {
-              const modalInst = bootstrap.Modal.getOrCreateInstance(modalEl);
-              modalInst.show();
-              const passInput = document.getElementById("modal-password");
-              if (passInput) passInput.value = code;
-            }
-            cargarSeries();
-          } else if (code !== null) {
-            alert("CÓDIGO DE ACCESO INCORRECTO. ACCESO DENEGADO.");
-          }
+          requestAccessAndOpenSerieModal();
         }
       });
 
@@ -457,7 +675,52 @@
       }
 
       document.addEventListener('click', async (event) => {
+        const editBtn = event.target.closest('.btn-edit-serie');
         const deleteBtn = event.target.closest('.btn-delete-serie');
+
+        if (editBtn && isAdmin) {
+          event.preventDefault();
+          const serieId = editBtn.getAttribute('data-id');
+          if (!serieId) return;
+
+          try {
+            const response = await fetch('/api/series');
+            if (!response.ok) throw new Error('No se pudo leer series');
+            const series = await response.json();
+            const serie = series.find(item => item.id === serieId);
+            if (!serie) throw new Error('Serie no encontrada');
+
+            const setVal = (id, value) => {
+              const el = document.getElementById(id);
+              if (el) el.value = value ?? '';
+            };
+
+            setVal('serie-id-editar', serie.id);
+            syncSerieEditModeBadge();
+            setVal('serie-titulo', serie.titulo || '');
+            setVal('serie-color-titulo', serie.colorTitulo || 'white');
+            setVal('serie-puntuacion', serie.puntuacion || '');
+            setVal('serie-color-puntuacion', serie.colorPuntuacion || 'cyan');
+            setVal('serie-genero', serie.genero || '');
+            setVal('serie-color-genero', serie.colorGenero || 'cyan');
+            setVal('serie-resena', serie.resena || '');
+            setVal('serie-color-resena', serie.colorResena || 'white');
+            setVal('serie-personajes-top', serie.personajesTop || '');
+            setVal('serie-color-personajes', serie.colorPersonajes || 'yellow');
+            setVal('serie-color', serie.color || 'cyan');
+            setVal('serie-cover', serie.cover || '');
+
+            const modalEl = document.getElementById('modal-nueva-serie');
+            if (modalEl) {
+              const modalInst = bootstrap.Modal.getOrCreateInstance(modalEl);
+              modalInst.show();
+            }
+          } catch (error) {
+            alert(`ERROR AL CARGAR SERIE: ${error.message}`);
+          }
+          return;
+        }
+
         if (!deleteBtn || !isAdmin) return;
 
         const serieId = deleteBtn.getAttribute('data-id');
@@ -481,6 +744,17 @@
 
       // 3. Form submit handler
       const formNuevaSerie = document.getElementById("form-nueva-serie");
+      const btnCloseAdminSerie = document.querySelector('.btn-deactivate-admin-modal');
+      if (btnCloseAdminSerie) {
+        btnCloseAdminSerie.addEventListener('click', () => {
+          desactivarModoAdmin();
+          const modalEl = document.getElementById("modal-nueva-serie");
+          if (modalEl) {
+            const modalInst = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modalInst.hide();
+          }
+        });
+      }
       if (formNuevaSerie) {
         formNuevaSerie.addEventListener("submit", function (e) {
           e.preventDefault();
@@ -489,7 +763,9 @@
           const file = fileInput ? fileInput.files[0] : null;
 
           const submitData = (coverData = null, fileName = null) => {
+            const editId = (document.getElementById('serie-id-editar')?.value || '').trim();
             const datosSerie = {
+              id: editId || undefined,
               titulo: document.getElementById("serie-titulo").value.toUpperCase(),
               colorTitulo: document.getElementById("serie-color-titulo") ? document.getElementById("serie-color-titulo").value : "white",
               puntuacion: document.getElementById("serie-puntuacion").value,
@@ -507,7 +783,9 @@
               coverFileName: fileName
             };
 
-            fetch("/api/series/nuevo", {
+            const endpoint = editId ? '/api/series/editar' : '/api/series/nuevo';
+
+            fetch(endpoint, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(datosSerie)
@@ -522,6 +800,9 @@
                 if (data.success) {
                   console.log(`[SYS]: ${data.message}`);
                   formNuevaSerie.reset();
+                  const editInput = document.getElementById('serie-id-editar');
+                  if (editInput) editInput.value = '';
+                  syncSerieEditModeBadge();
                   
                   const modalEl = document.getElementById("modal-nueva-serie");
                   if (modalEl) {
@@ -562,15 +843,27 @@
         green: '#3afc13',
         yellow: '#ffee00',
         purple: '#a072ff',
-        orange: '#ff8c00'
+        orange: '#ff8c00',
+        red: '#ff2b2b',
+        blue: '#1f6fff',
+        gray: '#b8bcc6',
+        brown: '#ffffff',
+        black: '#ffffff'
       };
+
+      function getReadablePreviewColor(colorValue) {
+        const value = String(colorValue || '').toLowerCase();
+        if (isHexColor(value)) return normalizeHex(value);
+        if (value === 'black' || value === 'brown') return '#ffffff';
+        return colorMap[value] || '#ffffff';
+      }
 
       function setupColorPreview(selectId, previewId) {
         const sel = document.getElementById(selectId);
         const prev = document.getElementById(previewId);
         if (!sel || !prev) return;
         const update = () => {
-          const c = colorMap[sel.value] || '#fff';
+          const c = getReadablePreviewColor(sel.value);
           prev.style.color = c;
           prev.style.borderColor = c;
           prev.style.textShadow = `0 0 8px ${c}`;

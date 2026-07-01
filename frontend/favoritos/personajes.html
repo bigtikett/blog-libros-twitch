@@ -129,9 +129,10 @@
 <!-- Modal Secreto de Inyección de Personajes (Se abre con Ctrl + Shift + B) -->
 <div class="modal fade" id="modal-nuevo-personaje" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div class="modal-content bg-dark border border-secondary border-opacity-50 text-white font-monospace">
+    <div class="modal-content bg-dark border border-secondary border-opacity-50 text-white font-monospace bitacora-skin-modal">
       <div class="modal-header border-bottom border-secondary border-opacity-25 bg-black-25">
         <h5 class="modal-title text-neon-cyan font-orbitron">[ INJECT_PERSONAJE_RECORD ]</h5>
+        <span id="personaje-admin-indicator" class="small fw-bold text-danger">[ ADMIN: OFF ]</span>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="px-4 pt-3 pb-2 border-bottom border-secondary border-opacity-10 bg-black-25">
@@ -140,6 +141,11 @@
       </div>
       <div class="modal-body" style="max-height: 65vh; overflow-y: auto;">
         <form id="form-nuevo-personaje" class="p-2">
+          <div class="mb-3">
+            <label class="form-label text-neon-magenta small">&gt; ID_EDITAR (OPCIONAL)</label>
+            <input type="text" id="personaje-id-editar" class="form-control form-control-sm bg-black border-secondary text-white" placeholder="personaje-123... (si lo rellenas, edita)">
+            <div id="personaje-edit-mode-badge" class="form-text small mt-1 text-warning d-none">[ MODO EDICION ACTIVO ]</div>
+          </div>
           <div class="mb-3">
             <label class="form-label text-neon-magenta small">&gt; NOMBRE_DEL_PERSONAJE</label>
             <input type="text" id="personaje-nombre" class="form-control form-control-sm bg-black border-secondary text-white text-uppercase" placeholder="TONY MONTANA" required>
@@ -256,7 +262,10 @@
             <label class="form-label text-neon-magenta small">&gt; PATH_IMAGEN (MANUAL)</label>
             <input type="text" id="personaje-imagen" class="form-control form-control-sm bg-black border-secondary text-white" value="/assets/images/default.jpg">
           </div>
-          <button type="submit" class="btn btn-outline-info btn-sm w-100 mt-2 font-orbitron">[ INJECT_PERSONAJE_RECORD ]</button>
+          <div class="d-flex gap-2 mt-2">
+            <button type="button" class="btn btn-outline-warning btn-sm w-50 font-orbitron btn-deactivate-admin-modal">[ CERRAR MODO ADMIN ]</button>
+            <button type="submit" class="btn btn-outline-info btn-sm w-50 font-orbitron">[ INJECT_PERSONAJE_RECORD ]</button>
+          </div>
         </form>
       </div>
     </div>
@@ -268,13 +277,236 @@
     document.addEventListener('DOMContentLoaded', () => {
       const personajeRow = document.getElementById('personajes-row');
       const btnOpenModal = document.getElementById('btn-open-modal-personaje');
+      const ACCESS_CODE = 'bunker2026';
       const ADMIN_SESSION_KEY = 'bunker_admin_authenticated';
       let isAdmin = sessionStorage.getItem(ADMIN_SESSION_KEY) === '1';
+      const personajeAdminIndicator = document.getElementById('personaje-admin-indicator');
+      let lastPersonajeAdminState = isAdmin;
+
+      function updatePersonajeAdminIndicator() {
+        if (!personajeAdminIndicator) return;
+        personajeAdminIndicator.textContent = isAdmin ? '[ ADMIN: ON ]' : '[ ADMIN: OFF ]';
+        personajeAdminIndicator.className = 'small fw-bold';
+        personajeAdminIndicator.style.color = isAdmin ? '#4cffb2' : '#ff6f8f';
+        personajeAdminIndicator.style.textShadow = isAdmin
+          ? '0 0 8px rgba(76,255,178,0.65), 0 0 14px rgba(76,255,178,0.35)'
+          : '0 0 8px rgba(255,111,143,0.6), 0 0 14px rgba(255,111,143,0.3)';
+        personajeAdminIndicator.style.transition = 'color 0.22s ease, text-shadow 0.22s ease';
+
+        if (isAdmin && !lastPersonajeAdminState && typeof personajeAdminIndicator.animate === 'function') {
+          personajeAdminIndicator.animate(
+            [
+              { opacity: 0.35, transform: 'scale(0.96)' },
+              { opacity: 1, transform: 'scale(1.08)' },
+              { opacity: 1, transform: 'scale(1)' }
+            ],
+            { duration: 220, easing: 'ease-out' }
+          );
+        }
+
+        lastPersonajeAdminState = isAdmin;
+      }
 
       function activarModoAdmin() {
         sessionStorage.setItem(ADMIN_SESSION_KEY, '1');
         isAdmin = true;
+        const passInput = document.getElementById('modal-password-personaje');
+        if (passInput) passInput.value = ACCESS_CODE;
+        updatePersonajeAdminIndicator();
       }
+
+      function desactivarModoAdmin() {
+        sessionStorage.removeItem(ADMIN_SESSION_KEY);
+        isAdmin = false;
+        const passInput = document.getElementById('modal-password-personaje');
+        if (passInput) passInput.value = '';
+        updatePersonajeAdminIndicator();
+        loadPersonajes();
+      }
+
+      function openPersonajeModal() {
+        const modalEl = document.getElementById('modal-nuevo-personaje');
+        if (!modalEl) return;
+        const modalInst = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modalInst.show();
+        const passInput = document.getElementById('modal-password-personaje');
+        if (passInput && isAdmin) passInput.value = ACCESS_CODE;
+      }
+
+      function requestAccessAndOpenPersonajeModal() {
+        if (isAdmin) {
+          openPersonajeModal();
+          return;
+        }
+
+        const code = prompt('INGRESE CÓDIGO DE ACCESO DE SEGURIDAD:');
+        if (code === ACCESS_CODE) {
+          activarModoAdmin();
+          openPersonajeModal();
+          loadPersonajes();
+        } else if (code !== null) {
+          alert('CÓDIGO DE ACCESO INCORRECTO. ACCESO DENEGADO.');
+        }
+      }
+
+      updatePersonajeAdminIndicator();
+
+      const personajePasswordInput = document.getElementById('modal-password-personaje');
+      if (personajePasswordInput) {
+        personajePasswordInput.addEventListener('input', () => {
+          if (personajePasswordInput.value === ACCESS_CODE && !isAdmin) {
+            activarModoAdmin();
+            loadPersonajes();
+          }
+        });
+      }
+
+      const SECRET_MODAL_EXTRA_COLORS = [
+        { value: 'red', label: 'RED (POTENTE)' },
+        { value: 'blue', label: 'BLUE (FUERTE)' },
+        { value: 'gray', label: 'GRAY (LEGIBLE)' },
+        { value: 'brown', label: 'BROWN (MARRON)' },
+        { value: 'black', label: 'BLACK (NEGRO)' }
+      ];
+
+      function expandSecretModalColorOptions() {
+        const modal = document.getElementById('modal-nuevo-personaje');
+        if (!modal) return;
+        const colorSelects = modal.querySelectorAll('select[id*="color"]');
+        colorSelects.forEach((select) => {
+          SECRET_MODAL_EXTRA_COLORS.forEach((opt) => {
+            const exists = Array.from(select.options).some((o) => o.value === opt.value);
+            if (!exists) {
+              select.add(new Option(opt.label, opt.value));
+            }
+          });
+        });
+      }
+
+      expandSecretModalColorOptions();
+
+      function isHexColor(value) {
+        return /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(String(value || '').trim());
+      }
+
+      function normalizeHex(value) {
+        const raw = String(value || '').trim();
+        if (!isHexColor(raw)) return '';
+        if (raw.length === 4) {
+          return `#${raw[1]}${raw[1]}${raw[2]}${raw[2]}${raw[3]}${raw[3]}`.toUpperCase();
+        }
+        return raw.toUpperCase();
+      }
+
+      function ensureCustomColorOption(select, hexValue) {
+        const hex = normalizeHex(hexValue);
+        if (!select || !hex) return;
+        const existing = Array.from(select.options).find((o) => o.value.toUpperCase() === hex);
+        if (!existing) {
+          select.add(new Option(`CUSTOM (${hex})`, hex));
+        }
+      }
+
+      function enhanceModalColorPickers() {
+        const modal = document.getElementById('modal-nuevo-personaje');
+        if (!modal) return;
+        const colorSelects = modal.querySelectorAll('select[id*="color"]');
+        colorSelects.forEach((select) => {
+          if (select.dataset.paletteEnhanced === '1') return;
+          select.dataset.paletteEnhanced = '1';
+
+          if (isHexColor(select.value)) {
+            ensureCustomColorOption(select, select.value);
+          }
+
+          const paletteBtn = document.createElement('button');
+          paletteBtn.type = 'button';
+          paletteBtn.className = 'btn btn-outline-light btn-sm mt-2 rounded-0 font-monospace';
+          paletteBtn.style.fontSize = '0.65rem';
+          paletteBtn.innerHTML = '[ 🎨 PALETA ] <span class="palette-swatch" aria-hidden="true" style="display:inline-block;width:11px;height:11px;margin-left:6px;border:1px solid rgba(255,255,255,0.65);vertical-align:middle;"></span>';
+
+          const swatchEl = paletteBtn.querySelector('.palette-swatch');
+
+          const resolveSwatchColor = (value) => {
+            const key = String(value || '').trim().toLowerCase();
+            if (isHexColor(key)) return normalizeHex(key);
+            if (key === 'black' || key === 'brown') return '#FFFFFF';
+            const quickMap = {
+              white: '#FFFFFF',
+              cyan: '#00F0FF',
+              magenta: '#FF007F',
+              green: '#3AFC13',
+              yellow: '#FFEE00',
+              purple: '#A072FF',
+              orange: '#FF8C00',
+              red: '#FF2B2B',
+              blue: '#1F6FFF',
+              gray: '#B8BCC6',
+              dark: '#999999'
+            };
+            return quickMap[key] || '#00F0FF';
+          };
+
+          const syncSwatch = () => {
+            if (!swatchEl) return;
+            swatchEl.style.backgroundColor = resolveSwatchColor(select.value);
+          };
+
+          const nativePicker = document.createElement('input');
+          nativePicker.type = 'color';
+          nativePicker.className = 'd-none';
+          nativePicker.value = '#00f0ff';
+
+          paletteBtn.addEventListener('click', () => {
+            const current = isHexColor(select.value) ? normalizeHex(select.value) : '#00f0ff';
+            nativePicker.value = current;
+            nativePicker.click();
+          });
+
+          nativePicker.addEventListener('input', () => {
+            const picked = normalizeHex(nativePicker.value);
+            if (!picked) return;
+            ensureCustomColorOption(select, picked);
+            select.value = picked;
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+          });
+
+          select.addEventListener('change', syncSwatch);
+          syncSwatch();
+
+          select.insertAdjacentElement('afterend', paletteBtn);
+          paletteBtn.insertAdjacentElement('afterend', nativePicker);
+        });
+      }
+
+      enhanceModalColorPickers();
+
+      function syncPersonajeEditModeBadge() {
+        const editInput = document.getElementById('personaje-id-editar');
+        const badge = document.getElementById('personaje-edit-mode-badge');
+        const form = document.getElementById('form-nuevo-personaje');
+        const submitBtn = form ? form.querySelector('button[type="submit"]') : null;
+        if (!editInput) return;
+
+        const isEditMode = !!(editInput.value || '').trim();
+        if (badge) {
+          badge.classList.toggle('d-none', !isEditMode);
+        }
+
+        if (submitBtn) {
+          if (!submitBtn.dataset.createLabel) {
+            submitBtn.dataset.createLabel = '[ INJECT_PERSONAJE_RECORD ]';
+          }
+          submitBtn.textContent = isEditMode ? '[ GUARDAR CAMBIOS ]' : submitBtn.dataset.createLabel;
+        }
+      }
+
+      const personajeEditInput = document.getElementById('personaje-id-editar');
+      if (personajeEditInput) {
+        personajeEditInput.addEventListener('input', syncPersonajeEditModeBadge);
+        personajeEditInput.addEventListener('change', syncPersonajeEditModeBadge);
+      }
+      syncPersonajeEditModeBadge();
 
       // Color preview system for modal selectors
       const colorMap = {
@@ -285,16 +517,27 @@
         yellow: '#ffee00',
         purple: '#a072ff',
         orange: '#ff8c00',
-        dark: '#999',
-        black: '#ccc'
+        red: '#ff2b2b',
+        blue: '#1f6fff',
+        gray: '#b8bcc6',
+        brown: '#ffffff',
+        black: '#ffffff',
+        dark: '#999'
       };
+
+      function getReadablePreviewColor(colorValue) {
+        const value = String(colorValue || '').toLowerCase();
+        if (isHexColor(value)) return normalizeHex(value);
+        if (value === 'black' || value === 'brown') return '#ffffff';
+        return colorMap[value] || '#ffffff';
+      }
 
       function setupColorPreview(selectId, previewId) {
         const sel = document.getElementById(selectId);
         const prev = document.getElementById(previewId);
         if (!sel || !prev) return;
         const update = () => {
-          const c = colorMap[sel.value] || '#fff';
+          const c = getReadablePreviewColor(sel.value);
           prev.style.color = c;
           prev.style.borderColor = c;
           prev.style.textShadow = `0 0 8px ${c}`;
@@ -322,7 +565,7 @@
         const nameClass = colorNombre === 'white' ? 'text-white' : `text-neon-${colorNombre}`;
 
         const colorOrigen = personaje.colorOrigen || personaje.colorInfo || personaje.color || 'cyan';
-        const originClass = ['cyan','magenta','green','yellow','purple','orange'].includes(colorOrigen)
+        const originClass = ['cyan','magenta','green','yellow','purple','orange','red','blue','gray','brown','black'].includes(colorOrigen)
           ? `text-neon-${colorOrigen}`
           : `text-${colorOrigen}`;
 
@@ -351,7 +594,7 @@
                     <button type="button" class="btn btn-subject-action text-uppercase fw-black w-100 rounded-0 btn-show-ficha">
                       Ver Ficha
                     </button>
-                    ${isAdmin ? `<button type="button" class="btn btn-outline-danger btn-sm rounded-0 text-uppercase font-monospace w-100 mt-2 btn-delete-personaje" data-id="${personaje.id || ''}" style="font-size: 0.68rem;">[ ELIMINAR ]</button>` : ''}
+                    ${isAdmin ? `<button type="button" class="btn btn-outline-info btn-sm rounded-0 text-uppercase font-monospace w-100 mt-2 btn-edit-personaje" data-id="${personaje.id || ''}" style="font-size: 0.68rem;">[ EDITAR ]</button><button type="button" class="btn btn-outline-danger btn-sm rounded-0 text-uppercase font-monospace w-100 mt-2 btn-delete-personaje" data-id="${personaje.id || ''}" style="font-size: 0.68rem;">[ ELIMINAR ]</button>` : ''}
                   </div>
                 </div>
                 <div class="flip-card-back">
@@ -409,9 +652,51 @@
       }
 
       document.addEventListener('click', async (event) => {
+        const editBtn = event.target.closest('.btn-edit-personaje');
         const deleteBtn = event.target.closest('.btn-delete-personaje');
         const showBtn = event.target.closest('.btn-show-ficha');
         const closeBtn = event.target.closest('.btn-close-ficha');
+
+        if (editBtn && isAdmin) {
+          event.preventDefault();
+          const personajeId = editBtn.getAttribute('data-id');
+          if (!personajeId) return;
+
+          try {
+            const response = await fetch('/api/personajes');
+            if (!response.ok) throw new Error('No se pudo leer personajes');
+            const personajes = await response.json();
+            const personaje = personajes.find(item => item.id === personajeId);
+            if (!personaje) throw new Error('Personaje no encontrado');
+
+            const setVal = (id, value) => {
+              const el = document.getElementById(id);
+              if (el) el.value = value ?? '';
+            };
+
+            setVal('personaje-id-editar', personaje.id);
+            syncPersonajeEditModeBadge();
+            setVal('personaje-nombre', personaje.nombre || '');
+            setVal('personaje-color-nombre', personaje.colorNombre || 'white');
+            setVal('personaje-origen', personaje.info || '');
+            setVal('personaje-color-origen', personaje.colorOrigen || personaje.colorInfo || personaje.color || 'cyan');
+            setVal('personaje-color-subjectid', personaje.colorSubjectId || 'cyan');
+            setVal('personaje-descripcion', personaje.descripcion || '');
+            setVal('personaje-ficha', personaje.ficha || '');
+            setVal('personaje-color-ficha', personaje.colorFicha || 'cyan');
+            setVal('personaje-curiosidades', personaje.curiosidades || personaje.datosCuriosos || '');
+            setVal('personaje-color-curiosidades', personaje.colorCuriosidades || 'magenta');
+            setVal('personaje-imagen', personaje.cover || '');
+
+            const modalEl = document.getElementById('modal-nuevo-personaje');
+            if (modalEl) {
+              bootstrap.Modal.getOrCreateInstance(modalEl).show();
+            }
+          } catch (error) {
+            alert(`ERROR AL CARGAR PERSONAJE: ${error.message}`);
+          }
+          return;
+        }
 
         if (deleteBtn && isAdmin) {
           event.preventDefault();
@@ -451,24 +736,22 @@
       document.addEventListener('keydown', (e) => {
         if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'b') {
           e.preventDefault();
-          const code = prompt('INGRESE CÓDIGO DE ACCESO DE SEGURIDAD:');
-          if (code === 'bunker2026') {
-            activarModoAdmin();
-            const modalEl = document.getElementById('modal-nuevo-personaje');
-            if (modalEl) {
-              const modalInst = bootstrap.Modal.getOrCreateInstance(modalEl);
-              modalInst.show();
-              const passInput = document.getElementById('modal-password-personaje');
-              if (passInput) passInput.value = code;
-            }
-            loadPersonajes();
-          } else if (code !== null) {
-            alert('CÓDIGO DE ACCESO INCORRECTO. ACCESO DENEGADO.');
-          }
+          requestAccessAndOpenPersonajeModal();
         }
       });
 
       const formNuevoPersonaje = document.getElementById('form-nuevo-personaje');
+      const btnCloseAdminPersonaje = document.querySelector('.btn-deactivate-admin-modal');
+      if (btnCloseAdminPersonaje) {
+        btnCloseAdminPersonaje.addEventListener('click', () => {
+          desactivarModoAdmin();
+          const modalEl = document.getElementById('modal-nuevo-personaje');
+          if (modalEl) {
+            const modalInst = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modalInst.hide();
+          }
+        });
+      }
       if (formNuevoPersonaje) {
         formNuevoPersonaje.addEventListener('submit', function (e) {
           e.preventDefault();
@@ -477,6 +760,7 @@
           const file = fileInput ? fileInput.files[0] : null;
 
           const submitData = (coverData = null, fileName = null) => {
+            const editId = (document.getElementById('personaje-id-editar')?.value || '').trim();
             const nombre = document.getElementById('personaje-nombre').value.trim();
             const info = document.getElementById('personaje-origen').value.trim();
             const descripcion = document.getElementById('personaje-descripcion').value.trim();
@@ -491,6 +775,7 @@
             const cover = document.getElementById('personaje-imagen').value.trim() || '/assets/images/default.jpg';
 
             const personajeData = {
+              id: editId || undefined,
               nombre,
               info,
               descripcion,
@@ -508,7 +793,9 @@
               coverFileName: fileName
             };
 
-            fetch('/api/personajes/nuevo', {
+            const endpoint = editId ? '/api/personajes/editar' : '/api/personajes/nuevo';
+
+            fetch(endpoint, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(personajeData)
@@ -527,6 +814,9 @@
                     loadPersonajes();
                   }
                   formNuevoPersonaje.reset();
+                  const editInput = document.getElementById('personaje-id-editar');
+                  if (editInput) editInput.value = '';
+                  syncPersonajeEditModeBadge();
                   const modalEl = document.getElementById('modal-nuevo-personaje');
                   if (modalEl) {
                     const modalInst = bootstrap.Modal.getInstance(modalEl);
@@ -558,11 +848,7 @@
 
       if (btnOpenModal) {
         btnOpenModal.addEventListener('click', () => {
-          const modalEl = document.getElementById('modal-nuevo-personaje');
-          if (modalEl) {
-            const modalInst = bootstrap.Modal.getOrCreateInstance(modalEl);
-            modalInst.show();
-          }
+          requestAccessAndOpenPersonajeModal();
         });
       }
 
