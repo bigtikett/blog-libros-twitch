@@ -2079,6 +2079,17 @@ app.post('/api/bitacora/nuevo', async (req, res) => {
     }
 
     const datosActuales = await getCollection('bitacora', RUTA_BITACORA, []);
+    let miniaturaFinal = String(nuevaEntrada.miniatura || '').trim();
+
+    if (nuevaEntrada.miniaturaFileData && nuevaEntrada.miniaturaFileName) {
+      miniaturaFinal = await uploadCoverAndGetUrl(
+        nuevaEntrada.miniaturaFileData,
+        nuevaEntrada.miniaturaFileName,
+        'bitacora',
+        IMG_FAVORITOS_DIR,
+        '/img/favoritos'
+      ) || miniaturaFinal;
+    }
 
     const entrada = {
       id: `bitacora-${Date.now()}`,
@@ -2088,7 +2099,7 @@ app.post('/api/bitacora/nuevo', async (req, res) => {
       spoiler: String(nuevaEntrada.spoiler || 'MEDIO').trim().toUpperCase(),
       titulo: String(nuevaEntrada.titulo || '').trim(),
       descripcion: String(nuevaEntrada.descripcion || '').trim(),
-      miniatura: String(nuevaEntrada.miniatura || '').trim(),
+      miniatura: miniaturaFinal,
       url: String(nuevaEntrada.url || '').trim(),
       createdAt: new Date().toISOString()
     };
@@ -2129,6 +2140,20 @@ app.post('/api/bitacora/editar', async (req, res) => {
     }
 
     const actual = datosActuales[index];
+    let miniaturaActualizada = String(cambios.miniatura || actual.miniatura || '').trim();
+
+    if (cambios.miniaturaFileData && cambios.miniaturaFileName) {
+      miniaturaActualizada = await uploadCoverAndGetUrl(
+        cambios.miniaturaFileData,
+        cambios.miniaturaFileName,
+        'bitacora',
+        IMG_FAVORITOS_DIR,
+        '/img/favoritos'
+      ) || miniaturaActualizada;
+
+      await deleteCoverFromR2IfNeeded(actual.miniatura);
+    }
+
     const editada = {
       ...actual,
       capitulo: String(cambios.capitulo || actual.capitulo || '').trim() || '00',
@@ -2137,11 +2162,14 @@ app.post('/api/bitacora/editar', async (req, res) => {
       spoiler: String(cambios.spoiler || actual.spoiler || 'MEDIO').trim().toUpperCase(),
       titulo: String(cambios.titulo || actual.titulo || '').trim(),
       descripcion: String(cambios.descripcion || actual.descripcion || '').trim(),
-      miniatura: String(cambios.miniatura || actual.miniatura || '').trim(),
+      miniatura: miniaturaActualizada,
       url: String(cambios.url || actual.url || '').trim(),
       id,
       updatedAt: new Date().toISOString()
     };
+
+    delete editada.miniaturaFileData;
+    delete editada.miniaturaFileName;
 
     datosActuales[index] = editada;
     await saveCollection('bitacora', datosActuales, RUTA_BITACORA);
@@ -2176,6 +2204,8 @@ app.post('/api/bitacora/eliminar', async (req, res) => {
     if (!item) {
       return res.status(404).json({ error: 'Entrada de bitácora no encontrada.' });
     }
+
+    await deleteCoverFromR2IfNeeded(item.miniatura);
 
     const actualizados = datosActuales.filter(entry => entry.id !== id);
     await saveCollection('bitacora', actualizados, RUTA_BITACORA);

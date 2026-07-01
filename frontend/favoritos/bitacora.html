@@ -1,0 +1,1485 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cuaderno de Bitacora | Nave</title>
+  <link rel="stylesheet" href="../style.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --space-bg-1: #05070f;
+      --space-bg-2: #0a1124;
+      --space-bg-3: #130a24;
+      --hud-cyan: #00f0ff;
+      --hud-magenta: #ff2aa5;
+      --hud-green: #4cffb2;
+      --hud-gold: #ffd44d;
+      --panel: rgba(11, 17, 34, 0.78);
+      --panel-border: rgba(0, 240, 255, 0.25);
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: #f2f8ff;
+      font-family: "Rajdhani", sans-serif;
+      background:
+        radial-gradient(circle at 12% 14%, rgba(0, 240, 255, 0.18), transparent 32%),
+        radial-gradient(circle at 82% 8%, rgba(255, 42, 165, 0.2), transparent 28%),
+        radial-gradient(circle at 74% 86%, rgba(76, 255, 178, 0.15), transparent 34%),
+        linear-gradient(160deg, var(--space-bg-1), var(--space-bg-2) 42%, var(--space-bg-3));
+      overflow-x: hidden;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::before {
+      background-image:
+        radial-gradient(2px 2px at 20% 20%, rgba(255,255,255,0.9), transparent 40%),
+        radial-gradient(1px 1px at 70% 32%, rgba(0,240,255,0.8), transparent 40%),
+        radial-gradient(2px 2px at 82% 74%, rgba(255,255,255,0.75), transparent 40%),
+        radial-gradient(1px 1px at 34% 80%, rgba(255,42,165,0.8), transparent 40%),
+        radial-gradient(1px 1px at 52% 58%, rgba(255,255,255,0.75), transparent 40%);
+      opacity: 0.75;
+      animation: drift 22s linear infinite;
+    }
+
+    body::after {
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.025) 0,
+        rgba(255, 255, 255, 0.025) 1px,
+        transparent 2px,
+        transparent 4px
+      );
+      mix-blend-mode: soft-light;
+      opacity: 0.3;
+    }
+
+    @keyframes drift {
+      from { transform: translateY(0); }
+      to { transform: translateY(18px); }
+    }
+
+    .ship-shell {
+      position: relative;
+      z-index: 1;
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 34px 18px 70px;
+    }
+
+    .space-clock-hud {
+      position: fixed;
+      right: 14px;
+      bottom: 14px;
+      z-index: 6;
+      border: 1px solid rgba(0, 240, 255, 0.35);
+      background: linear-gradient(130deg, rgba(7, 16, 34, 0.92), rgba(22, 10, 38, 0.88));
+      border-radius: 10px;
+      padding: 8px 10px;
+      min-width: 240px;
+      box-shadow: 0 0 16px rgba(0, 240, 255, 0.18);
+      backdrop-filter: blur(6px);
+    }
+
+    .space-clock-hud .hud-label {
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.62rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #9ddfff;
+      margin-bottom: 4px;
+    }
+
+    .space-clock-hud .hud-time {
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.9rem;
+      letter-spacing: 0.07em;
+      color: #4cffb2;
+      text-shadow: 0 0 10px rgba(76,255,178,0.45);
+      line-height: 1.2;
+      text-transform: uppercase;
+    }
+
+    @media (max-width: 740px) {
+      .space-clock-hud {
+        right: 10px;
+        left: 10px;
+        bottom: 10px;
+        min-width: 0;
+      }
+    }
+
+    .ship-topbar {
+      border: 1px solid var(--panel-border);
+      background: rgba(8, 14, 28, 0.72);
+      backdrop-filter: blur(8px);
+      border-radius: 10px;
+      padding: 10px 14px;
+      display: flex;
+      gap: 10px;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      box-shadow: 0 0 24px rgba(0, 240, 255, 0.08);
+    }
+
+    .ship-id {
+      font-family: "Orbitron", sans-serif;
+      letter-spacing: 1.6px;
+      text-transform: uppercase;
+      font-size: 0.84rem;
+      color: var(--hud-cyan);
+    }
+
+    .ship-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .ship-actions a,
+    .ship-actions button {
+      color: #e9f8ff;
+      text-decoration: none;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      background: transparent;
+      padding: 6px 12px;
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition: 0.2s ease;
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .ship-actions a:hover,
+    .ship-actions button:hover {
+      border-color: var(--hud-cyan);
+      color: var(--hud-cyan);
+      box-shadow: 0 0 14px rgba(0, 240, 255, 0.25);
+    }
+
+    .hero {
+      margin-top: 18px;
+      border: 1px solid rgba(255, 42, 165, 0.3);
+      background: linear-gradient(130deg, rgba(10, 18, 36, 0.92), rgba(20, 10, 38, 0.88));
+      border-radius: 14px;
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: inset 0 0 30px rgba(0, 240, 255, 0.06), 0 0 24px rgba(255, 42, 165, 0.12);
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      width: 240px;
+      height: 240px;
+      right: -60px;
+      top: -80px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,240,255,0.24), transparent 62%);
+      filter: blur(2px);
+      pointer-events: none;
+    }
+
+    .hero .kicker {
+      font-size: 0.76rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--hud-green);
+      margin-bottom: 10px;
+      font-family: "Orbitron", sans-serif;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-family: "Orbitron", sans-serif;
+      font-weight: 900;
+      font-size: clamp(1.9rem, 4.5vw, 3.2rem);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      line-height: 1.08;
+      color: #ffffff;
+      text-shadow: 0 0 14px rgba(0, 240, 255, 0.22);
+    }
+
+    .hero p {
+      margin: 14px 0 0;
+      max-width: 760px;
+      color: #d6e8ff;
+      font-size: 1.04rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.35fr 1fr;
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .panel {
+      border: 1px solid var(--panel-border);
+      background: var(--panel);
+      border-radius: 12px;
+      padding: 16px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.38);
+    }
+
+    .panel-title {
+      margin: 0 0 10px;
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.84rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--hud-cyan);
+    }
+
+    .status-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 8px;
+    }
+
+    .status-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 10px;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 6px;
+      font-size: 0.92rem;
+      background: rgba(255,255,255,0.02);
+    }
+
+    .status-item .ok { color: var(--hud-green); }
+    .status-item .warn { color: var(--hud-gold); }
+    .status-item .note { color: var(--hud-magenta); }
+
+    .exclusive-grid {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .exclusive-card {
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 10px;
+      background: rgba(9, 18, 36, 0.75);
+      padding: 12px;
+      min-height: 148px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .exclusive-card .tag {
+      display: inline-block;
+      font-family: "Orbitron", sans-serif;
+      letter-spacing: 0.08em;
+      font-size: 0.66rem;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      border: 1px solid rgba(255,255,255,0.22);
+      border-radius: 4px;
+      padding: 2px 7px;
+      color: #9edfff;
+    }
+
+    .exclusive-card h3 {
+      margin: 0 0 6px;
+      font-size: 1.03rem;
+      color: #ffffff;
+    }
+
+    .exclusive-card p {
+      margin: 0;
+      font-size: 0.9rem;
+      color: #d3e6ff;
+      line-height: 1.35;
+    }
+
+    .card-actions {
+      margin-top: auto;
+      padding-top: 12px;
+    }
+
+    .btn-add-entry,
+    .btn-dossier {
+      border: 1px solid rgba(0, 240, 255, 0.35);
+      color: #00f0ff;
+      background: rgba(0, 0, 0, 0.28);
+      text-decoration: none;
+      padding: 6px 10px;
+      border-radius: 0;
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.66rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition: 0.2s ease;
+      cursor: pointer;
+    }
+
+    .btn-add-entry:hover,
+    .btn-dossier:hover {
+      box-shadow: 0 0 12px rgba(0, 240, 255, 0.25);
+      border-color: rgba(0, 240, 255, 0.75);
+      color: #c8f9ff;
+    }
+
+    .btn-admin-danger {
+      border-color: rgba(255, 74, 126, 0.45);
+      color: #ff8db4;
+    }
+
+    .btn-admin-danger:hover {
+      box-shadow: 0 0 12px rgba(255, 74, 126, 0.22);
+      border-color: rgba(255, 74, 126, 0.75);
+      color: #ffd0df;
+    }
+
+    .admin-only {
+      display: none !important;
+    }
+
+    body.admin-mode .admin-only {
+      display: inline-flex !important;
+    }
+
+    .entry-list {
+      margin-top: 16px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .entry-template {
+      border: 1px solid rgba(0, 240, 255, 0.24);
+      border-radius: 10px;
+      background: rgba(7, 16, 32, 0.86);
+      overflow: hidden;
+    }
+
+    .entry-template .head {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 10px 12px;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .entry-template .chips {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .entry-template .chip {
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.62rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border: 1px solid rgba(255,255,255,0.22);
+      border-radius: 4px;
+      padding: 2px 7px;
+      color: #bfe9ff;
+      background: rgba(255,255,255,0.03);
+    }
+
+    .entry-template .date {
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.66rem;
+      color: #9fdcff;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .entry-template .body {
+      display: grid;
+      grid-template-columns: 170px 1fr;
+      gap: 12px;
+      padding: 12px;
+    }
+
+    .entry-template .thumb {
+      min-height: 120px;
+      border: 1px dashed rgba(255,255,255,0.24);
+      border-radius: 8px;
+      background: linear-gradient(130deg, rgba(0,240,255,0.08), rgba(255,42,165,0.08));
+      display: grid;
+      place-items: center;
+      color: #9cdfff;
+      font-size: 0.8rem;
+      text-align: center;
+      padding: 8px;
+    }
+
+    .entry-template .thumb img {
+      width: 100%;
+      height: 100%;
+      min-height: 120px;
+      max-height: 180px;
+      object-fit: cover;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .entry-template h3 {
+      margin: 0 0 6px;
+      color: #ffffff;
+      font-size: 1.03rem;
+    }
+
+    .entry-template p {
+      margin: 0;
+      color: #d4e7ff;
+      font-size: 0.94rem;
+      line-height: 1.42;
+    }
+
+    .entry-template .actions {
+      margin-top: 10px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .empty-note {
+      border: 1px dashed rgba(255,255,255,0.2);
+      border-radius: 8px;
+      padding: 12px;
+      color: #d6dff0;
+      font-size: 0.9rem;
+      background: rgba(255,255,255,0.02);
+    }
+
+    .empty-note .empty-note-kicker {
+      font-family: "Orbitron", sans-serif;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #00f0ff;
+      font-size: 0.72rem;
+      margin-bottom: 8px;
+    }
+
+    .empty-note .empty-note-controls {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    .empty-note .monitor-sound-toggle {
+      border: 1px solid rgba(0, 240, 255, 0.35);
+      background: rgba(0, 10, 18, 0.5);
+      color: #b8ecff;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 0.72rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+
+    .empty-note .monitor-sound-toggle:hover {
+      border-color: rgba(76, 255, 178, 0.7);
+      color: #4cffb2;
+    }
+
+    .empty-note .empty-note-status {
+      color: #c9d9ed;
+      margin-bottom: 10px;
+      font-size: 0.85rem;
+    }
+
+    .empty-note .empty-monitor-list {
+      display: grid;
+      gap: 6px;
+      max-height: 220px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .empty-note .monitor-item {
+      border-left: 2px solid rgba(0,240,255,0.45);
+      padding-left: 8px;
+      font-size: 0.8rem;
+      color: #cfe3ff;
+      line-height: 1.3;
+      opacity: 0;
+      transform: translateY(6px);
+      animation: monitorLineIn 380ms ease forwards;
+      animation-delay: var(--line-delay, 0ms);
+    }
+
+    .empty-note .monitor-item strong {
+      color: #4cffb2;
+      font-weight: 700;
+      margin-right: 6px;
+    }
+
+    .empty-note .monitor-item .monitor-text {
+      display: inline-block;
+      clip-path: inset(0 100% 0 0);
+      animation: monitorTyping 900ms steps(26, end) forwards;
+      animation-delay: calc(var(--line-delay, 0ms) + 50ms);
+    }
+
+    @keyframes monitorLineIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes monitorTyping {
+      to {
+        clip-path: inset(0 0 0 0);
+      }
+    }
+
+    .modal-shell {
+      position: fixed;
+      inset: 0;
+      background: rgba(3, 6, 16, 0.72);
+      backdrop-filter: blur(6px);
+      z-index: 20;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+    }
+
+    .modal-shell.is-open { display: flex; }
+
+    .modal-card {
+      width: min(760px, 100%);
+      max-height: 90vh;
+      overflow-y: auto;
+      border: 1px solid rgba(0, 240, 255, 0.34);
+      border-radius: 12px;
+      background: linear-gradient(145deg, rgba(8, 16, 34, 0.98), rgba(24, 10, 38, 0.96));
+      box-shadow: 0 0 24px rgba(0, 240, 255, 0.15);
+    }
+
+    .modal-card .modal-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.14);
+      font-family: "Orbitron", sans-serif;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #00f0ff;
+      font-size: 0.8rem;
+    }
+
+    .modal-card .modal-body {
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .modal-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .modal-card label {
+      display: block;
+      margin-bottom: 4px;
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.64rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #ff9fd7;
+    }
+
+    .modal-card input,
+    .modal-card select,
+    .modal-card textarea {
+      width: 100%;
+      background: #050914;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #eff9ff;
+      padding: 8px;
+      border-radius: 6px;
+      font: inherit;
+      box-sizing: border-box;
+    }
+
+    .modal-card textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      padding-top: 4px;
+      flex-wrap: wrap;
+    }
+
+    .modal-note {
+      font-size: 0.78rem;
+      color: #b8d6ff;
+    }
+
+    @media (max-width: 950px) {
+      .grid { grid-template-columns: 1fr; }
+      .exclusive-grid { grid-template-columns: 1fr; }
+      .entry-template .body { grid-template-columns: 1fr; }
+      .modal-grid { grid-template-columns: 1fr; }
+      .hero { padding: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="ship-shell">
+    <div class="ship-topbar">
+      <div class="ship-id">NAVE YAI-01 // CUADERNO DE BITACORA</div>
+      <div class="ship-actions">
+        <button type="button" id="open-bitacora-admin"><i class="bi bi-shield-lock"></i> Acceso admin</button>
+        <a href="/index.html"><i class="bi bi-arrow-left"></i> Volver al bunker</a>
+      </div>
+    </div>
+
+    <section class="hero">
+      <div class="kicker">[ BRIDGE LOG // MISSION TRACK ]</div>
+      <h1>Cuaderno de Bitacora Estelar</h1>
+      <p>
+        Archivo exclusivo del libro tras cada nuevo capitulo. Aqui se publican piezas que NO aparecen
+        en Wattpad: bandas de trafico, logos, recetas, arte conceptual, mapas, notas y material del mundo.
+      </p>
+    </section>
+
+    <section class="grid">
+      <article class="panel">
+        <h2 class="panel-title">Protocolo de exclusividad</h2>
+        <ul class="status-list">
+          <li class="status-item"><span>Visible en Wattpad</span><span class="warn">SOLO CAPITULO</span></li>
+          <li class="status-item"><span>Visible en Bitacora</span><span class="ok">MATERIAL EXTRA</span></li>
+          <li class="status-item"><span>Drop por capitulo</span><span class="ok">ACTIVO</span></li>
+          <li class="status-item"><span>Contenido canon</span><span class="note">EXPANDIDO</span></li>
+        </ul>
+      </article>
+      <article class="panel">
+        <h2 class="panel-title">Drop de capitulo</h2>
+        <ul class="status-list">
+          <li class="status-item"><span>Capitulo actual</span><span class="ok">#07</span></li>
+          <li class="status-item"><span>Piezas subidas</span><span class="ok">AUTO</span></li>
+          <li class="status-item"><span>Acceso</span><span class="note">EXCLUSIVO WEB</span></li>
+          <li class="status-item"><span>Admin activo</span><span id="admin-status" class="warn">OFFLINE</span></li>
+        </ul>
+      </article>
+    </section>
+
+    <section class="exclusive-grid" aria-label="Categorias exclusivas por capitulo">
+      <article class="exclusive-card">
+        <span class="tag">Faccion</span>
+        <h3>Bandas y trafico de armas</h3>
+        <p>Fichas visuales de facciones, simbolos y rutas ilegales que no aparecen en el capitulo.</p>
+        <div class="card-actions"><button type="button" class="btn-add-entry btn-open-bitacora-modal admin-only" data-entry-type="BANDAS">[ + ANADIR CONTENIDO ]</button></div>
+      </article>
+      <article class="exclusive-card">
+        <span class="tag">Identidad</span>
+        <h3>Logos y marcas del mundo</h3>
+        <p>Sellos corporativos, insignias de mercado negro y emblemas de distritos con notas de lore.</p>
+        <div class="card-actions"><button type="button" class="btn-add-entry btn-open-bitacora-modal admin-only" data-entry-type="LOGOS">[ + ANADIR CONTENIDO ]</button></div>
+      </article>
+      <article class="exclusive-card">
+        <span class="tag">Documentacion</span>
+        <h3>Recetas y archivos tecnicos</h3>
+        <p>Recetas diegeticas, formulas, notas de laboratorio y documentos internos del universo narrativo.</p>
+        <div class="card-actions"><button type="button" class="btn-add-entry btn-open-bitacora-modal admin-only" data-entry-type="RECETAS">[ + ANADIR CONTENIDO ]</button></div>
+      </article>
+      <article class="exclusive-card">
+        <span class="tag">Visual Dev</span>
+        <h3>Arte conceptual</h3>
+        <p>Concept art de escenas, personajes y props con variantes descartadas y comentarios de proceso.</p>
+        <div class="card-actions"><button type="button" class="btn-add-entry btn-open-bitacora-modal admin-only" data-entry-type="ARTE">[ + ANADIR CONTENIDO ]</button></div>
+      </article>
+      <article class="exclusive-card">
+        <span class="tag">Worldbuilding</span>
+        <h3>Mapas y zonas</h3>
+        <p>Mapas de sectores, puntos de conflicto y espacios que solo se mencionan brevemente en la novela.</p>
+        <div class="card-actions"><button type="button" class="btn-add-entry btn-open-bitacora-modal admin-only" data-entry-type="MAPAS">[ + ANADIR CONTENIDO ]</button></div>
+      </article>
+      <article class="exclusive-card">
+        <span class="tag">Behind the scenes</span>
+        <h3>Bitacora del autor</h3>
+        <p>Notas de cada update: por que se tomo cierta decision y que pistas esconde para proximos capitulos.</p>
+        <div class="card-actions"><button type="button" class="btn-add-entry btn-open-bitacora-modal admin-only" data-entry-type="BITACORA">[ + ANADIR CONTENIDO ]</button></div>
+      </article>
+    </section>
+
+    <section class="entry-list" id="entry-list" aria-label="Entradas de bitacora">
+      <div class="empty-note" id="empty-note">
+        <div class="empty-note-kicker">[ MONITOR DE ACTUALIZACIONES ]</div>
+        <div class="empty-note-controls">
+          <button type="button" id="monitor-sound-toggle" class="monitor-sound-toggle" aria-pressed="false">[ SONIDO: OFF ]</button>
+          <button type="button" id="monitor-beep-mode-toggle" class="monitor-sound-toggle" aria-pressed="false">[ BEEP: LINEA ]</button>
+          <button type="button" id="monitor-sound-profile-toggle" class="monitor-sound-toggle" aria-pressed="false">[ PERFIL: DEFAULT ]</button>
+        </div>
+        <div class="empty-note-status">Aun no hay entradas de bitacora cargadas. Mientras tanto, este monitor mostrara las ultimas actualizaciones del bunker.</div>
+        <div class="empty-monitor-list" id="empty-monitor-list">
+          <div class="monitor-item">Esperando actualizaciones...</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <aside class="space-clock-hud" aria-live="polite">
+    <div class="hud-label">CUADERNO DE BITACORA // FECHA ESTELAR</div>
+    <div id="space-clock-now" class="hud-time">CARGANDO...</div>
+  </aside>
+
+  <div id="bitacora-secret-modal" class="modal-shell" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span id="bitacora-modal-title">[ INJECT_BITACORA_RECORD ]</span>
+        <span id="bitacora-admin-indicator">[ ADMIN: OFF ]</span>
+        <button type="button" class="btn-add-entry" id="close-bitacora-modal">[ CERRAR ]</button>
+      </div>
+      <form id="form-bitacora-entry" class="modal-body">
+        <input type="hidden" id="entry-id-editar" value="">
+        <div>
+          <label for="bitacora-password">CODIGO_SISTEMA</label>
+          <input type="password" id="bitacora-password" placeholder="••••••••" required>
+          <div class="modal-note">Con la clave correcta se activa modo admin y aparecen botones de anadir/editar/eliminar.</div>
+        </div>
+        <div class="modal-grid">
+          <div>
+            <label for="entry-capitulo">CAPITULO</label>
+            <input type="text" id="entry-capitulo" placeholder="07" required>
+          </div>
+          <div>
+            <label for="entry-fecha">FECHA</label>
+            <input type="date" id="entry-fecha" required>
+          </div>
+          <div>
+            <label for="entry-tipo">TIPO_CONTENIDO</label>
+            <select id="entry-tipo" required>
+              <option value="BANDAS">BANDAS</option>
+              <option value="LOGOS">LOGOS</option>
+              <option value="RECETAS">RECETAS</option>
+              <option value="ARTE">ARTE CONCEPTUAL</option>
+              <option value="MAPAS">MAPAS</option>
+              <option value="BITACORA">BITACORA AUTOR</option>
+            </select>
+          </div>
+          <div>
+            <label for="entry-spoiler">SPOILER_LEVEL</label>
+            <select id="entry-spoiler" required>
+              <option value="BAJO">BAJO</option>
+              <option value="MEDIO">MEDIO</option>
+              <option value="ALTO">ALTO</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label for="entry-titulo">TITULO</label>
+          <input type="text" id="entry-titulo" placeholder="Dossier: ..." required>
+        </div>
+        <div>
+          <label for="entry-descripcion">DESCRIPCION</label>
+          <textarea id="entry-descripcion" placeholder="Resumen de lo que aporta al mundo del libro..." required></textarea>
+        </div>
+        <div class="modal-grid">
+          <div>
+            <label for="entry-miniatura">MINIATURA_TEXTO</label>
+            <input type="text" id="entry-miniatura" placeholder="EMBLEMA / FACCION">
+            <label for="entry-miniatura-file" style="margin-top: 8px;">SUBIR_IMAGEN_PC</label>
+            <input type="file" id="entry-miniatura-file" accept="image/*">
+            <div class="modal-note">Opcional: si subes una imagen, reemplaza el texto/miniatura actual.</div>
+          </div>
+          <div>
+            <label for="entry-url">DOSSIER_URL</label>
+            <input type="url" id="entry-url" placeholder="https://...">
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-add-entry" id="deactivate-bitacora-admin">[ CERRAR MODO ADMIN ]</button>
+          <button type="submit" class="btn-add-entry" id="submit-bitacora-entry">[ PUBLICAR REGISTRO ]</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const ACCESS_CODE = 'bunker2026';
+      const ADMIN_SESSION_KEY = 'bunker_admin_authenticated';
+
+      let isAdmin = sessionStorage.getItem(ADMIN_SESSION_KEY) === '1';
+
+      const modal = document.getElementById('bitacora-secret-modal');
+      const form = document.getElementById('form-bitacora-entry');
+      const openAdminBtn = document.getElementById('open-bitacora-admin');
+      const closeBtn = document.getElementById('close-bitacora-modal');
+      const deactivateAdminBtn = document.getElementById('deactivate-bitacora-admin');
+      const modalTitle = document.getElementById('bitacora-modal-title');
+      const submitBtn = document.getElementById('submit-bitacora-entry');
+      const bitacoraAdminIndicator = document.getElementById('bitacora-admin-indicator');
+      const editIdInput = document.getElementById('entry-id-editar');
+      const typeInput = document.getElementById('entry-tipo');
+      const dateInput = document.getElementById('entry-fecha');
+      const entryMiniaturaFileInput = document.getElementById('entry-miniatura-file');
+      const entryList = document.getElementById('entry-list');
+      const adminStatus = document.getElementById('admin-status');
+      const emptyNote = document.getElementById('empty-note');
+      const spaceClockNow = document.getElementById('space-clock-now');
+      const emptyMonitorList = document.getElementById('empty-monitor-list');
+      const monitorSoundToggle = document.getElementById('monitor-sound-toggle');
+      const monitorBeepModeToggle = document.getElementById('monitor-beep-mode-toggle');
+      const monitorSoundProfileToggle = document.getElementById('monitor-sound-profile-toggle');
+      const MONITOR_SOUND_KEY = 'bitacora_monitor_sound_enabled';
+      const MONITOR_BEEP_MODE_KEY = 'bitacora_monitor_beep_mode';
+      const MONITOR_SOUND_PROFILE_KEY = 'bitacora_monitor_sound_profile';
+      let lastMonitorSignature = '';
+      let monitorSoundEnabled = localStorage.getItem(MONITOR_SOUND_KEY) === '1';
+      let monitorBeepMode = localStorage.getItem(MONITOR_BEEP_MODE_KEY) === 'letter' ? 'letter' : 'line';
+      const monitorProfiles = ['default', 'militar', '8bit', 'glitch'];
+      let monitorSoundProfile = monitorProfiles.includes(localStorage.getItem(MONITOR_SOUND_PROFILE_KEY))
+        ? localStorage.getItem(MONITOR_SOUND_PROFILE_KEY)
+        : 'default';
+      let monitorAudioContext = null;
+      const typingBeepTimers = new WeakMap();
+      let lastBitacoraAdminState = isAdmin;
+
+      function escapeHtml(value) {
+        return String(value || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function formatDate(isoDate) {
+        if (!isoDate) return 'SIN FECHA';
+        const [year, month, day] = isoDate.split('-');
+        const months = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
+        return `${day} ${months[Number(month) - 1] || '---'} ${year}`;
+      }
+
+      function resolveMiniaturaUrl(value) {
+        const raw = String(value || '').trim();
+        if (!raw) return '';
+        if (/^data:image\//i.test(raw)) return raw;
+        if (/^https?:\/\//i.test(raw)) return raw;
+        if (raw.startsWith('/')) return raw;
+        return '';
+      }
+
+      function updateSpaceClock() {
+        if (!spaceClockNow) return;
+
+        const now = new Date();
+        const months = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
+        const day = String(now.getDate()).padStart(2, '0');
+        const month = months[now.getMonth()] || '---';
+        const year = now.getFullYear();
+        const hour = String(now.getHours()).padStart(2, '0');
+        const minute = String(now.getMinutes()).padStart(2, '0');
+        const second = String(now.getSeconds()).padStart(2, '0');
+
+        spaceClockNow.textContent = `${day} ${month} ${year} // ${hour}:${minute}:${second} HRS`;
+      }
+
+      function applyAdminUI() {
+        document.body.classList.toggle('admin-mode', isAdmin);
+        if (adminStatus) {
+          adminStatus.textContent = isAdmin ? 'ONLINE' : 'OFFLINE';
+          adminStatus.className = isAdmin ? 'ok' : 'warn';
+        }
+        if (bitacoraAdminIndicator) {
+          bitacoraAdminIndicator.textContent = isAdmin ? '[ ADMIN: ON ]' : '[ ADMIN: OFF ]';
+          bitacoraAdminIndicator.style.color = isAdmin ? '#4cffb2' : '#ff6f8f';
+          bitacoraAdminIndicator.style.textShadow = isAdmin
+            ? '0 0 8px rgba(76,255,178,0.65), 0 0 14px rgba(76,255,178,0.35)'
+            : '0 0 8px rgba(255,111,143,0.6), 0 0 14px rgba(255,111,143,0.3)';
+          bitacoraAdminIndicator.style.transition = 'color 0.22s ease, text-shadow 0.22s ease';
+          bitacoraAdminIndicator.style.fontWeight = '700';
+
+          if (isAdmin && !lastBitacoraAdminState && typeof bitacoraAdminIndicator.animate === 'function') {
+            bitacoraAdminIndicator.animate(
+              [
+                { opacity: 0.35, transform: 'scale(0.96)' },
+                { opacity: 1, transform: 'scale(1.08)' },
+                { opacity: 1, transform: 'scale(1)' }
+              ],
+              { duration: 220, easing: 'ease-out' }
+            );
+          }
+        }
+
+        lastBitacoraAdminState = isAdmin;
+      }
+
+      function activateAdminMode() {
+        sessionStorage.setItem(ADMIN_SESSION_KEY, '1');
+        isAdmin = true;
+        const passInput = document.getElementById('bitacora-password');
+        if (passInput) passInput.value = ACCESS_CODE;
+        applyAdminUI();
+      }
+
+      function deactivateAdminMode() {
+        sessionStorage.removeItem(ADMIN_SESSION_KEY);
+        isAdmin = false;
+        const passInput = document.getElementById('bitacora-password');
+        if (passInput) passInput.value = '';
+        applyAdminUI();
+      }
+
+      function requestAccessAndOpen(typeValue) {
+        if (isAdmin) {
+          openModalWithType(typeValue);
+          return;
+        }
+
+        const code = prompt('INGRESE CÓDIGO DE ACCESO DE SEGURIDAD DEL BÚNKER:');
+        if (code === ACCESS_CODE) {
+          activateAdminMode();
+          openModalWithType(typeValue);
+        } else if (code !== null) {
+          alert('CÓDIGO DE ACCESO INCORRECTO. ACCESO DENEGADO.');
+        }
+      }
+
+      function resetFormForCreate(typeValue = 'BITACORA') {
+        if (!form) return;
+        form.reset();
+        if (modalTitle) modalTitle.textContent = '[ INJECT_BITACORA_RECORD ]';
+        if (submitBtn) submitBtn.textContent = '[ PUBLICAR REGISTRO ]';
+        if (editIdInput) editIdInput.value = '';
+        if (typeInput) {
+          const found = Array.from(typeInput.options).some((opt) => opt.value === typeValue);
+          if (found) typeInput.value = typeValue;
+        }
+        if (dateInput) dateInput.value = new Date().toISOString().slice(0, 10);
+        const passInput = document.getElementById('bitacora-password');
+        if (passInput && isAdmin) passInput.value = ACCESS_CODE;
+        if (entryMiniaturaFileInput) entryMiniaturaFileInput.value = '';
+      }
+
+      function openModalWithType(typeValue) {
+        resetFormForCreate(typeValue || 'BITACORA');
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+      }
+
+      function openModalForEdit(item) {
+        if (!item) return;
+        if (modalTitle) modalTitle.textContent = '[ EDIT_BITACORA_RECORD ]';
+        if (submitBtn) submitBtn.textContent = '[ GUARDAR CAMBIOS ]';
+        if (editIdInput) editIdInput.value = item.id || '';
+
+        document.getElementById('entry-capitulo').value = item.capitulo || '';
+        document.getElementById('entry-fecha').value = item.fecha || new Date().toISOString().slice(0, 10);
+        document.getElementById('entry-tipo').value = item.tipo || 'BITACORA';
+        document.getElementById('entry-spoiler').value = item.spoiler || 'MEDIO';
+        document.getElementById('entry-titulo').value = item.titulo || '';
+        document.getElementById('entry-descripcion').value = item.descripcion || '';
+        document.getElementById('entry-miniatura').value = item.miniatura || '';
+        document.getElementById('entry-url').value = item.url || '';
+        if (entryMiniaturaFileInput) entryMiniaturaFileInput.value = '';
+        const passInput = document.getElementById('bitacora-password');
+        if (passInput && isAdmin) passInput.value = ACCESS_CODE;
+
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+      }
+
+      function closeModal() {
+        modal.classList.remove('is-open');
+        modal.setAttribute('aria-hidden', 'true');
+      }
+
+      function updateEmptyState() {
+        const count = entryList.querySelectorAll('.entry-template[data-entry-id]').length;
+        if (emptyNote) emptyNote.style.display = count === 0 ? '' : 'none';
+      }
+
+      function updateMonitorSoundButton() {
+        if (!monitorSoundToggle) return;
+        monitorSoundToggle.textContent = monitorSoundEnabled ? '[ SONIDO: ON ]' : '[ SONIDO: OFF ]';
+        monitorSoundToggle.setAttribute('aria-pressed', monitorSoundEnabled ? 'true' : 'false');
+      }
+
+      function updateMonitorBeepModeButton() {
+        if (!monitorBeepModeToggle) return;
+        const isLetter = monitorBeepMode === 'letter';
+        monitorBeepModeToggle.textContent = isLetter ? '[ BEEP: LETRA ]' : '[ BEEP: LINEA ]';
+        monitorBeepModeToggle.setAttribute('aria-pressed', isLetter ? 'true' : 'false');
+      }
+
+      function updateMonitorSoundProfileButton() {
+        if (!monitorSoundProfileToggle) return;
+        const labelMap = {
+          default: 'DEFAULT',
+          militar: 'MILITAR',
+          '8bit': '8BIT',
+          glitch: 'GLITCH'
+        };
+        monitorSoundProfileToggle.textContent = `[ PERFIL: ${labelMap[monitorSoundProfile] || 'DEFAULT'} ]`;
+      }
+
+      function getSoundProfileConfig(baseFrequency, baseDuration, baseVolume) {
+        switch (monitorSoundProfile) {
+          case 'militar':
+            return {
+              type: 'triangle',
+              frequency: Math.max(260, baseFrequency - 180),
+              duration: Math.max(0.045, baseDuration * 1.2),
+              volume: baseVolume * 0.9,
+              attack: 0.004,
+              release: 0.018,
+              sweepTo: Math.max(230, baseFrequency - 260)
+            };
+          case '8bit':
+            return {
+              type: 'square',
+              frequency: baseFrequency + 190,
+              duration: Math.max(0.015, baseDuration * 0.55),
+              volume: baseVolume * 1.08,
+              attack: 0.0016,
+              release: 0.008,
+              sweepTo: baseFrequency + 240
+            };
+          case 'glitch':
+            return {
+              type: 'sawtooth',
+              frequency: baseFrequency - 80 + Math.floor(Math.random() * 90),
+              duration: Math.max(0.03, baseDuration * 0.9),
+              volume: baseVolume * 0.8,
+              attack: 0.0025,
+              release: 0.012,
+              sweepTo: baseFrequency + 120 + Math.floor(Math.random() * 60)
+            };
+          default:
+            return {
+              type: 'square',
+              frequency: baseFrequency,
+              duration: baseDuration,
+              volume: baseVolume,
+              attack: 0.008,
+              release: 0.012,
+              sweepTo: baseFrequency
+            };
+        }
+      }
+
+      function ensureMonitorAudioContext() {
+        if (monitorAudioContext) {
+          if (monitorAudioContext.state === 'suspended') monitorAudioContext.resume();
+          return monitorAudioContext;
+        }
+
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return null;
+
+        monitorAudioContext = new AudioCtx();
+        if (monitorAudioContext.state === 'suspended') monitorAudioContext.resume();
+        return monitorAudioContext;
+      }
+
+      function playMonitorBeep(frequency = 860, duration = 0.06, volume = 0.03) {
+        if (!monitorSoundEnabled) return;
+
+        const ctx = ensureMonitorAudioContext();
+        if (!ctx) return;
+
+        const config = getSoundProfileConfig(frequency, duration, volume);
+
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const now = ctx.currentTime;
+
+        osc.type = config.type;
+        osc.frequency.setValueAtTime(config.frequency, now);
+        if (config.sweepTo && config.sweepTo !== config.frequency) {
+          osc.frequency.linearRampToValueAtTime(config.sweepTo, now + (config.duration * 0.65));
+        }
+
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.exponentialRampToValueAtTime(Math.max(0.0002, config.volume), now + config.attack);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + config.duration + config.release);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + config.duration + config.release + 0.008);
+      }
+
+      function stopTypingBeep(targetEl) {
+        if (!targetEl) return;
+        const timerId = typingBeepTimers.get(targetEl);
+        if (timerId) {
+          clearInterval(timerId);
+          typingBeepTimers.delete(targetEl);
+        }
+      }
+
+      function startTypingBeep(targetEl, toneBase) {
+        if (!targetEl) return;
+        stopTypingBeep(targetEl);
+
+        const timerId = setInterval(() => {
+          if (!monitorSoundEnabled || monitorBeepMode !== 'letter') return;
+          const jitter = Math.floor(Math.random() * 28);
+          playMonitorBeep(toneBase + jitter, 0.018, 0.008);
+        }, 34);
+
+        typingBeepTimers.set(targetEl, timerId);
+      }
+
+      function renderMonitorFallback(message) {
+        if (!emptyMonitorList) return;
+        emptyMonitorList.innerHTML = `<div class="monitor-item" style="--line-delay: 0ms;"><span class="monitor-text">${escapeHtml(message)}</span></div>`;
+      }
+
+      function formatLogDate(value) {
+        if (!value) return '--:--';
+        const asDate = new Date(value);
+        if (Number.isNaN(asDate.getTime())) return String(value);
+        return asDate.toLocaleString('es-ES', {
+          day: '2-digit',
+          month: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      }
+
+      async function loadMonitorUpdates() {
+        if (!emptyMonitorList) return;
+
+        try {
+          const response = await fetch('/api/logs');
+          if (!response.ok) throw new Error('API_LOGS_ERROR');
+          const logs = await response.json();
+          if (!Array.isArray(logs) || logs.length === 0) {
+            renderMonitorFallback('Sin logs disponibles por ahora.');
+            return;
+          }
+
+          const latest = logs.slice(-8).reverse();
+          const signature = latest.map((log) => String(log.id || log.fecha || log.tag || '')).join('|');
+          if (signature === lastMonitorSignature) return;
+          lastMonitorSignature = signature;
+
+          emptyMonitorList.innerHTML = latest.map((log, index) => {
+            const tag = escapeHtml(log.tag || 'SYS');
+            const desc = escapeHtml(log.desc || log.crtDesc || 'Actualizacion aplicada.');
+            const fecha = escapeHtml(formatLogDate(log.fecha || log.createdAt));
+            return `<div class="monitor-item" data-tone-index="${index}" style="--line-delay: ${index * 110}ms;"><strong>[${tag}]</strong><span class="monitor-text">${desc} <small>(${fecha})</small></span></div>`;
+          }).join('');
+        } catch (error) {
+          renderMonitorFallback('No se pudo sincronizar el monitor de actualizaciones.');
+        }
+      }
+
+      function renderEntryCard(item, prepend = false) {
+        const entryId = String(item.id || '').trim();
+        if (!entryId) return;
+
+        let article = entryList.querySelector(`.entry-template[data-entry-id="${entryId}"]`);
+        if (!article) {
+          article = document.createElement('article');
+          article.className = 'entry-template';
+          article.setAttribute('data-entry-id', entryId);
+        }
+
+        article._entryData = item;
+        const thumbUrl = resolveMiniaturaUrl(item.miniatura);
+        const thumbContent = thumbUrl
+          ? `<img src="${escapeHtml(thumbUrl)}" alt="Miniatura de ${escapeHtml(item.titulo || 'entrada de bitacora')}" loading="lazy">`
+          : `MINIATURA<br>${escapeHtml(item.miniatura || 'ARCHIVO CLASIFICADO')}`;
+
+        article.innerHTML = `
+          <div class="head">
+            <div class="chips">
+              <span class="chip">CAPITULO ${escapeHtml(item.capitulo)}</span>
+              <span class="chip">${escapeHtml(item.tipo)}</span>
+              <span class="chip">SPOILER ${escapeHtml(item.spoiler)}</span>
+            </div>
+            <div class="date">${escapeHtml(formatDate(item.fecha))}</div>
+          </div>
+          <div class="body">
+            <div class="thumb">${thumbContent}</div>
+            <div>
+              <h3>${escapeHtml(item.titulo)}</h3>
+              <p>${escapeHtml(item.descripcion)}</p>
+              <div class="actions">
+                <a class="btn-dossier" href="${escapeHtml(item.url || '#')}" ${item.url ? 'target="_blank" rel="noopener noreferrer"' : ''}>[ VER DOSSIER ]</a>
+                <button type="button" class="btn-dossier admin-only btn-edit-entry">[ EDITAR ]</button>
+                <button type="button" class="btn-dossier btn-admin-danger admin-only btn-delete-entry">[ ELIMINAR ]</button>
+              </div>
+            </div>
+          </div>
+        `;
+
+        if (!article.isConnected) {
+          if (prepend) entryList.prepend(article);
+          else entryList.append(article);
+        }
+
+        updateEmptyState();
+      }
+
+      async function loadEntries() {
+        try {
+          const response = await fetch('/api/bitacora');
+          if (!response.ok) throw new Error('API_BITACORA_ERROR');
+          const data = await response.json();
+          if (!Array.isArray(data)) return;
+          data.forEach((item) => renderEntryCard(item, false));
+        } catch (error) {
+          console.warn('No se pudieron cargar entradas de bitacora desde API.', error);
+        }
+      }
+
+      document.querySelectorAll('.btn-open-bitacora-modal').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          openModalWithType(btn.getAttribute('data-entry-type') || 'BITACORA');
+        });
+      });
+
+      if (openAdminBtn) {
+        openAdminBtn.addEventListener('click', () => requestAccessAndOpen('BITACORA'));
+      }
+
+      if (closeBtn) closeBtn.addEventListener('click', closeModal);
+
+      const bitacoraPasswordInput = document.getElementById('bitacora-password');
+      if (bitacoraPasswordInput) {
+        bitacoraPasswordInput.addEventListener('input', () => {
+          if (bitacoraPasswordInput.value === ACCESS_CODE && !isAdmin) {
+            activateAdminMode();
+          }
+        });
+      }
+
+      if (deactivateAdminBtn) {
+        deactivateAdminBtn.addEventListener('click', () => {
+          deactivateAdminMode();
+          closeModal();
+        });
+      }
+
+      if (modal) {
+        modal.addEventListener('click', (event) => {
+          if (event.target === modal) closeModal();
+        });
+      }
+
+      document.addEventListener('keydown', (event) => {
+        if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'b') {
+          event.preventDefault();
+          requestAccessAndOpen('BITACORA');
+        }
+        if (event.key === 'Escape') closeModal();
+      });
+
+      if (entryList) {
+        entryList.addEventListener('click', async (event) => {
+          const editBtn = event.target.closest('.btn-edit-entry');
+          const deleteBtn = event.target.closest('.btn-delete-entry');
+          if (!editBtn && !deleteBtn) return;
+          if (!isAdmin) return;
+
+          const article = event.target.closest('.entry-template');
+          if (!article || !article._entryData) return;
+          const item = article._entryData;
+
+          if (editBtn) {
+            openModalForEdit(item);
+            return;
+          }
+
+          if (deleteBtn) {
+            if (!confirm('¿Eliminar este registro de bitacora?')) return;
+            try {
+              const response = await fetch('/api/bitacora/eliminar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: item.id, password: ACCESS_CODE })
+              });
+              const result = await response.json();
+              if (!response.ok || !result.success) {
+                throw new Error(result.error || 'ERROR_API_ELIMINAR_BITACORA');
+              }
+              article.remove();
+              updateEmptyState();
+            } catch (error) {
+              alert(`ERROR AL ELIMINAR BITACORA: ${error.message}`);
+            }
+          }
+        });
+      }
+
+      if (form) {
+        async function saveBitacoraEntry(item) {
+          const endpoint = item.id ? '/api/bitacora/editar' : '/api/bitacora/nuevo';
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(item)
+          });
+
+          const result = await response.json();
+          if (!response.ok || !result.success) {
+            throw new Error(result.error || 'ERROR_API_BITACORA');
+          }
+
+          if (result.entry) {
+            renderEntryCard(result.entry, !item.id);
+          }
+
+          activateAdminMode();
+          resetFormForCreate(item.tipo || 'BITACORA');
+          closeModal();
+        }
+
+        form.addEventListener('submit', async (event) => {
+          event.preventDefault();
+          const password = document.getElementById('bitacora-password')?.value || '';
+          if (password !== ACCESS_CODE) {
+            alert('CODIGO INCORRECTO. ACCESO DENEGADO.');
+            return;
+          }
+
+          const item = {
+            id: editIdInput?.value.trim() || undefined,
+            capitulo: document.getElementById('entry-capitulo')?.value.trim() || '00',
+            fecha: document.getElementById('entry-fecha')?.value || '',
+            tipo: document.getElementById('entry-tipo')?.value || 'BITACORA',
+            spoiler: document.getElementById('entry-spoiler')?.value || 'MEDIO',
+            titulo: document.getElementById('entry-titulo')?.value.trim() || 'SIN TITULO',
+            descripcion: document.getElementById('entry-descripcion')?.value.trim() || '',
+            miniatura: document.getElementById('entry-miniatura')?.value.trim() || '',
+            url: document.getElementById('entry-url')?.value.trim() || '',
+            password
+          };
+
+          try {
+            const selectedFile = entryMiniaturaFileInput?.files?.[0];
+            if (selectedFile) {
+              const fileData = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (loadEvent) => resolve(loadEvent.target?.result || '');
+                reader.onerror = () => reject(new Error('ERROR_LECTURA_IMAGEN_BITACORA'));
+                reader.readAsDataURL(selectedFile);
+              });
+
+              item.miniaturaFileData = fileData;
+              item.miniaturaFileName = selectedFile.name || 'bitacora-image.jpg';
+            }
+
+            await saveBitacoraEntry(item);
+          } catch (error) {
+            alert(`ERROR AL GUARDAR BITACORA: ${error.message}`);
+          }
+        });
+      }
+
+      applyAdminUI();
+      updateMonitorSoundButton();
+      updateMonitorBeepModeButton();
+      updateMonitorSoundProfileButton();
+      if (monitorSoundToggle) {
+        monitorSoundToggle.addEventListener('click', () => {
+          monitorSoundEnabled = !monitorSoundEnabled;
+          localStorage.setItem(MONITOR_SOUND_KEY, monitorSoundEnabled ? '1' : '0');
+          updateMonitorSoundButton();
+          if (monitorSoundEnabled) {
+            playMonitorBeep(980, 0.05, 0.02);
+          }
+        });
+      }
+
+      if (monitorSoundProfileToggle) {
+        monitorSoundProfileToggle.addEventListener('click', () => {
+          const currentIndex = monitorProfiles.indexOf(monitorSoundProfile);
+          const nextIndex = (currentIndex + 1) % monitorProfiles.length;
+          monitorSoundProfile = monitorProfiles[nextIndex];
+          localStorage.setItem(MONITOR_SOUND_PROFILE_KEY, monitorSoundProfile);
+          updateMonitorSoundProfileButton();
+          if (monitorSoundEnabled) {
+            playMonitorBeep(920, 0.045, 0.02);
+          }
+        });
+      }
+
+      if (monitorBeepModeToggle) {
+        monitorBeepModeToggle.addEventListener('click', () => {
+          monitorBeepMode = monitorBeepMode === 'letter' ? 'line' : 'letter';
+          localStorage.setItem(MONITOR_BEEP_MODE_KEY, monitorBeepMode);
+          updateMonitorBeepModeButton();
+          if (monitorSoundEnabled) {
+            playMonitorBeep(monitorBeepMode === 'letter' ? 1040 : 840, 0.04, 0.02);
+          }
+        });
+      }
+
+      if (emptyMonitorList) {
+        emptyMonitorList.addEventListener('animationstart', (event) => {
+          const target = event.target;
+          if (!(target instanceof HTMLElement)) return;
+          if (!target.classList.contains('monitor-text')) return;
+
+          const line = target.closest('.monitor-item');
+          const toneIndex = Number(line?.getAttribute('data-tone-index') || '0');
+          const tone = 760 + ((toneIndex % 4) * 70);
+
+          if (monitorBeepMode === 'letter') {
+            startTypingBeep(target, tone);
+          } else {
+            playMonitorBeep(tone, 0.05, 0.026);
+          }
+        });
+
+        emptyMonitorList.addEventListener('animationend', (event) => {
+          const target = event.target;
+          if (!(target instanceof HTMLElement)) return;
+          if (!target.classList.contains('monitor-text')) return;
+          stopTypingBeep(target);
+        });
+      }
+
+      resetFormForCreate('BITACORA');
+      updateSpaceClock();
+      setInterval(updateSpaceClock, 1000);
+      loadEntries();
+      loadMonitorUpdates();
+      setInterval(loadMonitorUpdates, 15000);
+    });
+  </script>
+</body>
+</html>
