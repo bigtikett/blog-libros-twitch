@@ -19,11 +19,20 @@
       ]
     },
     {
-      "source": "/(.*)\\.(css|js|mjs|png|jpg|jpeg|jfif|webp|svg|gif|ico|woff|woff2|ttf|eot)",
+      "source": "/(.*)\\.(css|js|mjs)",
       "headers": [
         {
           "key": "Cache-Control",
-          "value": "public, max-age=3600, stale-while-revalidate=86400"
+          "value": "no-cache, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)\\.(png|jpg|jpeg|jfif|webp|svg|gif|ico|woff|woff2|ttf|eot)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400, stale-while-revalidate=604800"
         }
       ]
     }
