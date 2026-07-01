@@ -8,7 +8,7 @@ import { Pool } from 'pg';
 import dotenv from 'dotenv';
 import dns from 'dns';
 import { buildPublicAssetUrl } from './utils/public-url.js';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { buildStorageKey, buildStoragePublicUrl } from './utils/r2-storage.js';
 
 dns.setDefaultResultOrder('ipv4first');
@@ -37,6 +37,7 @@ const RUTA_PERSONAJES = path.join(DATA_DIR, 'personajes.json');
 const RUTA_ENTREVISTAS = path.join(DATA_DIR, 'entrevistas.json');
 const RUTA_JUEGOS = path.join(DATA_DIR, 'juegos.json');
 const RUTA_REDES = path.join(DATA_DIR, 'redes.json');
+const RUTA_BITACORA = path.join(DATA_DIR, 'bitacora.json');
 const DATABASE_URL = process.env.DATABASE_URL || '';
 const DATABASE_SSL = (process.env.DATABASE_SSL || 'true').toLowerCase() === 'true';
 const AUDIO_PUBLIC_BASE_URL = (process.env.AUDIO_PUBLIC_BASE_URL || '').trim().replace(/\/+$/, '');
@@ -95,7 +96,8 @@ async function ensureCollectionsDbReady() {
       { key: 'personajes', path: RUTA_PERSONAJES, default: [] },
       { key: 'entrevistas', path: RUTA_ENTREVISTAS, default: [] },
       { key: 'juegos', path: RUTA_JUEGOS, default: [] },
-      { key: 'redes', path: RUTA_REDES, default: { instagram: [], tiktok: [], wattpad: [] } }
+      { key: 'redes', path: RUTA_REDES, default: { instagram: [], tiktok: [], wattpad: [] } },
+      { key: 'bitacora', path: RUTA_BITACORA, default: [] }
     ];
 
     for (const col of collections) {
@@ -228,6 +230,92 @@ function toRebasedAudioUrl(sourceUrl, nextBaseUrl) {
   }
 
   return sourceUrl;
+}
+
+function extractR2ObjectKeyFromCoverUrl(coverUrl) {
+  if (!coverUrl || typeof coverUrl !== 'string') {
+    return null;
+  }
+
+  if (!/^https?:\/\//i.test(coverUrl)) {
+    return null;
+  }
+
+  try {
+    const parsed = new URL(coverUrl);
+    const allowedHosts = [R2_PUBLIC_BASE_URL, IMAGE_PUBLIC_BASE_URL]
+      .filter(Boolean)
+      .map(value => {
+        try {
+          return new URL(value).host;
+        } catch {
+          return null;
+        }
+      })
+      .filter(Boolean);
+
+    if (!allowedHosts.includes(parsed.host)) {
+      return null;
+    }
+
+    const key = parsed.pathname.replace(/^\/+/, '');
+    return key || null;
+  } catch {
+    return null;
+  }
+}
+
+async function deleteCoverFromR2IfNeeded(coverUrl) {
+  if (!r2Client) {
+    return;
+  }
+
+  const objectKey = extractR2ObjectKeyFromCoverUrl(coverUrl);
+  if (!objectKey) {
+    return;
+  }
+
+  try {
+    await r2Client.send(new DeleteObjectCommand({
+      Bucket: R2_BUCKET_NAME,
+      Key: objectKey
+    }));
+  } catch (error) {
+    console.error('No se pudo eliminar la portada en R2:', error);
+  }
+}
+
+async function uploadCoverAndGetUrl(fileData, fileName, prefix, localDir, localRoutePrefix) {
+  if (!fileData || !fileName) {
+    return null;
+  }
+
+  const base64Data = fileData.replace(/^data:image\/\w+;base64,/, '');
+  const buffer = Buffer.from(base64Data, 'base64');
+  const contentType = fileData.match(/^data:(image\/\w+);base64,/)?.[1] || 'image/jpeg';
+
+  if (r2Client) {
+    const objectKey = buildStorageKey(fileName, prefix);
+    await r2Client.send(new PutObjectCommand({
+      Bucket: R2_BUCKET_NAME,
+      Key: objectKey,
+      Body: buffer,
+      ContentType: contentType,
+      ACL: 'public-read'
+    }));
+    return buildStoragePublicUrl(R2_PUBLIC_BASE_URL || IMAGE_PUBLIC_BASE_URL, objectKey);
+  }
+
+  if (!fs.existsSync(localDir)) {
+    fs.mkdirSync(localDir, { recursive: true });
+  }
+
+  const extension = path.extname(fileName) || '.jpg';
+  const nombreLimpio = path.basename(fileName, extension).replace(/[^a-z0-9]/gi, '_').toLowerCase();
+  const nombreArchivo = `${Date.now()}-${nombreLimpio}${extension}`;
+  const rutaFisica = path.join(localDir, nombreArchivo);
+  fs.writeFileSync(rutaFisica, buffer);
+  return `${localRoutePrefix}/${nombreArchivo}`;
 }
 
 function getArtistColor(index) {
@@ -714,6 +802,73 @@ app.post('/api/biblioteca/nuevo', async (req, res) => {
   }
 });
 
+app.post('/api/biblioteca/editar', async (req, res) => {
+  try {
+    const cambiosLibro = req.body || {};
+    const { id, password } = cambiosLibro;
+
+    if (password !== BIBLIOTECA_PASSWORD) {
+      return res.status(401).json({ error: 'Código de acceso incorrecto. Interrupción del sector.' });
+    }
+
+    if (!id) {
+      return res.status(400).json({ error: 'ID de libro requerido para editar.' });
+    }
+
+    const datosActuales = await getCollection('biblioteca', RUTA_BIBLIOTECA, []);
+    const index = datosActuales.findIndex(libro => libro.id === id);
+
+    if (index === -1) {
+      return res.status(404).json({ error: 'Libro no encontrado en el registro.' });
+    }
+
+    const libroActual = datosActuales[index];
+    let coverActualizada = libroActual.cover;
+
+    if (cambiosLibro.coverFileData && cambiosLibro.coverFileName) {
+      coverActualizada = await uploadCoverAndGetUrl(
+        cambiosLibro.coverFileData,
+        cambiosLibro.coverFileName,
+        'books',
+        IMG_BIBLIOTECA_DIR,
+        '/img/biblioteca'
+      );
+      await deleteCoverFromR2IfNeeded(libroActual.cover);
+    }
+
+    const libroEditado = {
+      ...libroActual,
+      ...cambiosLibro,
+      id: libroActual.id,
+      cover: coverActualizada
+    };
+
+    delete libroEditado.password;
+    delete libroEditado.coverFileData;
+    delete libroEditado.coverFileName;
+
+    if (libroEditado.favorito && libroEditado.podio) {
+      datosActuales.forEach((libro, i) => {
+        if (i !== index && libro.favorito && parseInt(libro.podio) === parseInt(libroEditado.podio)) {
+          libro.podio = null;
+        }
+      });
+    }
+
+    datosActuales[index] = libroEditado;
+    await saveCollection('biblioteca', datosActuales, RUTA_BIBLIOTECA);
+
+    const descLog = `Editado libro: ${libroEditado.titulo} [UPDATE]`;
+    const crtDescLog = `El bloque de lectura "${libroEditado.titulo}" ha sido actualizado en la biblioteca.`;
+    await agregarLog('DATABASE', descLog, crtDescLog, 'text-warning');
+
+    res.json({ success: true, message: 'Terminal: Registro de libro editado.', libro: libroEditado });
+  } catch (error) {
+    console.error('Error editando libro:', error);
+    res.status(500).json({ error: 'Fallo al editar el bloque de datos.' });
+  }
+});
+
 app.post('/api/biblioteca/eliminar', async (req, res) => {
   try {
     const { id, password } = req.body;
@@ -728,6 +883,8 @@ app.post('/api/biblioteca/eliminar', async (req, res) => {
     if (!libroAEliminar) {
       return res.status(404).json({ error: 'Libro no encontrado en el registro.' });
     }
+
+    await deleteCoverFromR2IfNeeded(libroAEliminar.cover);
 
     datosActuales = datosActuales.filter(l => l.id !== id);
     await saveCollection('biblioteca', datosActuales, RUTA_BIBLIOTECA);
@@ -811,6 +968,47 @@ app.post('/api/citas/nuevo', async (req, res) => {
   } catch (error) {
     console.error("Error guardando la cita:", error);
     res.status(500).json({ error: 'Fallo en la escritura del bloque de datos.' });
+  }
+});
+
+app.post('/api/citas/editar', async (req, res) => {
+  try {
+    const cambiosCita = req.body || {};
+    const { id, password } = cambiosCita;
+
+    if (password !== BIBLIOTECA_PASSWORD) {
+      return res.status(401).json({ error: 'Código de acceso incorrecto. Interrupción del sector.' });
+    }
+
+    if (!id) {
+      return res.status(400).json({ error: 'ID de cita requerido para editar.' });
+    }
+
+    const datosActuales = await getCollection('citas', RUTA_CITAS, []);
+    const index = datosActuales.findIndex(cita => cita.id === id);
+
+    if (index === -1) {
+      return res.status(404).json({ error: 'Cita no encontrada en el registro.' });
+    }
+
+    const citaEditada = {
+      ...datosActuales[index],
+      ...cambiosCita,
+      id
+    };
+
+    delete citaEditada.password;
+    datosActuales[index] = citaEditada;
+    await saveCollection('citas', datosActuales, RUTA_CITAS);
+
+    const descLog = `Editada cita de: ${citaEditada.autor} [UPDATE]`;
+    const crtDescLog = `La cita de "${citaEditada.autor}" ha sido actualizada en el registro de citas.`;
+    await agregarLog('CITAS', descLog, crtDescLog, 'text-warning');
+
+    res.json({ success: true, message: 'Terminal: Registro de cita editado.', cita: citaEditada });
+  } catch (error) {
+    console.error('Error editando cita:', error);
+    res.status(500).json({ error: 'Fallo al editar el bloque de datos.' });
   }
 });
 
@@ -1086,6 +1284,58 @@ app.post('/api/series/nuevo', async (req, res) => {
   }
 });
 
+app.post('/api/series/editar', async (req, res) => {
+  try {
+    const cambiosSerie = req.body || {};
+    const { id, password } = cambiosSerie;
+
+    if (password !== BIBLIOTECA_PASSWORD) {
+      return res.status(401).json({ error: 'Código de acceso incorrecto. Interrupción del sector.' });
+    }
+    if (!id) {
+      return res.status(400).json({ error: 'ID de serie requerido para editar.' });
+    }
+
+    const datosActuales = await getCollection('series', RUTA_SERIES, []);
+    const index = datosActuales.findIndex(serie => serie.id === id);
+    if (index === -1) {
+      return res.status(404).json({ error: 'Serie no encontrada.' });
+    }
+
+    const serieActual = datosActuales[index];
+    let coverActualizada = serieActual.cover;
+    if (cambiosSerie.coverFileData && cambiosSerie.coverFileName) {
+      coverActualizada = await uploadCoverAndGetUrl(
+        cambiosSerie.coverFileData,
+        cambiosSerie.coverFileName,
+        'series',
+        IMG_FAVORITOS_DIR,
+        '/img/favoritos'
+      );
+      await deleteCoverFromR2IfNeeded(serieActual.cover);
+    }
+
+    const serieEditada = {
+      ...serieActual,
+      ...cambiosSerie,
+      id,
+      cover: coverActualizada
+    };
+    delete serieEditada.password;
+    delete serieEditada.coverFileData;
+    delete serieEditada.coverFileName;
+
+    datosActuales[index] = serieEditada;
+    await saveCollection('series', datosActuales, RUTA_SERIES);
+    await agregarLog('FAVORITOS', `Editada serie: ${serieEditada.titulo} [UPDATE]`, `La serie "${serieEditada.titulo}" ha sido actualizada.`, 'text-warning');
+
+    res.json({ success: true, message: 'Terminal: Registro de serie editado.', serie: serieEditada });
+  } catch (error) {
+    console.error('Error editando la serie:', error);
+    res.status(500).json({ error: 'Fallo al editar el bloque de datos.' });
+  }
+});
+
 app.post('/api/series/eliminar', async (req, res) => {
   try {
     const { id, password } = req.body;
@@ -1100,6 +1350,8 @@ app.post('/api/series/eliminar', async (req, res) => {
     if (!serieAEliminar) {
       return res.status(404).json({ error: 'Serie no encontrada.' });
     }
+
+    await deleteCoverFromR2IfNeeded(serieAEliminar.cover);
 
     datosActuales = datosActuales.filter(s => s.id !== id);
     await saveCollection('series', datosActuales, RUTA_SERIES);
@@ -1190,6 +1442,58 @@ app.post('/api/peliculas/nuevo', async (req, res) => {
   }
 });
 
+app.post('/api/peliculas/editar', async (req, res) => {
+  try {
+    const cambiosPelicula = req.body || {};
+    const { id, password } = cambiosPelicula;
+
+    if (password !== BIBLIOTECA_PASSWORD) {
+      return res.status(401).json({ error: 'Código de acceso incorrecto. Interrupción del sector.' });
+    }
+    if (!id) {
+      return res.status(400).json({ error: 'ID de película requerido para editar.' });
+    }
+
+    const datosActuales = await getCollection('peliculas', RUTA_PELICULAS, []);
+    const index = datosActuales.findIndex(pelicula => pelicula.id === id);
+    if (index === -1) {
+      return res.status(404).json({ error: 'Película no encontrada.' });
+    }
+
+    const peliculaActual = datosActuales[index];
+    let coverActualizada = peliculaActual.cover;
+    if (cambiosPelicula.coverFileData && cambiosPelicula.coverFileName) {
+      coverActualizada = await uploadCoverAndGetUrl(
+        cambiosPelicula.coverFileData,
+        cambiosPelicula.coverFileName,
+        'peliculas',
+        IMG_FAVORITOS_DIR,
+        '/img/favoritos'
+      );
+      await deleteCoverFromR2IfNeeded(peliculaActual.cover);
+    }
+
+    const peliculaEditada = {
+      ...peliculaActual,
+      ...cambiosPelicula,
+      id,
+      cover: coverActualizada
+    };
+    delete peliculaEditada.password;
+    delete peliculaEditada.coverFileData;
+    delete peliculaEditada.coverFileName;
+
+    datosActuales[index] = peliculaEditada;
+    await saveCollection('peliculas', datosActuales, RUTA_PELICULAS);
+    await agregarLog('FAVORITOS', `Editada película: ${peliculaEditada.titulo} [UPDATE]`, `La película "${peliculaEditada.titulo}" ha sido actualizada.`, 'text-warning');
+
+    res.json({ success: true, message: 'Terminal: Registro de película editado.', pelicula: peliculaEditada });
+  } catch (error) {
+    console.error('Error editando la película:', error);
+    res.status(500).json({ error: 'Fallo al editar el bloque de datos.' });
+  }
+});
+
 app.post('/api/peliculas/eliminar', async (req, res) => {
   try {
     const { id, password } = req.body;
@@ -1204,6 +1508,8 @@ app.post('/api/peliculas/eliminar', async (req, res) => {
     if (!peliculaAEliminar) {
       return res.status(404).json({ error: 'Película no encontrada.' });
     }
+
+    await deleteCoverFromR2IfNeeded(peliculaAEliminar.cover);
 
     datosActuales = datosActuales.filter(p => p.id !== id);
     await saveCollection('peliculas', datosActuales, RUTA_PELICULAS);
@@ -1298,6 +1604,59 @@ app.post('/api/personajes/nuevo', async (req, res) => {
   }
 });
 
+app.post('/api/personajes/editar', async (req, res) => {
+  try {
+    const cambiosPersonaje = req.body || {};
+    const { id, password } = cambiosPersonaje;
+
+    if (password !== BIBLIOTECA_PASSWORD) {
+      return res.status(401).json({ error: 'Código de acceso incorrecto. Interrupción del sector.' });
+    }
+    if (!id) {
+      return res.status(400).json({ error: 'ID de personaje requerido para editar.' });
+    }
+
+    const datosActuales = await getCollection('personajes', RUTA_PERSONAJES, []);
+    const index = datosActuales.findIndex(personaje => personaje.id === id);
+    if (index === -1) {
+      return res.status(404).json({ error: 'Personaje no encontrado.' });
+    }
+
+    const personajeActual = datosActuales[index];
+    let coverActualizada = personajeActual.cover;
+    if (cambiosPersonaje.coverFileData && cambiosPersonaje.coverFileName) {
+      coverActualizada = await uploadCoverAndGetUrl(
+        cambiosPersonaje.coverFileData,
+        cambiosPersonaje.coverFileName,
+        'personajes',
+        IMG_FAVORITOS_DIR,
+        '/img/favoritos'
+      );
+      await deleteCoverFromR2IfNeeded(personajeActual.cover);
+    }
+
+    const personajeEditado = {
+      ...personajeActual,
+      ...cambiosPersonaje,
+      id,
+      subjectId: personajeActual.subjectId,
+      cover: coverActualizada
+    };
+    delete personajeEditado.password;
+    delete personajeEditado.coverFileData;
+    delete personajeEditado.coverFileName;
+
+    datosActuales[index] = personajeEditado;
+    await saveCollection('personajes', datosActuales, RUTA_PERSONAJES);
+    await agregarLog('FAVORITOS', `Editado personaje: ${personajeEditado.nombre} [UPDATE]`, `La ficha de "${personajeEditado.nombre}" ha sido actualizada.`, 'text-warning');
+
+    res.json({ success: true, message: 'Terminal: Registro de personaje editado.', personaje: personajeEditado });
+  } catch (error) {
+    console.error('Error editando el personaje:', error);
+    res.status(500).json({ error: 'Fallo al editar el bloque de datos.' });
+  }
+});
+
 app.post('/api/personajes/eliminar', async (req, res) => {
   try {
     const { id, password } = req.body;
@@ -1312,6 +1671,8 @@ app.post('/api/personajes/eliminar', async (req, res) => {
     if (!personajeAEliminar) {
       return res.status(404).json({ error: 'Personaje no encontrado.' });
     }
+
+    await deleteCoverFromR2IfNeeded(personajeAEliminar.cover);
 
     datosActuales = datosActuales.filter(p => p.id !== id);
     await saveCollection('personajes', datosActuales, RUTA_PERSONAJES);
@@ -1368,6 +1729,42 @@ app.post('/api/entrevistas/nuevo', async (req, res) => {
   }
 });
 
+app.post('/api/entrevistas/editar', async (req, res) => {
+  try {
+    const cambiosEntrevista = req.body || {};
+    const { id, password } = cambiosEntrevista;
+
+    if (password !== BIBLIOTECA_PASSWORD) {
+      return res.status(401).json({ error: 'Código de acceso incorrecto. Interrupción del sector.' });
+    }
+    if (!id) {
+      return res.status(400).json({ error: 'ID de entrevista requerido para editar.' });
+    }
+
+    const datosActuales = await getCollection('entrevistas', RUTA_ENTREVISTAS, []);
+    const index = datosActuales.findIndex(entrevista => entrevista.id === id);
+    if (index === -1) {
+      return res.status(404).json({ error: 'Entrevista no encontrada.' });
+    }
+
+    const entrevistaEditada = {
+      ...datosActuales[index],
+      ...cambiosEntrevista,
+      id
+    };
+    delete entrevistaEditada.password;
+
+    datosActuales[index] = entrevistaEditada;
+    await saveCollection('entrevistas', datosActuales, RUTA_ENTREVISTAS);
+    await agregarLog('FAVORITOS', `Editada entrevista: ${entrevistaEditada.nombre} [UPDATE]`, `La entrevista con "${entrevistaEditada.nombre}" ha sido actualizada.`, 'text-warning');
+
+    res.json({ success: true, message: 'Terminal: Registro de entrevista editado.', entrevista: entrevistaEditada });
+  } catch (error) {
+    console.error('Error editando la entrevista:', error);
+    res.status(500).json({ error: 'Fallo al editar el bloque de datos.' });
+  }
+});
+
 // ========================================================
 // 🎮 ENDPOINTS PARA JUEGOS (GET / POST / ELIMINAR)
 // ========================================================
@@ -1406,6 +1803,42 @@ app.post('/api/juegos/nuevo', async (req, res) => {
   } catch (error) {
     console.error("Error guardando el juego:", error);
     res.status(500).json({ error: 'Fallo en la escritura del bloque de datos.' });
+  }
+});
+
+app.post('/api/juegos/editar', async (req, res) => {
+  try {
+    const cambiosJuego = req.body || {};
+    const { id, password } = cambiosJuego;
+
+    if (password !== BIBLIOTECA_PASSWORD) {
+      return res.status(401).json({ error: 'Código de acceso incorrecto. Interrupción del sector.' });
+    }
+    if (!id) {
+      return res.status(400).json({ error: 'ID de juego requerido para editar.' });
+    }
+
+    const datosActuales = await getCollection('juegos', RUTA_JUEGOS, []);
+    const index = datosActuales.findIndex(juego => juego.id === id);
+    if (index === -1) {
+      return res.status(404).json({ error: 'Juego no encontrado en el registro.' });
+    }
+
+    const juegoEditado = {
+      ...datosActuales[index],
+      ...cambiosJuego,
+      id
+    };
+    delete juegoEditado.password;
+
+    datosActuales[index] = juegoEditado;
+    await saveCollection('juegos', datosActuales, RUTA_JUEGOS);
+    await agregarLog('GAMING', `Editado juego: ${juegoEditado.titulo} [UPDATE]`, `El juego "${juegoEditado.titulo}" fue actualizado en el registro.`, 'text-warning');
+
+    res.json({ success: true, message: 'Terminal: Registro de juego editado.', juego: juegoEditado });
+  } catch (error) {
+    console.error('Error editando juego:', error);
+    res.status(500).json({ error: 'Fallo al editar el bloque de datos.' });
   }
 });
 
@@ -1529,6 +1962,61 @@ app.post('/api/redes/nuevo', async (req, res) => {
   }
 });
 
+app.post('/api/redes/editar/:red/:id', async (req, res) => {
+  try {
+    const { red, id } = req.params;
+    const { embedHtml, password, imageFileData, imageFileName } = req.body || {};
+
+    if (password !== BIBLIOTECA_PASSWORD) {
+      return res.status(401).json({ error: 'Contraseña incorrecta.' });
+    }
+
+    const redesValidas = ['instagram', 'tiktok', 'wattpad'];
+    if (!redesValidas.includes(red)) {
+      return res.status(400).json({ error: 'Red no válida. Usa: instagram, tiktok o wattpad.' });
+    }
+
+    const datos = await getCollection('redes', RUTA_REDES, { instagram: [], tiktok: [], wattpad: [] });
+    const index = datos[red].findIndex(post => post.id === id);
+    if (index === -1) {
+      return res.status(404).json({ error: 'Post no encontrado.' });
+    }
+
+    let cleanEmbed = String(embedHtml || '').replace(/<script[\s\S]*?<\/script>/gi, '').trim();
+    if (!cleanEmbed) {
+      cleanEmbed = datos[red][index].embedHtml || '';
+    }
+
+    if (imageFileData && imageFileName) {
+      const uploadedImageUrl = await uploadCoverAndGetUrl(
+        imageFileData,
+        imageFileName,
+        `redes/${red}`,
+        IMG_FAVORITOS_DIR,
+        '/img/favoritos'
+      );
+      cleanEmbed = cleanEmbed.replace(/__IMAGE_PLACEHOLDER__/g, uploadedImageUrl);
+    }
+
+    datos[red][index] = {
+      ...datos[red][index],
+      embedHtml: cleanEmbed,
+      updatedAt: new Date().toISOString()
+    };
+
+    await saveCollection('redes', datos, RUTA_REDES);
+
+    const descLog = `Editado post en ${red.toUpperCase()} [UPDATE]`;
+    const crtDescLog = `Se actualizó un registro del sector ${red.toUpperCase()} (${id}).`;
+    await agregarLog('REDES', descLog, crtDescLog, 'text-warning');
+
+    res.json({ success: true, message: `Post editado en ${red.toUpperCase()}.`, post: datos[red][index] });
+  } catch (error) {
+    console.error('Error editando post de redes:', error);
+    res.status(500).json({ error: 'Fallo al editar el post.' });
+  }
+});
+
 app.delete('/api/redes/eliminar/:red/:id', async (req, res) => {
   try {
     const { red, id } = req.params;
@@ -1562,6 +2050,147 @@ app.delete('/api/redes/eliminar/:red/:id', async (req, res) => {
   } catch (error) {
     console.error('Error eliminando post de redes:', error);
     res.status(500).json({ error: 'Fallo al eliminar el post.' });
+  }
+});
+
+// ========================================================
+// 📓 ENDPOINTS PARA BITÁCORA EXCLUSIVA (GET / POST)
+// ========================================================
+app.get('/api/bitacora', async (req, res) => {
+  try {
+    const datos = await getCollection('bitacora', RUTA_BITACORA, []);
+    res.json(Array.isArray(datos) ? datos : []);
+  } catch (error) {
+    console.error('Error leyendo bitácora:', error);
+    res.status(500).json({ error: 'Fallo al leer bitácora.' });
+  }
+});
+
+app.post('/api/bitacora/nuevo', async (req, res) => {
+  try {
+    const nuevaEntrada = req.body || {};
+
+    if (nuevaEntrada.password !== BIBLIOTECA_PASSWORD) {
+      return res.status(401).json({ error: 'Código de acceso incorrecto. Interrupción del sector.' });
+    }
+
+    if (!nuevaEntrada.titulo || !String(nuevaEntrada.titulo).trim()) {
+      return res.status(400).json({ error: 'El título de la entrada es obligatorio.' });
+    }
+
+    const datosActuales = await getCollection('bitacora', RUTA_BITACORA, []);
+
+    const entrada = {
+      id: `bitacora-${Date.now()}`,
+      capitulo: String(nuevaEntrada.capitulo || '').trim() || '00',
+      fecha: String(nuevaEntrada.fecha || '').trim() || new Date().toISOString().slice(0, 10),
+      tipo: String(nuevaEntrada.tipo || 'BITACORA').trim().toUpperCase(),
+      spoiler: String(nuevaEntrada.spoiler || 'MEDIO').trim().toUpperCase(),
+      titulo: String(nuevaEntrada.titulo || '').trim(),
+      descripcion: String(nuevaEntrada.descripcion || '').trim(),
+      miniatura: String(nuevaEntrada.miniatura || '').trim(),
+      url: String(nuevaEntrada.url || '').trim(),
+      createdAt: new Date().toISOString()
+    };
+
+    datosActuales.unshift(entrada);
+    await saveCollection('bitacora', datosActuales, RUTA_BITACORA);
+
+    await agregarLog(
+      'FAVORITOS',
+      `Nueva entrada de bitácora: ${entrada.titulo} [ONLINE]`,
+      `Se publicó un registro exclusivo del capítulo ${entrada.capitulo}.`,
+      'text-neon-purple'
+    );
+
+    res.json({ success: true, message: 'Terminal: Registro de bitácora indexado.', entry: entrada });
+  } catch (error) {
+    console.error('Error guardando bitácora:', error);
+    res.status(500).json({ error: 'Fallo en la escritura de bitácora.' });
+  }
+});
+
+app.post('/api/bitacora/editar', async (req, res) => {
+  try {
+    const cambios = req.body || {};
+    const { id, password } = cambios;
+
+    if (password !== BIBLIOTECA_PASSWORD) {
+      return res.status(401).json({ error: 'Código de acceso incorrecto. Interrupción del sector.' });
+    }
+    if (!id) {
+      return res.status(400).json({ error: 'ID de bitácora requerido para editar.' });
+    }
+
+    const datosActuales = await getCollection('bitacora', RUTA_BITACORA, []);
+    const index = datosActuales.findIndex(item => item.id === id);
+    if (index === -1) {
+      return res.status(404).json({ error: 'Entrada de bitácora no encontrada.' });
+    }
+
+    const actual = datosActuales[index];
+    const editada = {
+      ...actual,
+      capitulo: String(cambios.capitulo || actual.capitulo || '').trim() || '00',
+      fecha: String(cambios.fecha || actual.fecha || '').trim() || new Date().toISOString().slice(0, 10),
+      tipo: String(cambios.tipo || actual.tipo || 'BITACORA').trim().toUpperCase(),
+      spoiler: String(cambios.spoiler || actual.spoiler || 'MEDIO').trim().toUpperCase(),
+      titulo: String(cambios.titulo || actual.titulo || '').trim(),
+      descripcion: String(cambios.descripcion || actual.descripcion || '').trim(),
+      miniatura: String(cambios.miniatura || actual.miniatura || '').trim(),
+      url: String(cambios.url || actual.url || '').trim(),
+      id,
+      updatedAt: new Date().toISOString()
+    };
+
+    datosActuales[index] = editada;
+    await saveCollection('bitacora', datosActuales, RUTA_BITACORA);
+
+    await agregarLog(
+      'FAVORITOS',
+      `Editada entrada de bitácora: ${editada.titulo} [UPDATE]`,
+      `Se actualizó un registro exclusivo del capítulo ${editada.capitulo}.`,
+      'text-warning'
+    );
+
+    res.json({ success: true, message: 'Terminal: Registro de bitácora editado.', entry: editada });
+  } catch (error) {
+    console.error('Error editando bitácora:', error);
+    res.status(500).json({ error: 'Fallo al editar bitácora.' });
+  }
+});
+
+app.post('/api/bitacora/eliminar', async (req, res) => {
+  try {
+    const { id, password } = req.body || {};
+
+    if (password !== BIBLIOTECA_PASSWORD) {
+      return res.status(401).json({ error: 'Código de acceso incorrecto. Interrupción del sector.' });
+    }
+    if (!id) {
+      return res.status(400).json({ error: 'ID de bitácora requerido para eliminar.' });
+    }
+
+    const datosActuales = await getCollection('bitacora', RUTA_BITACORA, []);
+    const item = datosActuales.find(entry => entry.id === id);
+    if (!item) {
+      return res.status(404).json({ error: 'Entrada de bitácora no encontrada.' });
+    }
+
+    const actualizados = datosActuales.filter(entry => entry.id !== id);
+    await saveCollection('bitacora', actualizados, RUTA_BITACORA);
+
+    await agregarLog(
+      'FAVORITOS',
+      `Eliminada entrada de bitácora: ${item.titulo} [OFFLINE]`,
+      `Se purgó un registro exclusivo del capítulo ${item.capitulo}.`,
+      'text-danger'
+    );
+
+    res.json({ success: true, message: 'Terminal: Registro de bitácora eliminado.', id });
+  } catch (error) {
+    console.error('Error eliminando bitácora:', error);
+    res.status(500).json({ error: 'Fallo al eliminar bitácora.' });
   }
 });
 
