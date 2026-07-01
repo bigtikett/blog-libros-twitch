@@ -7,7 +7,8 @@
   "scripts": {
     "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "health:prod": "powershell -ExecutionPolicy Bypass -File ./scripts/prod-healthcheck.ps1"
   },
   "keywords": [],
   "author": "",
