@@ -12,10 +12,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const version = data && data.version ? data.version : {};
     const packageVersion = String(version.packageVersion || '1.0.0');
     const commitShort = String(version.commitShort || '').trim();
+    const buildRunShort = String(version.buildRunShort || '').trim();
     const platform = String(version.platform || 'web').toUpperCase();
-    const label = commitShort
-      ? `[ BUILD ${packageVersion} // ${platform} // ${commitShort} ]`
-      : `[ BUILD ${packageVersion} // ${platform} ]`;
+    const labelParts = [`BUILD ${packageVersion}`, platform];
+    if (commitShort) labelParts.push(commitShort);
+    if (buildRunShort) labelParts.push(`run:${buildRunShort}`);
+    const label = `[ ${labelParts.join(' // ')} ]`;
 
     targets.forEach((node) => {
       node.textContent = label;

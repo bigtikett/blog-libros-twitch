@@ -50,7 +50,20 @@ const DEPLOY_PLATFORM = DEPLOY_COMMIT_SHA
   ? (process.env.RENDER_GIT_COMMIT ? 'render' : process.env.VERCEL_GIT_COMMIT_SHA ? 'vercel' : 'git')
   : 'local';
 const SERVER_BOOTED_AT = new Date().toISOString();
-const DEPLOY_VERSION_LABEL = [APP_PACKAGE_VERSION, DEPLOY_COMMIT_SHORT ? `build.${DEPLOY_COMMIT_SHORT}` : 'runtime'].join(' / ');
+const DEPLOY_BUILD_RUN_ID = (
+  process.env.RENDER_DEPLOYMENT_ID ||
+  process.env.RENDER_DEPLOY_ID ||
+  SERVER_BOOTED_AT
+).trim();
+const DEPLOY_BUILD_RUN_SHORT = DEPLOY_BUILD_RUN_ID
+  .replace(/[^a-zA-Z0-9]/g, '')
+  .slice(-12)
+  .toLowerCase();
+const DEPLOY_VERSION_LABEL = [
+  APP_PACKAGE_VERSION,
+  DEPLOY_COMMIT_SHORT ? `build.${DEPLOY_COMMIT_SHORT}` : 'runtime',
+  DEPLOY_BUILD_RUN_SHORT ? `run.${DEPLOY_BUILD_RUN_SHORT}` : null
+].filter(Boolean).join(' / ');
 
 const RUTA_BIBLIOTECA = path.join(DATA_DIR, 'biblioteca.json');
 const RUTA_CITAS = path.join(DATA_DIR, 'citas.json');
@@ -740,6 +753,8 @@ app.get('/api/health', (req, res) => {
       commitSha: DEPLOY_COMMIT_SHA,
       commitShort: DEPLOY_COMMIT_SHORT,
       platform: DEPLOY_PLATFORM,
+      buildRunId: DEPLOY_BUILD_RUN_ID,
+      buildRunShort: DEPLOY_BUILD_RUN_SHORT,
       bootedAt: SERVER_BOOTED_AT
     }
   });
