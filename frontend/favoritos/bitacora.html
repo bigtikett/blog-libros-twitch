@@ -193,6 +193,65 @@
       box-shadow: 0 0 14px rgba(0, 240, 255, 0.25);
     }
 
+    .sticky-admin-trigger {
+      position: fixed;
+      right: 14px;
+      bottom: 72px;
+      z-index: 12;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 12px;
+      border: 1px solid rgba(0, 240, 255, 0.32);
+      background: linear-gradient(135deg, rgba(6, 14, 30, 0.92), rgba(18, 8, 34, 0.9));
+      color: #dffbff;
+      text-decoration: none;
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.66rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border-radius: 999px;
+      box-shadow: 0 0 18px rgba(0, 240, 255, 0.14);
+      backdrop-filter: blur(8px);
+      opacity: 0;
+      transform: translateY(14px) scale(0.96);
+      pointer-events: none;
+      visibility: hidden;
+      transition: opacity 0.24s ease, transform 0.24s ease, border-color 0.24s ease, box-shadow 0.24s ease;
+    }
+
+    .sticky-admin-trigger:hover {
+      color: #ffffff;
+      border-color: rgba(0, 240, 255, 0.64);
+      box-shadow: 0 0 18px rgba(0, 240, 255, 0.26);
+    }
+
+    body.admin-mode .sticky-admin-trigger {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+      visibility: visible;
+    }
+
+    body.admin-mode .sticky-admin-trigger {
+      animation: adminTriggerIn 260ms ease-out;
+    }
+
+    @keyframes adminTriggerIn {
+      0% {
+        opacity: 0;
+        transform: translateY(18px) scale(0.94);
+      }
+      65% {
+        opacity: 1;
+        transform: translateY(-2px) scale(1.03);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
     .hero {
       margin-top: 18px;
       border: 1px solid rgba(255, 42, 165, 0.3);
@@ -676,10 +735,17 @@
       .entry-template .body { grid-template-columns: 1fr; }
       .modal-grid { grid-template-columns: 1fr; }
       .hero { padding: 22px; }
+      .sticky-admin-trigger {
+        right: 10px;
+        left: 10px;
+        bottom: 84px;
+        justify-content: center;
+      }
     }
   </style>
 </head>
 <body>
+  <button type="button" id="open-bitacora-admin" class="sticky-admin-trigger admin-only"><i class="bi bi-shield-lock"></i> Panel admin</button>
   <main class="ship-shell">
     <div class="ship-topbar">
       <div>
@@ -687,7 +753,6 @@
         <div class="ship-id-meta" data-deploy-version>[ BUILD: CARGANDO ]</div>
       </div>
       <div class="ship-actions">
-        <button type="button" id="open-bitacora-admin"><i class="bi bi-shield-lock"></i> Acceso admin</button>
         <a href="/index.html"><i class="bi bi-arrow-left"></i> Volver al bunker</a>
       </div>
     </div>
@@ -885,6 +950,7 @@
       const MONITOR_BEEP_MODE_KEY = 'bitacora_monitor_beep_mode';
       const MONITOR_SOUND_PROFILE_KEY = 'bitacora_monitor_sound_profile';
       let lastMonitorSignature = '';
+      let latestMonitorEntries = [];
       let monitorSoundEnabled = localStorage.getItem(MONITOR_SOUND_KEY) === '1';
       let monitorBeepMode = localStorage.getItem(MONITOR_BEEP_MODE_KEY) === 'letter' ? 'letter' : 'line';
       const monitorProfiles = ['default', 'militar', '8bit', 'glitch'];
@@ -1185,6 +1251,7 @@
 
       function renderMonitorFallback(message) {
         if (!emptyMonitorList) return;
+        latestMonitorEntries = [];
         emptyMonitorList.innerHTML = `<div class="monitor-item" style="--line-delay: 0ms;"><span class="monitor-text">${escapeHtml(message)}</span></div>`;
       }
 
@@ -1198,6 +1265,21 @@
           hour: '2-digit',
           minute: '2-digit'
         });
+      }
+
+      function renderMonitorEntries(entries) {
+        if (!emptyMonitorList || !Array.isArray(entries) || entries.length === 0) return;
+
+        emptyMonitorList.querySelectorAll('.monitor-text').forEach((target) => {
+          if (target instanceof HTMLElement) stopTypingBeep(target);
+        });
+
+        emptyMonitorList.innerHTML = entries.map((log, index) => {
+          const tag = escapeHtml(log.tag || 'SYS');
+          const desc = escapeHtml(log.desc || log.crtDesc || 'Actualizacion aplicada.');
+          const fecha = escapeHtml(formatLogDate(log.fecha || log.createdAt));
+          return `<div class="monitor-item" data-tone-index="${index}" style="--line-delay: ${index * 110}ms;"><strong>[${tag}]</strong><span class="monitor-text">${desc} <small>(${fecha})</small></span></div>`;
+        }).join('');
       }
 
       async function loadMonitorUpdates() {
@@ -1216,16 +1298,16 @@
           const signature = latest.map((log) => String(log.id || log.fecha || log.tag || '')).join('|');
           if (signature === lastMonitorSignature) return;
           lastMonitorSignature = signature;
-
-          emptyMonitorList.innerHTML = latest.map((log, index) => {
-            const tag = escapeHtml(log.tag || 'SYS');
-            const desc = escapeHtml(log.desc || log.crtDesc || 'Actualizacion aplicada.');
-            const fecha = escapeHtml(formatLogDate(log.fecha || log.createdAt));
-            return `<div class="monitor-item" data-tone-index="${index}" style="--line-delay: ${index * 110}ms;"><strong>[${tag}]</strong><span class="monitor-text">${desc} <small>(${fecha})</small></span></div>`;
-          }).join('');
+          latestMonitorEntries = latest;
+          renderMonitorEntries(latestMonitorEntries);
         } catch (error) {
           renderMonitorFallback('No se pudo sincronizar el monitor de actualizaciones.');
         }
+      }
+
+      function replayMonitorTyping() {
+        if (!emptyMonitorList || !latestMonitorEntries.length) return;
+        renderMonitorEntries(latestMonitorEntries);
       }
 
       function renderEntryCard(item, prepend = false) {
@@ -1501,6 +1583,7 @@
       setInterval(updateSpaceClock, 1000);
       loadEntries();
       loadMonitorUpdates();
+      setInterval(replayMonitorTyping, 6500);
       setInterval(loadMonitorUpdates, 15000);
     });
   </script>

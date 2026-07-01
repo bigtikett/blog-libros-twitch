@@ -199,6 +199,10 @@
       line-height: 1.3;
     }
 
+    .dev-log-ticker-container .ticker-content {
+      animation-duration: 54s !important;
+    }
+
     /* Global admin modal polish inspired by bitacora controls */
     .bitacora-skin-modal .modal-title {
       font-family: "Orbitron", sans-serif;
@@ -330,6 +334,71 @@
       color: #9ee9ff;
       border-color: rgba(0, 240, 255, 0.34);
     }
+
+    .sticky-admin-trigger {
+      position: fixed;
+      right: 14px;
+      bottom: 20px;
+      z-index: 1085;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 13px;
+      border: 1px solid rgba(0, 240, 255, 0.32);
+      background: linear-gradient(135deg, rgba(6, 14, 30, 0.94), rgba(18, 8, 34, 0.92));
+      color: #dffbff;
+      text-decoration: none;
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.64rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border-radius: 999px;
+      box-shadow: 0 0 18px rgba(0, 240, 255, 0.14);
+      backdrop-filter: blur(8px);
+      opacity: 0;
+      transform: translateY(14px) scale(0.96);
+      pointer-events: none;
+      visibility: hidden;
+      transition: opacity 0.24s ease, transform 0.24s ease, border-color 0.24s ease, box-shadow 0.24s ease;
+    }
+
+    .sticky-admin-trigger:hover {
+      color: #ffffff;
+      border-color: rgba(0, 240, 255, 0.64);
+      box-shadow: 0 0 18px rgba(0, 240, 255, 0.26);
+    }
+
+    body.admin-mode .sticky-admin-trigger {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+      visibility: visible;
+      animation: adminTriggerIn 260ms ease-out;
+    }
+
+    @keyframes adminTriggerIn {
+      0% {
+        opacity: 0;
+        transform: translateY(18px) scale(0.94);
+      }
+      65% {
+        opacity: 1;
+        transform: translateY(-2px) scale(1.03);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .sticky-admin-trigger {
+        right: 10px;
+        left: 10px;
+        bottom: 14px;
+        justify-content: center;
+      }
+    }
   </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -337,6 +406,8 @@
 </head>
 
 <body>
+
+  <button type="button" id="open-index-admin-panel" class="sticky-admin-trigger"><i class="bi bi-shield-lock"></i> Panel admin</button>
 
   <!-- BARRA DE NAVEGACIÓN (Fija arriba para moverse fácil) -->
   <nav class="navbar navbar-expand-lg navbar-dark sticky-top cyber-navbar">
@@ -1125,7 +1196,7 @@
                 <span class="text-neon-magenta fw-bold tracking-wider text-lg font-monospace ">DATA_FILE_01</span>
                 <i class="bi bi-tv display-6 text-neon-magenta"></i>
               </div>
-              <h4 class="fw-black text-uppercase tracking-wide mb-2">📺 SERIES </h4>
+              <h4 class="fw-black text-uppercase tracking-wide mb-2"><a href="/favoritos/series.html" class="fav-link fav-link-magenta">📺 SERIES</a> </h4>
               <p class="small text-white mb-3">Las producciones que me marcaron de por vida. Mundos distópicos, ciencia
                 ficción o historias de las que no sales igual.</p>
               <ul class="list-unstyled fav-list small">
@@ -1158,7 +1229,7 @@
                 <span class="text-neon-cyan fw-bold tracking-wider text-lg font-monospace">DATA_FILE_02</span>
                 <i class="bi bi-film display-6 text-neon-cyan"></i>
               </div>
-              <h4 class="fw-black text-uppercase tracking-wide mb-2">🎬 PELÍCULAS</h4>
+              <h4 class="fw-black text-uppercase tracking-wide mb-2"><a href="/favoritos/peliculas.html" class="fav-link fav-link-cyan" >🎬 PELÍCULAS</a></h4>
               <p class="small text-white mb-3">Historias inolvidables y direcciones de arte que me obsesionan
                 visualmente.</p>
               <ul class="list-unstyled fav-list small">
@@ -1192,7 +1263,7 @@
                 <span class="text-warning fw-bold tracking-wider text-lg font-monospace">DATA_FILE_03</span>
                 <i class="bi bi-person-badge display-6 text-warning"></i>
               </div>
-              <h4 class="fw-black text-uppercase tracking-wide mb-2">👤 PERSONAJES</h4>
+              <h4 class="fw-black text-uppercase tracking-wide mb-2"><a href="/favoritos/personajes.html" class="fav-link fav-link-warning">👤 PERSONAJES</a></h4>
               <p class="small text-white mb-3">Esos seres de ficción que se ganaron un rincón eterno en mi corazón.</p>
               <ul class="list-unstyled fav-list small">
                 <li><a href="/favoritos/personajes.html" class="fav-link fav-link-warning text-decoration-none"><i
@@ -1218,11 +1289,11 @@
                 
               </div>
 <h4 class="fw-black text-uppercase tracking-wide mb-1 d-inline-flex align-items-center gap-2">
-  <span class="log-cyber-icon">
-    <img src="/frontend/assets/images/bitacora.webp" alt="Icono Diario Bitácora">
-  </span>
   
-  CUADERNO DE BITÁCORA
+  
+  <a href="/favoritos/bitacora.html" class="fav-link fav-link-purple"><span class="log-cyber-icon">
+    <img src="/assets/images/bitacora.webp" alt="Icono Diario Bitácora">
+  </span> CUADERNO DE BITÁCORA</a>
 </h4> 
               <p class="small text-white mb-3">Detrás de las páginas... Sigue la evolución visual del libro.</p>
 
@@ -1285,7 +1356,7 @@
       
       <p class="font-monospace text-muted small mt-4 footer-credits">
         <span class="text-glow-warning">// ESTABLECIENDO NODO PRINCIPAL YAIHI • <span class="text-white">2026</span> • HECHO CON ❤️ PARA LA COMUNIDAD</span> <br>
-        <span class="text-neon-cyan dev-credits">&gt; DESARROLLADO POR G4rNeTT_</span> • 
+        <span class="text-neon-cyan dev-credits">&gt; DESARROLLADO POR <a href="https://bigtikett.github.io/Portafolio/index.html" target="_blank" rel="noopener noreferrer" class="fav-link fav-link-cyan text-decoration-none">@G4rNeTT_</a></span><span class="text-white"> • </span>  
         <a href="legal.html" class="text-neon-magenta text-decoration-none footer-legal-link">[ AVISO_LEGAL & PRIVACIDAD ]</a>
       </p>
       <div class="deploy-version-chip" data-deploy-version>[ BUILD: CARGANDO ]</div>

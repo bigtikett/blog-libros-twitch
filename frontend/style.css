@@ -391,6 +391,7 @@
   font-size: clamp(2.2rem, 5vw, 3.8rem);
   background: linear-gradient(45deg, #ff007f, #a072ff);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   text-shadow: 0 0 35px rgba(255, 0, 127, 0.2);
   margin-bottom: 1.5rem;
@@ -449,7 +450,7 @@
 .ticker-content {
   display: flex;
   white-space: nowrap;
-  animation: ticker-scroll 32s linear infinite;
+  animation: ticker-scroll 54s linear infinite;
 }
 .ticker-content:hover {
   animation-play-state: paused;
@@ -4264,6 +4265,7 @@ body.matrix-active > *:not(#matrix-landing-overlay) {
 .title-instagram {
   background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   animation: instagram-glow 3s infinite;
   font-weight: 900;

@@ -6,6 +6,7 @@
   const logsCanvasPanel = document.getElementById("logs-canvas-panel");
   const openLogsCanvasBtn = document.getElementById("open-logs-canvas");
   const closeLogsCanvasBtn = document.getElementById("close-logs-canvas");
+  const openIndexAdminPanelBtn = document.getElementById("open-index-admin-panel");
 
   let swiperFavoritos = null;
 
@@ -15,6 +16,8 @@
   let lastIndexAdminState = isAdmin;
 
   function updateAdminIndicators() {
+    document.body.classList.toggle("admin-mode", isAdmin);
+
     const indicatorIds = [
       "index-admin-indicator-lib",
       "index-admin-indicator-ent",
@@ -194,6 +197,19 @@
       hideModalSafe(modalEl);
     });
   });
+
+  if (openIndexAdminPanelBtn) {
+    openIndexAdminPanelBtn.addEventListener("click", () => {
+      if (isAdmin) {
+        openAdminModal("modal-nuevo-libro", "modal-password");
+        return;
+      }
+
+      requestAdminAccess(() => {
+        openAdminModal("modal-nuevo-libro", "modal-password");
+      });
+    });
+  }
 
   updateAdminIndicators();
 
