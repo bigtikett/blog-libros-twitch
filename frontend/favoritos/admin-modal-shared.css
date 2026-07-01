@@ -92,6 +92,10 @@
   border-radius: 999px;
   box-shadow: 0 0 18px rgba(0, 240, 255, 0.14);
   backdrop-filter: blur(8px);
+  opacity: 0;
+  transform: translateY(14px) scale(0.96);
+  pointer-events: none;
+  visibility: hidden;
   transition: opacity 0.24s ease, transform 0.24s ease, border-color 0.24s ease, box-shadow 0.24s ease;
 }
 
@@ -99,6 +103,13 @@
   color: #ffffff;
   border-color: rgba(0, 240, 255, 0.64);
   box-shadow: 0 0 18px rgba(0, 240, 255, 0.26);
+}
+
+body.admin-mode .fav-admin-trigger {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+  visibility: visible;
 }
 
 @media (max-width: 768px) {

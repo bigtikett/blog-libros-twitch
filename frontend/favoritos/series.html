@@ -359,6 +359,7 @@
 
       function updateSerieAdminIndicator() {
         if (!serieAdminIndicator) return;
+        document.body.classList.toggle('admin-mode', isAdmin);
         serieAdminIndicator.textContent = isAdmin ? '[ ADMIN: ON ]' : '[ ADMIN: OFF ]';
         serieAdminIndicator.className = 'small fw-bold';
         serieAdminIndicator.style.color = isAdmin ? '#4cffb2' : '#ff6f8f';

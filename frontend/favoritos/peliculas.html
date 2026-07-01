@@ -183,6 +183,7 @@
 
       function updatePeliculaAdminIndicator() {
         if (!peliculaAdminIndicator) return;
+        document.body.classList.toggle('admin-mode', isAdmin);
         peliculaAdminIndicator.textContent = isAdmin ? '[ ADMIN: ON ]' : '[ ADMIN: OFF ]';
         peliculaAdminIndicator.className = 'small fw-bold';
         peliculaAdminIndicator.style.color = isAdmin ? '#4cffb2' : '#ff6f8f';

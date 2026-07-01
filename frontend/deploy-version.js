@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
   const targets = document.querySelectorAll('[data-deploy-version]');
-  if (!targets.length) return;
+  const monitorTargets = document.querySelectorAll('[data-monitor-version]');
+  if (!targets.length && !monitorTargets.length) return;
 
   const fallbackText = '[ BUILD: OFFLINE ]';
 
@@ -24,11 +25,19 @@ document.addEventListener('DOMContentLoaded', async () => {
       node.setAttribute('data-build-ready', 'true');
       node.setAttribute('title', version.bootedAt ? `Deploy activo desde ${version.bootedAt}` : label);
     });
+
+    monitorTargets.forEach((node) => {
+      node.textContent = `[ MONITOR STATUS: ON // VER_${packageVersion} ]`;
+    });
   } catch (error) {
     targets.forEach((node) => {
       node.textContent = fallbackText;
       node.setAttribute('data-build-ready', 'false');
       node.setAttribute('title', 'No se pudo cargar la version del deploy');
+    });
+
+    monitorTargets.forEach((node) => {
+      node.textContent = '[ MONITOR STATUS: ON // VER_OFFLINE ]';
     });
   }
 });
