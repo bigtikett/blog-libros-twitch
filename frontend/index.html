@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="es">
 
 <head>
@@ -38,6 +38,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
   <!-- Tu archivo de estilos personalizados -->
   <link rel="stylesheet" href="style.min.css?v=20260701" />
+  <link rel="stylesheet" href="theme-mode.css?v=20260701" />
   <link rel="icon" type="image/webp" href="/assets/icons/rani.webp">
   <style>
     /* Override local: asegurar visibilidad del badge animado en redes */
@@ -91,6 +92,60 @@
       border-color: #ff007f !important;
       color: #ffffff !important;
       box-shadow: 0 0 12px rgba(255, 0, 127, 0.25);
+    }
+
+    .band-pinterest {
+      background: linear-gradient(180deg, rgba(30, 8, 10, 0.92), rgba(15, 3, 6, 0.94));
+    }
+
+    .band-pinterest::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 25% 15%, rgba(255, 61, 86, 0.18), transparent 60%);
+      pointer-events: none;
+    }
+
+    .title-pinterest {
+      color: #ff6b7f;
+      text-shadow: 0 0 10px rgba(255, 67, 94, 0.4);
+    }
+
+    .btn-connect-pinterest {
+      border-color: rgba(255, 67, 94, 0.7) !important;
+      color: #ff6b7f !important;
+    }
+
+    .btn-connect-pinterest:hover {
+      background: rgba(255, 67, 94, 0.18) !important;
+      border-color: #ff435e !important;
+      color: #ffffff !important;
+      box-shadow: 0 0 12px rgba(255, 67, 94, 0.25);
+    }
+
+    .patreon-pulse-strip {
+      border-top: 1px solid rgba(255, 179, 79, 0.4);
+      border-bottom: 1px solid rgba(255, 179, 79, 0.25);
+      background: linear-gradient(90deg, rgba(6, 8, 15, 0.95) 0%, rgba(32, 14, 8, 0.92) 55%, rgba(6, 8, 15, 0.95) 100%);
+    }
+
+    .patreon-pulse-card {
+      border: 1px solid rgba(255, 179, 79, 0.35);
+      background: rgba(0, 0, 0, 0.34);
+      box-shadow: inset 0 0 18px rgba(255, 179, 79, 0.08);
+    }
+
+    .btn-patreon-join {
+      border-color: rgba(255, 179, 79, 0.7) !important;
+      color: #ffc66d !important;
+      font-size: 0.72rem;
+      letter-spacing: 0.07rem;
+    }
+
+    .btn-patreon-join:hover {
+      background: rgba(255, 179, 79, 0.16) !important;
+      border-color: #ffb347 !important;
+      color: #ffffff !important;
     }
 
     .logs-canvas-toggle {
@@ -227,6 +282,167 @@
       letter-spacing: 0.01em;
     }
 
+    .bitacora-skin-modal {
+      --modal-accent: #00f0ff;
+      --modal-accent-soft: rgba(0, 240, 255, 0.24);
+      --modal-accent-strong: rgba(0, 240, 255, 0.72);
+      --modal-chip-bg: rgba(0, 0, 0, 0.35);
+      --modal-text-main: #eaf7ff;
+      --modal-text-muted: rgba(216, 233, 255, 0.74);
+    }
+
+    .bitacora-skin-modal.palette-cyan {
+      --modal-accent: #00f0ff;
+      --modal-accent-soft: rgba(0, 240, 255, 0.24);
+      --modal-accent-strong: rgba(0, 240, 255, 0.72);
+    }
+
+    .bitacora-skin-modal.palette-magenta {
+      --modal-accent: #ff3d9a;
+      --modal-accent-soft: rgba(255, 61, 154, 0.25);
+      --modal-accent-strong: rgba(255, 61, 154, 0.75);
+    }
+
+    .bitacora-skin-modal.palette-amber {
+      --modal-accent: #ffb347;
+      --modal-accent-soft: rgba(255, 179, 71, 0.25);
+      --modal-accent-strong: rgba(255, 179, 71, 0.78);
+      --modal-text-main: #f8fbff;
+      --modal-text-muted: rgba(232, 241, 255, 0.78);
+    }
+
+    .bitacora-skin-modal.palette-lime {
+      --modal-accent: #86ff4d;
+      --modal-accent-soft: rgba(134, 255, 77, 0.24);
+      --modal-accent-strong: rgba(134, 255, 77, 0.72);
+      --modal-text-main: #f6fbff;
+      --modal-text-muted: rgba(230, 243, 255, 0.78);
+    }
+
+    .bitacora-skin-modal {
+      border-color: var(--modal-accent-soft) !important;
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--modal-accent) 22%, transparent), 0 0 24px color-mix(in srgb, var(--modal-accent) 18%, transparent);
+      background: linear-gradient(160deg, rgba(6, 8, 18, 0.95) 0%, color-mix(in srgb, var(--modal-accent) 10%, rgba(8, 4, 16, 0.95)) 100%) !important;
+    }
+
+    .bitacora-skin-modal .modal-header {
+      border-bottom-color: var(--modal-accent-soft) !important;
+      background: linear-gradient(180deg, color-mix(in srgb, var(--modal-accent) 14%, rgba(0, 0, 0, 0.56)), rgba(0, 0, 0, 0.28)) !important;
+    }
+
+    .bitacora-skin-modal .modal-body,
+    .bitacora-skin-modal .modal-footer {
+      border-top-color: var(--modal-accent-soft) !important;
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0.16), color-mix(in srgb, var(--modal-accent) 7%, rgba(3, 4, 8, 0.2))) !important;
+    }
+
+    .bitacora-skin-modal .modal-title,
+    .bitacora-skin-modal .form-label,
+    .bitacora-skin-modal .text-neon-cyan {
+      color: var(--modal-accent) !important;
+      text-shadow: 0 0 10px color-mix(in srgb, var(--modal-accent) 50%, transparent);
+    }
+
+    .bitacora-skin-modal,
+    .bitacora-skin-modal .text-white {
+      color: var(--modal-text-main) !important;
+    }
+
+    .bitacora-skin-modal .text-white-50,
+    .bitacora-skin-modal .form-text,
+    .bitacora-skin-modal small {
+      color: var(--modal-text-muted) !important;
+    }
+
+    .bitacora-skin-modal .form-control,
+    .bitacora-skin-modal .form-select,
+    .bitacora-skin-modal textarea {
+      border-color: var(--modal-accent-soft) !important;
+      box-shadow: inset 0 0 10px color-mix(in srgb, var(--modal-accent) 14%, transparent);
+    }
+
+    .bitacora-skin-modal .form-select {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      padding-right: 2.2rem;
+      cursor: pointer;
+      background-color: rgba(6, 12, 24, 0.78) !important;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 8'%3E%3Cpath d='M1 1l6 6 6-6' fill='none' stroke='%23eaf7ff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+      background-repeat: no-repeat !important;
+      background-position: right 0.65rem center !important;
+      background-position-x: calc(100% - 10px) !important;
+      background-position-y: center !important;
+      background-size: 9px 6px !important;
+      border-color: var(--modal-accent-soft) !important;
+      box-shadow: inset 0 0 12px color-mix(in srgb, var(--modal-accent) 16%, transparent);
+    }
+
+    .bitacora-skin-modal .form-select:hover {
+      border-color: var(--modal-accent-strong) !important;
+      box-shadow: inset 0 0 12px color-mix(in srgb, var(--modal-accent) 24%, transparent), 0 0 10px color-mix(in srgb, var(--modal-accent) 28%, transparent);
+    }
+
+    .bitacora-skin-modal .form-select:focus {
+      border-color: var(--modal-accent-strong) !important;
+      box-shadow: 0 0 0 0.18rem color-mix(in srgb, var(--modal-accent) 26%, transparent), inset 0 0 10px color-mix(in srgb, var(--modal-accent) 20%, transparent);
+    }
+
+    .bitacora-skin-modal .modal-palette-switcher {
+      border: 1px solid var(--modal-accent-soft);
+      background: var(--modal-chip-bg);
+      box-shadow: inset 0 0 14px color-mix(in srgb, var(--modal-accent) 18%, transparent);
+      padding: 0.45rem 0.55rem;
+      margin-bottom: 0.8rem;
+    }
+
+    .bitacora-skin-modal .modal-palette-switcher-inline {
+      border: 1px solid var(--modal-accent-soft);
+      background: color-mix(in srgb, var(--modal-accent) 10%, rgba(0, 0, 0, 0.38));
+      box-shadow: inset 0 0 10px color-mix(in srgb, var(--modal-accent) 18%, transparent);
+      padding: 0.18rem 0.35rem;
+      margin-left: 0.45rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.32rem;
+      flex-wrap: nowrap;
+    }
+
+    .bitacora-skin-modal .modal-palette-switcher-inline .modal-palette-chip {
+      width: 14px;
+      height: 14px;
+      margin: 0;
+    }
+
+    .bitacora-skin-modal .modal-palette-chip {
+      width: 20px;
+      height: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      display: inline-block;
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      animation: modal-palette-chip-pulse 1.7s ease-in-out infinite;
+    }
+
+    @keyframes modal-palette-chip-pulse {
+      0%,
+      100% {
+        transform: translateY(0);
+        filter: brightness(1);
+      }
+      50% {
+        transform: translateY(-2px);
+        filter: brightness(1.18);
+      }
+    }
+
+    .bitacora-skin-modal .modal-palette-chip.is-active {
+      border-color: #ffffff;
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--modal-accent) 45%, transparent), 0 0 10px color-mix(in srgb, var(--modal-accent) 35%, transparent);
+      transform: translateY(-1px) scale(1.06);
+    }
+
     .bitacora-skin-modal .modal-tab-btn {
       font-family: "Orbitron", sans-serif;
       font-size: 0.68rem;
@@ -235,13 +451,13 @@
     }
 
     .bitacora-skin-modal .nav-tabs {
-      border-bottom-color: rgba(0, 240, 255, 0.25) !important;
+      border-bottom-color: var(--modal-accent-soft) !important;
     }
 
     .bitacora-skin-modal .nav-tabs .modal-tab-btn {
       color: rgba(200, 249, 255, 0.82);
       background: rgba(0, 0, 0, 0.2);
-      border: 1px solid rgba(0, 240, 255, 0.2);
+      border: 1px solid var(--modal-accent-soft);
       border-bottom-color: transparent;
       border-radius: 0;
       margin-right: 0.4rem;
@@ -249,44 +465,44 @@
     }
 
     .bitacora-skin-modal .nav-tabs .modal-tab-btn:hover {
-      color: #c8f9ff;
-      border-color: rgba(0, 240, 255, 0.45);
-      box-shadow: 0 0 12px rgba(0, 240, 255, 0.16);
+      color: color-mix(in srgb, var(--modal-accent) 65%, #ffffff);
+      border-color: var(--modal-accent-strong);
+      box-shadow: 0 0 12px color-mix(in srgb, var(--modal-accent) 22%, transparent);
     }
 
     .bitacora-skin-modal .nav-tabs .modal-tab-btn.active,
     .bitacora-skin-modal .nav-tabs .nav-link.active {
-      color: #00f0ff;
-      background: linear-gradient(180deg, rgba(0, 240, 255, 0.18), rgba(0, 0, 0, 0.36));
-      border-color: rgba(0, 240, 255, 0.52);
-      box-shadow: inset 0 0 12px rgba(0, 240, 255, 0.12), 0 0 12px rgba(0, 240, 255, 0.18);
+      color: var(--modal-accent);
+      background: linear-gradient(180deg, color-mix(in srgb, var(--modal-accent) 22%, transparent), rgba(0, 0, 0, 0.36));
+      border-color: var(--modal-accent-strong);
+      box-shadow: inset 0 0 12px color-mix(in srgb, var(--modal-accent) 20%, transparent), 0 0 12px color-mix(in srgb, var(--modal-accent) 25%, transparent);
     }
 
     .bitacora-skin-modal .btn-close {
       width: 1.7rem;
       height: 1.7rem;
-      border: 1px solid rgba(0, 240, 255, 0.35);
+      border: 1px solid var(--modal-accent-soft);
       border-radius: 0;
-      background-color: rgb(255, 0, 0);
-      box-shadow: inset 0 0 8px rgba(0, 240, 255, 0.1);
+      background-color: color-mix(in srgb, var(--modal-accent) 24%, rgba(0, 0, 0, 0.65));
+      box-shadow: inset 0 0 8px color-mix(in srgb, var(--modal-accent) 26%, transparent);
       opacity: 0.88;
       transition: 0.2s ease;
     }
 
     .bitacora-skin-modal .btn-close:hover {
       opacity: 1;
-      border-color: rgba(0, 240, 255, 0.72);
-      box-shadow: 0 0 10px rgba(0, 240, 255, 0.26);
+      border-color: var(--modal-accent-strong);
+      box-shadow: 0 0 10px color-mix(in srgb, var(--modal-accent) 35%, transparent);
       transform: translateY(-1px);
     }
 
     .bitacora-skin-modal .btn-close:focus {
-      box-shadow: 0 0 0 0.2rem rgba(0, 240, 255, 0.22);
+      box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--modal-accent) 28%, transparent);
     }
 
     .bitacora-modal-btn {
-      border: 1px solid rgba(0, 240, 255, 0.35) !important;
-      color: #00f0ff !important;
+      border: 1px solid var(--modal-accent-soft) !important;
+      color: var(--modal-accent) !important;
       background: rgba(0, 0, 0, 0.28) !important;
       border-radius: 0 !important;
       font-family: "Orbitron", sans-serif !important;
@@ -297,9 +513,9 @@
     }
 
     .bitacora-modal-btn:hover {
-      box-shadow: 0 0 12px rgba(0, 240, 255, 0.25);
-      border-color: rgba(0, 240, 255, 0.75) !important;
-      color: #c8f9ff !important;
+      box-shadow: 0 0 12px color-mix(in srgb, var(--modal-accent) 33%, transparent);
+      border-color: var(--modal-accent-strong) !important;
+      color: color-mix(in srgb, var(--modal-accent) 62%, #ffffff) !important;
     }
 
     .bitacora-modal-btn-danger {
@@ -400,6 +616,240 @@
       }
     }
 
+    .theme-mode-switcher {
+      position: fixed !important;
+      left: 14px;
+      top: 50svh;
+      transform: translateY(-50%);
+      z-index: 1085;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 8px;
+      border: 1px solid rgba(0, 240, 255, 0.35);
+      background: linear-gradient(180deg, rgba(4, 8, 18, 0.88), rgba(9, 4, 18, 0.86));
+      box-shadow: 0 0 18px rgba(0, 240, 255, 0.18), inset 0 0 12px rgba(0, 240, 255, 0.1);
+      backdrop-filter: blur(6px);
+      will-change: transform;
+    }
+
+    .theme-mode-btn {
+      width: 40px;
+      height: 40px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      background: rgba(0, 0, 0, 0.34);
+      color: #d8ecff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      transition: all 0.22s ease;
+    }
+
+    .theme-mode-btn:hover {
+      transform: translateX(2px) scale(1.04);
+      border-color: rgba(0, 240, 255, 0.75);
+      color: #ffffff;
+      box-shadow: 0 0 12px rgba(0, 240, 255, 0.24);
+    }
+
+    .theme-mode-btn.is-active {
+      border-color: rgba(0, 240, 255, 0.9);
+      color: #00f0ff;
+      box-shadow: 0 0 14px rgba(0, 240, 255, 0.35), inset 0 0 12px rgba(0, 240, 255, 0.2);
+      background: rgba(0, 14, 18, 0.78);
+    }
+
+    body,
+    .cyber-navbar,
+    section,
+    #header-inicio,
+    .card,
+    .modal-content,
+    .social-band,
+    .twitch-schedule-card,
+    .library-screen-frame,
+    .cyber-quote-card {
+      transition: background-color 0.35s ease, color 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease, filter 0.35s ease;
+    }
+
+    body.theme-light {
+      background: radial-gradient(circle at 8% 2%, #fff9ec 0%, #efe3c9 44%, #d8c9ad 100%) !important;
+      color: #2f261a;
+    }
+
+    body.theme-light .cyber-navbar,
+    body.theme-light .bitacora-skin-modal,
+    body.theme-light .social-band,
+    body.theme-light .twitch-schedule-card,
+    body.theme-light .library-screen-frame,
+    body.theme-light .cyber-quote-card,
+    body.theme-light .card {
+      background-color: rgba(255, 248, 233, 0.95) !important;
+      border-color: rgba(93, 77, 47, 0.26) !important;
+      box-shadow: 0 14px 28px rgba(70, 57, 37, 0.13);
+    }
+
+    body.theme-light .cyber-navbar {
+      background: linear-gradient(180deg, rgba(248, 239, 217, 0.97), rgba(229, 214, 181, 0.96)) !important;
+      border-bottom: 1px solid rgba(96, 80, 47, 0.28) !important;
+    }
+
+    body.theme-light .social-band,
+    body.theme-light .cyber-quote-card,
+    body.theme-light .library-screen-frame,
+    body.theme-light .twitch-schedule-card {
+      background-color: rgba(246, 236, 214, 0.93) !important;
+      border-color: rgba(71, 96, 55, 0.34) !important;
+      box-shadow: 0 12px 24px rgba(66, 82, 47, 0.15);
+    }
+
+    body.theme-light .text-white,
+    body.theme-light h1,
+    body.theme-light h2,
+    body.theme-light h3,
+    body.theme-light h4,
+    body.theme-light h5,
+    body.theme-light h6 {
+      color: #2b2216 !important;
+      text-shadow: none !important;
+    }
+
+    body.theme-light .text-white-50,
+    body.theme-light .lead,
+    body.theme-light p {
+      color: rgba(71, 59, 40, 0.88) !important;
+    }
+
+    body.theme-light .text-neon-cyan,
+    body.theme-light .text-neon-magenta,
+    body.theme-light .text-warning,
+    body.theme-light .text-info {
+      filter: saturate(0.6) brightness(0.72);
+    }
+
+    body.theme-light .text-neon-green,
+    body.theme-light .text-success {
+      color: #466a2d !important;
+      text-shadow: 0 0 6px rgba(70, 106, 45, 0.2) !important;
+    }
+
+    body.theme-light .text-neon-cyan,
+    body.theme-light .text-info,
+    body.theme-light a {
+      color: #355f47 !important;
+    }
+
+    body.theme-light .btn-outline-info {
+      color: #355f47 !important;
+      border-color: rgba(53, 95, 71, 0.45) !important;
+    }
+
+    body.theme-light .btn-outline-info:hover {
+      color: #f7efdb !important;
+      background-color: #355f47 !important;
+      border-color: #355f47 !important;
+    }
+
+    body.theme-light .theme-mode-switcher {
+      border-color: rgba(91, 75, 45, 0.34);
+      background: linear-gradient(180deg, rgba(244, 234, 209, 0.97), rgba(220, 204, 168, 0.95));
+      box-shadow: 0 0 20px rgba(88, 72, 44, 0.22), inset 0 0 12px rgba(106, 91, 61, 0.15);
+    }
+
+    body.theme-light .theme-mode-btn {
+      background: rgba(248, 239, 218, 0.93);
+      color: #463621;
+      border-color: rgba(96, 80, 47, 0.34);
+    }
+
+    body.theme-light .theme-mode-btn.is-active {
+      color: #466a2d;
+      border-color: rgba(76, 111, 44, 0.76);
+      box-shadow: 0 0 14px rgba(81, 114, 47, 0.32), inset 0 0 10px rgba(101, 134, 64, 0.21);
+    }
+
+    body.theme-dark {
+      background: radial-gradient(circle at 50% -20%, #121f3f 0%, #0a132a 42%, #060811 100%) !important;
+      color: #e8efff;
+    }
+
+    body.theme-dark .cyber-navbar,
+    body.theme-dark .bitacora-skin-modal,
+    body.theme-dark .social-band,
+    body.theme-dark .twitch-schedule-card,
+    body.theme-dark .library-screen-frame,
+    body.theme-dark .cyber-quote-card,
+    body.theme-dark .card {
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.45);
+      background-color: rgba(9, 16, 33, 0.92) !important;
+      border-color: rgba(234, 196, 74, 0.3) !important;
+    }
+
+    body.theme-dark .cyber-navbar {
+      background: linear-gradient(180deg, rgba(13, 23, 48, 0.95), rgba(8, 14, 32, 0.92)) !important;
+      border-bottom: 1px solid rgba(235, 197, 75, 0.3) !important;
+    }
+
+    body.theme-dark .social-band,
+    body.theme-dark .cyber-quote-card,
+    body.theme-dark .library-screen-frame,
+    body.theme-dark .twitch-schedule-card {
+      background-color: rgba(8, 16, 34, 0.88) !important;
+      border-color: rgba(226, 82, 82, 0.28) !important;
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.42);
+    }
+
+    body.theme-dark .text-neon-cyan,
+    body.theme-dark .text-info {
+      color: #62b6ff !important;
+      text-shadow: 0 0 10px rgba(98, 182, 255, 0.42) !important;
+    }
+
+    body.theme-dark .text-neon-magenta,
+    body.theme-dark .text-danger {
+      color: #ff5d6c !important;
+      text-shadow: 0 0 10px rgba(255, 93, 108, 0.36) !important;
+    }
+
+    body.theme-dark .text-warning,
+    body.theme-dark .text-neon-yellow {
+      color: #ffd45e !important;
+      text-shadow: 0 0 10px rgba(255, 212, 94, 0.34) !important;
+    }
+
+    body.theme-dark .theme-mode-switcher {
+      border-color: rgba(255, 207, 72, 0.34);
+      background: linear-gradient(180deg, rgba(9, 16, 35, 0.95), rgba(10, 14, 27, 0.94));
+      box-shadow: 0 0 18px rgba(79, 156, 255, 0.26), inset 0 0 12px rgba(222, 74, 74, 0.16);
+    }
+
+    body.theme-dark .theme-mode-btn {
+      border-color: rgba(80, 154, 255, 0.35);
+      color: #bedeff;
+      background: rgba(8, 18, 36, 0.88);
+    }
+
+    body.theme-dark .theme-mode-btn.is-active {
+      color: #8bc8ff;
+      border-color: rgba(122, 196, 255, 0.84);
+      box-shadow: 0 0 14px rgba(107, 184, 255, 0.42), inset 0 0 10px rgba(86, 169, 248, 0.25);
+    }
+
+    @media (max-width: 768px) {
+      .theme-mode-switcher {
+        left: 8px;
+        gap: 8px;
+        padding: 6px;
+      }
+
+      .theme-mode-btn {
+        width: 34px;
+        height: 34px;
+        font-size: 0.9rem;
+      }
+    }
+
     
   </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -408,6 +858,15 @@
 </head>
 
 <body>
+
+  <aside class="theme-mode-switcher" aria-label="Selector de tema visual">
+    <button type="button" class="theme-mode-btn" data-theme-mode="light" title="Modo claro" aria-label="Modo claro">
+      <i class="bi bi-sun"></i>
+    </button>
+    <button type="button" class="theme-mode-btn is-active" data-theme-mode="default" title="Modo default" aria-label="Modo default">
+      <i class="bi bi-moon-stars"></i>
+    </button>
+  </aside>
 
   <button type="button" id="open-index-admin-panel" class="sticky-admin-trigger"><i class="bi bi-shield-lock"></i> Panel admin</button>
 
@@ -433,6 +892,12 @@
             <a class="nav-link cyber-nav-link" href="#redes-sociales">
               <span class="nav-hover-accent"></span>
               <span class="nav-icon">📱</span> Redes
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link cyber-nav-link" href="#patreon-support">
+              <span class="nav-hover-accent"></span>
+              <span class="nav-icon">🧡</span> Patreon
             </a>
           </li>
           <li class="nav-item">
@@ -578,6 +1043,18 @@
     </div>
   </header>
 
+  <section id="patreon-support" class="patreon-pulse-strip py-3">
+    <div class="container">
+      <div class="patreon-pulse-card d-flex flex-column flex-lg-row align-items-start align-items-lg-center justify-content-between gap-3 px-3 px-md-4 py-3">
+        <div>
+          <div class="text-warning fw-bold font-orbitron text-uppercase small">[ PATREON_CHANNEL // SUPPORT_NODE ]</div>
+          <p class="mb-0 text-white-50 font-monospace" style="font-size:0.82rem;">Si te gusta este rincón, puedes apoyar el proyecto para mejorar contenido, directos y secciones nuevas.</p>
+        </div>
+        <a href="https://www.patreon.com/" target="_blank" rel="noopener" class="btn btn-sm rounded-0 font-monospace text-uppercase btn-patreon-join">[ UNIRME_EN_PATREON ]</a>
+      </div>
+    </div>
+  </section>
+
   <!-- 2. ⚡ SOBRE MÍ -->
   <section id="sobre-mi" class="py-5 position-relative overflow-hidden">
 
@@ -656,7 +1133,7 @@
     <div class="row g-0 align-items-stretch min-vh-75">
       
       <!-- Columna Instagram -->
-      <div class="col-lg-4 d-flex flex-column justify-content-between p-4 p-md-5 position-relative social-band band-instagram">
+      <div class="col-lg-3 col-md-6 d-flex flex-column justify-content-between p-4 p-md-5 position-relative social-band band-instagram">
         <div>
           <div class="d-flex justify-content-between align-items-center mb-4">
             <div class="d-flex align-items-center gap-2">
@@ -686,7 +1163,7 @@
       </div>
 
       <!-- Columna TikTok -->
-      <div class="col-lg-4 d-flex flex-column justify-content-between p-4 p-md-5 position-relative social-band band-tiktok">
+      <div class="col-lg-3 col-md-6 d-flex flex-column justify-content-between p-4 p-md-5 position-relative social-band band-tiktok">
         <div>
           <div class="d-flex justify-content-between align-items-center mb-4">
             <div class="d-flex align-items-center gap-2">
@@ -716,7 +1193,7 @@
       </div>
 
       <!-- Columna Wattpad -->
-      <div class="col-lg-4 d-flex flex-column justify-content-between p-4 p-md-5 position-relative social-band band-wattpad">
+      <div class="col-lg-3 col-md-6 d-flex flex-column justify-content-between p-4 p-md-5 position-relative social-band band-wattpad">
         <div>
           <div class="d-flex justify-content-between align-items-center mb-4">
             <div class="d-flex align-items-center gap-2">
@@ -742,6 +1219,36 @@
         </div>
         <div class="mt-4 pt-3 border-top border-secondary border-opacity-25">
           <a href="https://www.wattpad.com/user/yaizamelo" target="_blank" class="btn btn-outline-warning btn-sm w-100 rounded-0 font-monospace text-uppercase">[ LEER_BORRADORES ]</a>
+        </div>
+      </div>
+
+      <!-- Columna Pinterest -->
+      <div class="col-lg-3 col-md-6 d-flex flex-column justify-content-between p-4 p-md-5 position-relative social-band band-pinterest">
+        <div>
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex align-items-center gap-2">
+              <i class="bi bi-pinterest fs-4 title-pinterest"></i>
+              <span class="font-orbitron fw-bold tracking-wide title-pinterest">PINTEREST</span>
+            </div>
+            <span class="text-xs text-white-50 font-monospace">
+              <span class="pulse-indicator me-1"></span> VISUAL_BOARD
+            </span>
+          </div>
+          <div class="d-flex align-items-center gap-3 mb-4">
+            <div class="rounded-circle bg-black p-1 border border-secondary" style="width: 48px; height: 48px;">
+              <img src="assets/images/perfilweb.png" class="rounded-circle img-fluid" alt="Perfil" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+            <div>
+              <a href="https://www.pinterest.com/" target="_blank" class="m-0 fw-bold fav-link text-decoration-none" style="color:#ff8a9a;">@yaihi</a>
+              <span class="text-xs text-white-50 font-monospace">Moodboards, inspiración y vibes</span>
+            </div>
+          </div>
+          <div id="pinterest-feed" class="social-feed-container">
+            <!-- Dynamic Content -->
+          </div>
+        </div>
+        <div class="mt-4 pt-3 border-top border-secondary border-opacity-25">
+          <a href="https://www.pinterest.com/" target="_blank" class="btn btn-sm w-100 rounded-0 font-monospace text-uppercase btn-connect-pinterest">[ ABRIR_TABLONES ]</a>
         </div>
       </div>
 
@@ -1389,6 +1896,7 @@
     })();
   </script>
   <script src="deploy-version.js"></script>
+  <script src="theme-mode.js?v=20260701"></script>
   <script src="terminal-loader.js"></script>
 
 
@@ -2029,6 +2537,7 @@
                 <option value="instagram">📸 Instagram</option>
                 <option value="tiktok">🎵 TikTok</option>
                 <option value="wattpad">📖 Wattpad</option>
+                <option value="pinterest">📌 Pinterest</option>
               </select>
             </div>
 
@@ -2104,15 +2613,16 @@
         <div class="modal-body" style="max-height: 65vh; overflow-y: auto;">
           <form id="form-nuevo-emote" autocomplete="off">
             <div class="mb-3">
-              <label class="form-label text-neon-magenta small">&gt; ID_EDITAR (OPCIONAL)</label>
-              <input type="text" id="emote-id-editar" class="form-control form-control-sm bg-black border-secondary text-white" placeholder="emote-123... (si lo rellenas, edita)">
+              <label class="form-label text-neon-magenta small">&gt; REGISTRO_SELECCIONADO</label>
+              <input type="hidden" id="emote-id-editar" value="">
+              <div class="form-text text-white-50 small mt-1">// Se activa al pulsar [ EDITAR ] en el inventario.</div>
               <div id="emote-edit-mode-badge" class="form-text small mt-1 text-warning d-none">[ MODO EDICION ACTIVO ]</div>
             </div>
 
             <div class="mb-3">
-              <label class="form-label text-neon-magenta small">&gt; ARCHIVO_ICONO</label>
-              <input type="text" id="emote-file" class="form-control form-control-sm bg-black border-secondary text-white" placeholder="ranihappy.jfif" required>
-              <div class="form-text text-white-50 small mt-1">// Nombre de archivo dentro de /assets/icons/</div>
+              <label class="form-label text-neon-magenta small">&gt; SUBIR_IMAGEN_EMOTE (DESDE_PC)</label>
+              <input type="file" id="emote-image-file" class="form-control form-control-sm bg-black border-secondary text-white" accept="image/*">
+              <div class="form-text text-white-50 small mt-1">// En alta es obligatoria. En edición es opcional si solo cambias rareza/color.</div>
             </div>
 
             <div class="row mb-3">
@@ -2132,6 +2642,7 @@
                   <option value="bg-gold">bg-gold</option>
                   <option value="bg-info">bg-info</option>
                 </select>
+                <div id="preview-emote-color" class="w-100 text-center py-1 rounded mt-2" style="border:1px solid rgba(0,240,255,0.3); font-size:0.7rem; font-weight:700; color:#00f0ff;">PREVIEW</div>
               </div>
             </div>
 

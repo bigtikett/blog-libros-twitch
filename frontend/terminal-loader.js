@@ -466,6 +466,22 @@
   }
 
   // ðŸ¸ CARGA DINÃMICA DE EMOTES DESDE ASSETS/ICONS
+  function resolveEmoteImageSrc(rawValue) {
+    const value = String(rawValue || '').trim();
+    if (!value) return '';
+    if (/^(https?:\/\/|\/|data:image\/)/i.test(value)) {
+      return value;
+    }
+    return `assets/icons/${value}`;
+  }
+
+  function getEmoteDisplayName(rawValue) {
+    const value = String(rawValue || '').trim();
+    if (!value) return 'emote';
+    const chunks = value.split('/');
+    return chunks[chunks.length - 1] || value;
+  }
+
   async function inicializarMarquesinaEmotes() {
     const container = document.getElementById('emotes-marquee-container');
     if (!container) return;
@@ -517,12 +533,17 @@
       const trackClass = esIzquierda ? 'track-left' : 'track-right';
       
       // Construimos los slots de emotes
-      const itemsHTML = listaEmotes.map(emote => `
+      const itemsHTML = listaEmotes.map(emote => {
+        const imageValue = String(emote.image || emote.file || '').trim();
+        const src = resolveEmoteImageSrc(imageValue);
+        const displayName = getEmoteDisplayName(imageValue);
+        return `
         <div class="emote-ticker-slot">
-          <img src="assets/icons/${emote.file}" alt="${emote.file.split('.')[0]}" loading="lazy">
+          <img src="${src}" alt="${displayName}" loading="lazy">
           <span class="badge-rarity ${emote.color}">${emote.rarity}</span>
         </div>
-      `).join('');
+      `;
+      }).join('');
 
       return `
         <div class="marquee-track ${trackClass}">
@@ -559,13 +580,15 @@
 
       preview.innerHTML = emotes.map((emote, index) => {
         const id = String(emote.id || `emote-${index}`);
-        const file = String(emote.file || emote.image || '').trim();
+        const imageValue = String(emote.image || emote.file || '').trim();
+        const src = resolveEmoteImageSrc(imageValue);
+        const file = getEmoteDisplayName(imageValue);
         const rarity = String(emote.rarity || 'SUB').trim().toUpperCase();
         const color = String(emote.color || 'bg-neon-cyan').trim();
         return `
           <div class="d-flex justify-content-between align-items-center gap-2 py-1 border-bottom border-secondary border-opacity-10">
             <div class="d-flex align-items-center gap-2" style="min-width: 0;">
-              <img src="assets/icons/${file}" alt="${file}" style="width: 28px; height: 28px; object-fit: cover; border:1px solid rgba(255,255,255,.2); border-radius:4px;">
+              <img src="${src}" alt="${file}" style="width: 28px; height: 28px; object-fit: cover; border:1px solid rgba(255,255,255,.2); border-radius:4px;">
               <span class="text-white-50 text-truncate" style="max-width: 200px;">${file}</span>
               <span class="badge-rarity ${color}">${rarity}</span>
             </div>
@@ -1644,13 +1667,141 @@
     return raw.toUpperCase();
   }
 
-  function ensureCustomColorOption(select, hexValue) {
+  function ensureCustomColorOption(select, hexValue, customName = '') {
     const hex = normalizeHex(hexValue);
     if (!select || !hex) return;
-    const existing = Array.from(select.options).find((o) => o.value.toUpperCase() === hex);
+    const normalizedName = String(customName || '').trim();
+    const label = normalizedName ? `${normalizedName} (${hex})` : `CUSTOM (${hex})`;
+    const existing = Array.from(select.options).find((o) => String(o.value || '').toUpperCase() === hex);
     if (!existing) {
-      select.add(new Option(`CUSTOM (${hex})`, hex));
+      const option = new Option(label, hex);
+      option.dataset.customColor = '1';
+      option.dataset.customName = normalizedName || 'CUSTOM';
+      select.add(option);
+      return;
     }
+
+    if (existing.dataset.customColor === '1') {
+      existing.text = label;
+      existing.dataset.customName = normalizedName || 'CUSTOM';
+    }
+  }
+
+  const CUSTOM_MODAL_COLORS_STORAGE_KEY = 'bunker_modal_custom_colors_v1';
+
+  function normalizeCustomColorEntry(entry) {
+    if (typeof entry === 'string') {
+      const hex = normalizeHex(entry);
+      return hex ? { hex, name: 'CUSTOM' } : null;
+    }
+
+    if (entry && typeof entry === 'object') {
+      const hex = normalizeHex(entry.hex || entry.value || '');
+      if (!hex) return null;
+      const name = String(entry.name || 'CUSTOM').trim() || 'CUSTOM';
+      return { hex, name };
+    }
+
+    return null;
+  }
+
+  function getStoredCustomModalColors() {
+    try {
+      const raw = localStorage.getItem(CUSTOM_MODAL_COLORS_STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(parsed)) return [];
+      return parsed.map((entry) => normalizeCustomColorEntry(entry)).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function saveStoredCustomModalColors(colors) {
+    const source = Array.isArray(colors) ? colors : [];
+    const map = new Map();
+    source.forEach((entry) => {
+      const normalized = normalizeCustomColorEntry(entry);
+      if (!normalized) return;
+      map.set(normalized.hex, normalized);
+    });
+    localStorage.setItem(CUSTOM_MODAL_COLORS_STORAGE_KEY, JSON.stringify(Array.from(map.values())));
+  }
+
+  function addColorToPersistentPalette(hexValue, customName = 'CUSTOM') {
+    const hex = normalizeHex(hexValue);
+    if (!hex) return;
+    const name = String(customName || 'CUSTOM').trim() || 'CUSTOM';
+    const current = getStoredCustomModalColors();
+    const existingIndex = current.findIndex((entry) => entry.hex === hex);
+    if (existingIndex >= 0) {
+      current[existingIndex] = { hex, name };
+    } else {
+      current.push({ hex, name });
+    }
+    saveStoredCustomModalColors(current);
+  }
+
+  function removeColorFromPersistentPalette(hexValue) {
+    const hex = normalizeHex(hexValue);
+    if (!hex) return false;
+    const current = getStoredCustomModalColors();
+    const filtered = current.filter((entry) => entry.hex !== hex);
+    saveStoredCustomModalColors(filtered);
+    return filtered.length !== current.length;
+  }
+
+  function injectStoredColorsIntoSelect(select) {
+    if (!select) return;
+    const stored = getStoredCustomModalColors();
+    stored.forEach((entry) => ensureCustomColorOption(select, entry.hex, entry.name));
+  }
+
+  function removeCustomOptionsFromSelect(select) {
+    if (!select) return;
+    Array.from(select.options).forEach((option) => {
+      if (option.dataset.customColor === '1') {
+        option.remove();
+      }
+    });
+  }
+
+  function injectStoredColorsIntoAllModalColorSelects() {
+    const colorSelects = document.querySelectorAll('.modal select[id*="color"]');
+    colorSelects.forEach((select) => injectStoredColorsIntoSelect(select));
+  }
+
+  function refreshCustomOptionsFromStorage() {
+    const colorSelects = document.querySelectorAll('.modal select[id*="color"]');
+    colorSelects.forEach((select) => {
+      const currentValue = String(select.value || '');
+      removeCustomOptionsFromSelect(select);
+      injectStoredColorsIntoSelect(select);
+      if (isHexColor(currentValue) && !Array.from(select.options).some((opt) => String(opt.value || '').toUpperCase() === currentValue.toUpperCase())) {
+        if (select.options.length > 0) {
+          select.selectedIndex = 0;
+        }
+      }
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+  }
+
+  function pickCustomColorToDelete() {
+    const stored = getStoredCustomModalColors();
+    if (!stored.length) {
+      alert('⚠ No hay colores custom guardados.');
+      return '';
+    }
+
+    const list = stored.map((entry, idx) => `${idx + 1}. ${entry.name} (${entry.hex})`).join('\n');
+    const answer = prompt(`Elige el número del color que quieres eliminar:\n\n${list}`);
+    if (answer === null) return '';
+    const index = Number.parseInt(String(answer).trim(), 10);
+    if (!Number.isInteger(index) || index < 1 || index > stored.length) {
+      alert('⚠ Selección inválida.');
+      return '';
+    }
+
+    return stored[index - 1].hex;
   }
 
   function enhanceModalColorPickers() {
@@ -1658,6 +1809,8 @@
     colorSelects.forEach((select) => {
       if (select.dataset.paletteEnhanced === '1') return;
       select.dataset.paletteEnhanced = '1';
+
+      injectStoredColorsIntoSelect(select);
 
       if (isHexColor(select.value)) {
         ensureCustomColorOption(select, select.value);
@@ -1669,12 +1822,30 @@
       paletteBtn.style.fontSize = '0.65rem';
       paletteBtn.innerHTML = '[ 🎨 PALETA ] <span class="palette-swatch" aria-hidden="true" style="display:inline-block;width:11px;height:11px;margin-left:6px;border:1px solid rgba(255,255,255,0.65);vertical-align:middle;"></span>';
 
+      const saveColorBtn = document.createElement('button');
+      saveColorBtn.type = 'button';
+      saveColorBtn.className = 'btn btn-outline-success btn-sm mt-2 ms-2 rounded-0 font-monospace';
+      saveColorBtn.style.fontSize = '0.65rem';
+      saveColorBtn.textContent = '[ + GUARDAR COLOR ]';
+
+      const customNameInput = document.createElement('input');
+      customNameInput.type = 'text';
+      customNameInput.className = 'form-control form-control-sm bg-black border-secondary text-white mt-2 ms-2 rounded-0';
+      customNameInput.style.maxWidth = '160px';
+      customNameInput.style.fontSize = '0.65rem';
+      customNameInput.placeholder = 'NOMBRE_CUSTOM';
+
+      const removeColorBtn = document.createElement('button');
+      removeColorBtn.type = 'button';
+      removeColorBtn.className = 'btn btn-outline-danger btn-sm mt-2 ms-2 rounded-0 font-monospace';
+      removeColorBtn.style.fontSize = '0.65rem';
+      removeColorBtn.textContent = '[ - ELIMINAR COLOR ]';
+
       const swatchEl = paletteBtn.querySelector('.palette-swatch');
 
       const resolveSwatchColor = (value) => {
         const key = String(value || '').trim().toLowerCase();
         if (isHexColor(key)) return normalizeHex(key);
-        if (key === 'black' || key === 'brown') return '#FFFFFF';
         const quickMap = {
           white: '#FFFFFF',
           cyan: '#00F0FF',
@@ -1685,7 +1856,9 @@
           orange: '#FF8C00',
           red: '#FF2B2B',
           blue: '#1F6FFF',
-          gray: '#B8BCC6',
+          gray: '#6B7280',
+          brown: '#8B5A2B',
+          black: '#111111',
           info: '#00F0FF',
           warning: '#FFEE00'
         };
@@ -1711,20 +1884,114 @@
       nativePicker.addEventListener('input', () => {
         const picked = normalizeHex(nativePicker.value);
         if (!picked) return;
-        ensureCustomColorOption(select, picked);
-        select.value = picked;
+        select.dataset.pendingCustomColor = picked;
+        if (swatchEl) {
+          swatchEl.style.backgroundColor = picked;
+          swatchEl.style.boxShadow = `0 0 8px ${picked}`;
+        }
+      });
+
+      saveColorBtn.addEventListener('click', () => {
+        const pending = normalizeHex(select.dataset.pendingCustomColor || '');
+        if (!pending) {
+          alert('⚠ Primero elige un color con [ 🎨 PALETA ].');
+          return;
+        }
+
+        const colorName = String(customNameInput.value || '').trim() || 'CUSTOM';
+
+        addColorToPersistentPalette(pending, colorName);
+        injectStoredColorsIntoAllModalColorSelects();
+        select.value = pending;
         select.dispatchEvent(new Event('change', { bubbles: true }));
+        customNameInput.value = '';
+      });
+
+      removeColorBtn.addEventListener('click', () => {
+        const targetHex = pickCustomColorToDelete();
+        if (!targetHex) return;
+        const deleted = removeColorFromPersistentPalette(targetHex);
+        if (!deleted) {
+          alert('⚠ No se pudo eliminar ese color custom.');
+          return;
+        }
+        refreshCustomOptionsFromStorage();
       });
 
       select.addEventListener('change', syncSwatch);
       syncSwatch();
 
       select.insertAdjacentElement('afterend', paletteBtn);
-      paletteBtn.insertAdjacentElement('afterend', nativePicker);
+      paletteBtn.insertAdjacentElement('afterend', customNameInput);
+      customNameInput.insertAdjacentElement('afterend', saveColorBtn);
+      saveColorBtn.insertAdjacentElement('afterend', removeColorBtn);
+      removeColorBtn.insertAdjacentElement('afterend', nativePicker);
     });
   }
 
   enhanceModalColorPickers();
+
+  const MODAL_PALETTE_STORAGE_KEY = 'bunker_admin_modal_palette';
+  const MODAL_PALETTE_CLASSES = ['palette-cyan', 'palette-magenta', 'palette-amber', 'palette-lime'];
+  const MODAL_PALETTES = [
+    { id: 'cyan', className: 'palette-cyan', color: '#00f0ff', label: 'CYAN' },
+    { id: 'magenta', className: 'palette-magenta', color: '#ff3d9a', label: 'MAGENTA' },
+    { id: 'amber', className: 'palette-amber', color: '#ffb347', label: 'AMBER' },
+    { id: 'lime', className: 'palette-lime', color: '#86ff4d', label: 'LIME' }
+  ];
+
+  function applyPaletteToAllModals(paletteId) {
+    const selected = MODAL_PALETTES.find((item) => item.id === paletteId) || MODAL_PALETTES[0];
+
+    document.querySelectorAll('.bitacora-skin-modal').forEach((modal) => {
+      MODAL_PALETTE_CLASSES.forEach((className) => modal.classList.remove(className));
+      modal.classList.add(selected.className);
+    });
+
+    document.querySelectorAll('.modal-palette-chip').forEach((chip) => {
+      chip.classList.toggle('is-active', chip.dataset.paletteId === selected.id);
+    });
+
+    localStorage.setItem(MODAL_PALETTE_STORAGE_KEY, selected.id);
+  }
+
+  function initModalPaletteSwitcher() {
+    const savedPalette = localStorage.getItem(MODAL_PALETTE_STORAGE_KEY) || 'cyan';
+
+    document.querySelectorAll('.bitacora-skin-modal').forEach((modalEl) => {
+      if (!modalEl || modalEl.querySelector('.modal-palette-switcher-inline')) return;
+
+      const modalHeader = modalEl.querySelector('.modal-header');
+      const modalTitle = modalEl.querySelector('.modal-title');
+      if (!modalHeader || !modalTitle) return;
+
+      const switcher = document.createElement('div');
+      switcher.className = 'modal-palette-switcher-inline';
+
+      const chipsWrap = document.createElement('div');
+      chipsWrap.className = 'd-flex align-items-center gap-1';
+
+      MODAL_PALETTES.forEach((palette, idx) => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'modal-palette-chip';
+        chip.style.background = palette.color;
+        chip.style.animationDelay = `${idx * 0.12}s`;
+        chip.title = palette.label;
+        chip.dataset.paletteId = palette.id;
+        chip.setAttribute('aria-label', `Cambiar paleta a ${palette.label}`);
+        chip.addEventListener('click', () => applyPaletteToAllModals(palette.id));
+        chipsWrap.appendChild(chip);
+      });
+
+      switcher.appendChild(chipsWrap);
+      modalTitle.insertAdjacentElement('afterend', switcher);
+    });
+
+    applyPaletteToAllModals(savedPalette);
+  }
+
+  initModalPaletteSwitcher();
 
   const colorMap = {
     white: '#ffffff',
@@ -1736,17 +2003,41 @@
     orange: '#ff8c00',
     red: '#ff2b2b',
     blue: '#1f6fff',
-    gray: '#b8bcc6',
-    brown: '#ffffff',
-    black: '#ffffff',
+    gray: '#6b7280',
+    brown: '#8b5a2b',
+    black: '#111111',
     info: '#00f0ff',
-    warning: '#ffee00'
+    warning: '#ffee00',
+    'bg-neon-cyan': '#00f0ff',
+    'bg-neon-magenta': '#ff3d9a',
+    'btn-purple': '#a072ff',
+    'bg-purple': '#7e55ff',
+    'bg-dark': '#d5d9e4',
+    'bg-gold': '#ffd166',
+    'bg-info': '#31d6ff'
   };
+
+  function hexToRgb(hex) {
+    const normalized = normalizeHex(hex);
+    if (!normalized) return null;
+    const int = Number.parseInt(normalized.slice(1), 16);
+    return {
+      r: (int >> 16) & 255,
+      g: (int >> 8) & 255,
+      b: int & 255
+    };
+  }
+
+  function getContrastTextColor(backgroundHex) {
+    const rgb = hexToRgb(backgroundHex);
+    if (!rgb) return '#ffffff';
+    const luminance = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
+    return luminance > 0.55 ? '#10151f' : '#f5f9ff';
+  }
 
   function getReadablePreviewColor(colorValue) {
     const value = String(colorValue || '').toLowerCase();
     if (isHexColor(value)) return normalizeHex(value);
-    if (value === 'black' || value === 'brown') return '#ffffff';
     return colorMap[value] || '#ffffff';
   }
 
@@ -1756,9 +2047,12 @@
     if (!sel || !prev) return;
     const update = () => {
       const c = getReadablePreviewColor(sel.value);
-      prev.style.color = c;
+      const contrast = getContrastTextColor(c);
+      prev.style.backgroundColor = c;
+      prev.style.color = contrast;
       prev.style.borderColor = c;
-      prev.style.textShadow = `0 0 8px ${c}`;
+      prev.style.textShadow = 'none';
+      prev.style.boxShadow = `0 0 8px ${c}`;
     };
     sel.addEventListener('change', update);
     update();
@@ -1781,6 +2075,7 @@
   setupColorPreview('ent-color-social', 'preview-ent-color-social');
 
   setupColorPreview('game-color-titulo', 'preview-game-color-titulo');
+  setupColorPreview('emote-color', 'preview-emote-color');
 
   // 5. Function to load interviews dynamically
   async function cargarEntrevistas() {
@@ -2291,7 +2586,8 @@
     };
 
     setVal('emote-id-editar', emote.id || '');
-    setVal('emote-file', emote.file || emote.image || '');
+    const emoteImageInput = document.getElementById('emote-image-file');
+    if (emoteImageInput) emoteImageInput.value = '';
     setVal('emote-rarity', emote.rarity || 'SUB');
     setVal('emote-color', emote.color || 'bg-neon-cyan');
     setEditModeBadgeState('emote-id-editar', 'emote-edit-mode-badge');
@@ -2422,8 +2718,9 @@
     const instagramContainer = document.getElementById("instagram-feed");
     const tiktokContainer = document.getElementById("tiktok-feed");
     const wattpadContainer = document.getElementById("wattpad-feed");
+    const pinterestContainer = document.getElementById("pinterest-feed");
 
-    if (!instagramContainer || !tiktokContainer || !wattpadContainer) return;
+    if (!instagramContainer || !tiktokContainer || !wattpadContainer || !pinterestContainer) return;
 
     try {
       const response = await fetch("/api/redes");
@@ -2490,6 +2787,7 @@
       renderFeed(instagramContainer, data.instagram, "url-card-instagram", "instagram");
       renderFeed(tiktokContainer, data.tiktok, "url-card-tiktok", "tiktok");
       renderFeed(wattpadContainer, data.wattpad, "url-card-wattpad", "wattpad");
+      renderFeed(pinterestContainer, data.pinterest, "url-card-pinterest", "pinterest");
 
       // Process embed scripts after DOM injection
       procesarEmbedsExternos();
@@ -2572,8 +2870,13 @@
       const data = await response.json();
       
       let html = '';
-      const redes = ['instagram', 'tiktok', 'wattpad'];
-      const icons = { instagram: 'bi-instagram text-neon-magenta', tiktok: 'bi-tiktok text-neon-cyan', wattpad: 'bi-book-half text-warning' };
+      const redes = ['instagram', 'tiktok', 'wattpad', 'pinterest'];
+      const icons = {
+        instagram: 'bi-instagram text-neon-magenta',
+        tiktok: 'bi-tiktok text-neon-cyan',
+        wattpad: 'bi-book-half text-warning',
+        pinterest: 'bi-pinterest text-danger'
+      };
 
       redes.forEach(red => {
         const posts = data[red] || [];
@@ -2772,28 +3075,35 @@
       e.preventDefault();
 
       const id = (document.getElementById('emote-id-editar')?.value || '').trim();
-      const file = (document.getElementById('emote-file')?.value || '').trim();
       const rarity = (document.getElementById('emote-rarity')?.value || '').trim().toUpperCase();
       const color = (document.getElementById('emote-color')?.value || 'bg-neon-cyan').trim();
       const password = document.getElementById('modal-password-emote')?.value || '';
+      const fileInput = document.getElementById('emote-image-file');
+      const selectedFile = fileInput && fileInput.files ? fileInput.files[0] : null;
+      const isEdit = Boolean(id);
 
-      if (!file || !rarity || !password) {
-        alert('⚠ Completa archivo, rareza y password.');
+      if (!rarity || !password) {
+        alert('⚠ Completa rareza y password.');
         return;
       }
 
-      const payload = {
-        id: id || undefined,
-        image: file,
-        file,
-        rarity,
-        color,
-        password
-      };
+      if (!isEdit && !selectedFile) {
+        alert('⚠ Debes subir una imagen desde tu PC para crear el emote.');
+        return;
+      }
 
-      const endpoint = id ? '/api/emotes/editar' : '/api/emotes/nuevo';
+      const submitEmote = async (imageFileData, imageFileName) => {
+        const payload = {
+          id: id || undefined,
+          rarity,
+          color,
+          password,
+          imageFileData: imageFileData || undefined,
+          imageFileName: imageFileName || undefined
+        };
 
-      try {
+        const endpoint = isEdit ? '/api/emotes/editar' : '/api/emotes/nuevo';
+
         const response = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -2809,6 +3119,25 @@
 
         await cargarPreviewEmotes();
         await inicializarMarquesinaEmotes();
+      };
+
+      try {
+        if (selectedFile) {
+          const reader = new FileReader();
+          reader.onload = async (event) => {
+            try {
+              await submitEmote(event.target.result, selectedFile.name);
+            } catch (error) {
+              alert(`ERROR: ${error.message}`);
+            }
+          };
+          reader.onerror = () => {
+            alert('ERROR: no se pudo leer la imagen seleccionada.');
+          };
+          reader.readAsDataURL(selectedFile);
+        } else {
+          await submitEmote();
+        }
       } catch (error) {
         alert(`ERROR: ${error.message}`);
       }

@@ -106,6 +106,39 @@ const DEFAULT_EMOTES = [
   { file: 'yaiwow.jfif', rarity: 'STREAMER', color: 'bg-gold' }
 ];
 
+const REDES_VALIDAS = ['instagram', 'tiktok', 'wattpad', 'pinterest'];
+const REDES_DEFAULT = { instagram: [], tiktok: [], wattpad: [], pinterest: [] };
+
+function generarEmoteId() {
+  return `emote-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+}
+
+function normalizarListaEmotes(raw) {
+  const list = Array.isArray(raw) ? raw : [];
+  return list.map((entry) => {
+    const source = (entry && typeof entry === 'object') ? entry : {};
+    const image = String(source.image || source.file || '').trim();
+    return {
+      ...source,
+      id: String(source.id || generarEmoteId()),
+      image,
+      file: image,
+      rarity: String(source.rarity || 'SUB').trim().toUpperCase(),
+      color: String(source.color || 'bg-neon-cyan').trim()
+    };
+  });
+}
+
+function normalizarColeccionRedes(datos) {
+  const base = (datos && typeof datos === 'object' && !Array.isArray(datos)) ? { ...datos } : {};
+  for (const red of REDES_VALIDAS) {
+    if (!Array.isArray(base[red])) {
+      base[red] = [];
+    }
+  }
+  return base;
+}
+
 const r2Client = R2_ENDPOINT && R2_ACCESS_KEY_ID && R2_SECRET_ACCESS_KEY && R2_BUCKET_NAME
   ? new S3Client({
       region: 'auto',
@@ -154,7 +187,7 @@ async function ensureCollectionsDbReady() {
       { key: 'personajes', path: RUTA_PERSONAJES, default: [] },
       { key: 'entrevistas', path: RUTA_ENTREVISTAS, default: [] },
       { key: 'juegos', path: RUTA_JUEGOS, default: [] },
-      { key: 'redes', path: RUTA_REDES, default: { instagram: [], tiktok: [], wattpad: [] } },
+      { key: 'redes', path: RUTA_REDES, default: REDES_DEFAULT },
       { key: 'bitacora', path: RUTA_BITACORA, default: [] },
       { key: 'emotes', path: RUTA_EMOTES, default: DEFAULT_EMOTES }
     ];
@@ -341,6 +374,32 @@ async function deleteCoverFromR2IfNeeded(coverUrl) {
     }));
   } catch (error) {
     console.error('No se pudo eliminar la portada en R2:', error);
+  }
+}
+
+function deleteLocalCoverIfNeeded(coverUrl, localRoutePrefix = '/img/favoritos', localDir = IMG_FAVORITOS_DIR) {
+  if (!coverUrl || typeof coverUrl !== 'string') {
+    return;
+  }
+
+  if (!coverUrl.startsWith(`${localRoutePrefix}/`)) {
+    return;
+  }
+
+  const fileName = decodeURIComponent(path.basename(coverUrl));
+  const fullPath = path.resolve(localDir, fileName);
+  const safeBase = path.resolve(localDir);
+
+  if (!fullPath.startsWith(safeBase)) {
+    return;
+  }
+
+  if (fs.existsSync(fullPath)) {
+    try {
+      fs.unlinkSync(fullPath);
+    } catch (error) {
+      console.error('No se pudo eliminar la portada local:', error);
+    }
   }
 }
 
@@ -2032,8 +2091,8 @@ app.post('/api/juegos/eliminar', async (req, res) => {
 // ========================================================
 app.get('/api/redes', async (req, res) => {
   try {
-    const datos = await getCollection('redes', RUTA_REDES, { instagram: [], tiktok: [], wattpad: [] });
-    res.json(datos);
+    const datos = await getCollection('redes', RUTA_REDES, REDES_DEFAULT);
+    res.json(normalizarColeccionRedes(datos));
   } catch (error) {
     console.error("Error leyendo redes:", error);
     res.status(500).json({ error: "Fallo al leer redes." });
@@ -2051,9 +2110,8 @@ app.post('/api/redes/nuevo', async (req, res) => {
       return res.status(401).json({ error: 'Contraseña incorrecta.' });
     }
 
-    const redesValidas = ['instagram', 'tiktok', 'wattpad'];
-    if (!redesValidas.includes(red)) {
-      return res.status(400).json({ error: 'Red no válida. Usa: instagram, tiktok o wattpad.' });
+    if (!REDES_VALIDAS.includes(red)) {
+      return res.status(400).json({ error: 'Red no válida. Usa: instagram, tiktok, wattpad o pinterest.' });
     }
 
     if (!embedHtml || !embedHtml.trim()) {
@@ -2077,7 +2135,8 @@ app.post('/api/redes/nuevo', async (req, res) => {
       }
     }
 
-    const datos = await getCollection('redes', RUTA_REDES, { instagram: [], tiktok: [], wattpad: [] });
+    const datosRaw = await getCollection('redes', RUTA_REDES, REDES_DEFAULT);
+    const datos = normalizarColeccionRedes(datosRaw);
 
     const nuevoPost = {
       id: `${red}-${Date.now()}`,
@@ -2119,12 +2178,12 @@ app.post('/api/redes/editar/:red/:id', async (req, res) => {
       return res.status(401).json({ error: 'Contraseña incorrecta.' });
     }
 
-    const redesValidas = ['instagram', 'tiktok', 'wattpad'];
-    if (!redesValidas.includes(red)) {
-      return res.status(400).json({ error: 'Red no válida. Usa: instagram, tiktok o wattpad.' });
+    if (!REDES_VALIDAS.includes(red)) {
+      return res.status(400).json({ error: 'Red no válida. Usa: instagram, tiktok, wattpad o pinterest.' });
     }
 
-    const datos = await getCollection('redes', RUTA_REDES, { instagram: [], tiktok: [], wattpad: [] });
+    const datosRaw = await getCollection('redes', RUTA_REDES, REDES_DEFAULT);
+    const datos = normalizarColeccionRedes(datosRaw);
     const index = datos[red].findIndex(post => post.id === id);
     if (index === -1) {
       return res.status(404).json({ error: 'Post no encontrado.' });
@@ -2181,12 +2240,12 @@ app.delete('/api/redes/eliminar/:red/:id', async (req, res) => {
       return res.status(401).json({ error: 'Contraseña incorrecta.' });
     }
 
-    const redesValidas = ['instagram', 'tiktok', 'wattpad'];
-    if (!redesValidas.includes(red)) {
-      return res.status(400).json({ error: 'Red no válida. Usa: instagram, tiktok o wattpad.' });
+    if (!REDES_VALIDAS.includes(red)) {
+      return res.status(400).json({ error: 'Red no válida. Usa: instagram, tiktok, wattpad o pinterest.' });
     }
 
-    const datos = await getCollection('redes', RUTA_REDES, { instagram: [], tiktok: [], wattpad: [] });
+    const datosRaw = await getCollection('redes', RUTA_REDES, REDES_DEFAULT);
+    const datos = normalizarColeccionRedes(datosRaw);
 
     const index = datos[red].findIndex(post => post.id === id);
     if (index === -1) {
@@ -2219,7 +2278,15 @@ app.delete('/api/redes/eliminar/:red/:id', async (req, res) => {
 app.get('/api/emotes', async (req, res) => {
   try {
     const datos = await getCollection('emotes', RUTA_EMOTES, DEFAULT_EMOTES);
-    const salida = Array.isArray(datos) ? datos : [];
+    const salida = normalizarListaEmotes(datos);
+    const rawLength = Array.isArray(datos) ? datos.length : 0;
+    const needsSync = rawLength !== salida.length || salida.some((entry, index) => {
+      const rawEntry = Array.isArray(datos) ? datos[index] : null;
+      return !rawEntry || !rawEntry.id || !rawEntry.image || !rawEntry.file;
+    });
+    if (needsSync) {
+      await saveCollection('emotes', salida, RUTA_EMOTES);
+    }
     res.json(salida);
   } catch (error) {
     console.error('Error leyendo emotes:', error);
@@ -2234,16 +2301,31 @@ app.post('/api/emotes/nuevo', async (req, res) => {
       return res.status(401).json({ error: 'Código de acceso incorrecto. Interrupción del sector.' });
     }
 
-    const image = String(payload.image || payload.file || '').trim();
     const rarity = String(payload.rarity || 'SUB').trim().toUpperCase();
     const color = String(payload.color || 'bg-neon-cyan').trim();
-    if (!image) {
-      return res.status(400).json({ error: 'Debes indicar imagen/ruta del emote.' });
+    let image = String(payload.image || payload.file || '').trim();
+
+    if (payload.imageFileData && payload.imageFileName) {
+      const subida = await uploadCoverAndGetUrl(
+        payload.imageFileData,
+        payload.imageFileName,
+        'emotes',
+        IMG_FAVORITOS_DIR,
+        '/img/favoritos'
+      );
+      if (subida) {
+        image = subida;
+      }
     }
 
-    const datosActuales = await getCollection('emotes', RUTA_EMOTES, DEFAULT_EMOTES);
+    if (!image) {
+      return res.status(400).json({ error: 'Debes subir una imagen de emote válida.' });
+    }
+
+    const datosRaw = await getCollection('emotes', RUTA_EMOTES, DEFAULT_EMOTES);
+    const datosActuales = normalizarListaEmotes(datosRaw);
     const nuevoEmote = {
-      id: `emote-${Date.now()}`,
+      id: generarEmoteId(),
       image,
       file: image,
       rarity,
@@ -2273,14 +2355,35 @@ app.post('/api/emotes/editar', async (req, res) => {
       return res.status(400).json({ error: 'ID de emote requerido para editar.' });
     }
 
-    const datosActuales = await getCollection('emotes', RUTA_EMOTES, DEFAULT_EMOTES);
+    const datosRaw = await getCollection('emotes', RUTA_EMOTES, DEFAULT_EMOTES);
+    const datosActuales = normalizarListaEmotes(datosRaw);
     const index = datosActuales.findIndex((entry) => String(entry.id || '') === String(id));
     if (index === -1) {
       return res.status(404).json({ error: 'Emote no encontrado.' });
     }
 
     const base = datosActuales[index] || {};
-    const image = String(payload.image || payload.file || base.image || base.file || '').trim();
+    const oldImage = String(base.image || base.file || '').trim();
+    let image = String(payload.image || payload.file || base.image || base.file || '').trim();
+
+    if (payload.imageFileData && payload.imageFileName) {
+      const subida = await uploadCoverAndGetUrl(
+        payload.imageFileData,
+        payload.imageFileName,
+        'emotes',
+        IMG_FAVORITOS_DIR,
+        '/img/favoritos'
+      );
+      if (subida) {
+        image = subida;
+      }
+    }
+
+    if (payload.imageFileData && payload.imageFileName && oldImage && oldImage !== image) {
+      await deleteCoverFromR2IfNeeded(oldImage);
+      deleteLocalCoverIfNeeded(oldImage);
+    }
+
     const rarity = String(payload.rarity || base.rarity || 'SUB').trim().toUpperCase();
     const color = String(payload.color || base.color || 'bg-neon-cyan').trim();
 
@@ -2317,10 +2420,17 @@ app.post('/api/emotes/eliminar', async (req, res) => {
       return res.status(400).json({ error: 'ID de emote requerido para eliminar.' });
     }
 
-    const datosActuales = await getCollection('emotes', RUTA_EMOTES, DEFAULT_EMOTES);
+    const datosRaw = await getCollection('emotes', RUTA_EMOTES, DEFAULT_EMOTES);
+    const datosActuales = normalizarListaEmotes(datosRaw);
     const emoteAEliminar = datosActuales.find((entry) => String(entry.id || '') === String(id));
     if (!emoteAEliminar) {
       return res.status(404).json({ error: 'Emote no encontrado.' });
+    }
+
+    const imageToDelete = String(emoteAEliminar.image || emoteAEliminar.file || '').trim();
+    if (imageToDelete) {
+      await deleteCoverFromR2IfNeeded(imageToDelete);
+      deleteLocalCoverIfNeeded(imageToDelete);
     }
 
     const actualizados = datosActuales.filter((entry) => String(entry.id || '') !== String(id));
