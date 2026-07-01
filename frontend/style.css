@@ -269,6 +269,11 @@
   width: 75%;
 }
 
+html,
+body {
+  overflow-x: clip;
+}
+
 /* Botón especial estilo Twitch Live */
 .twitch-special-btn {
   border: 1px solid rgba(145, 70, 255, 0.35) !important;
@@ -364,6 +369,29 @@
     display: none; /* Quitamos la pulsación exterior para no saturar en móvil */
   }
 }
+
+@media (min-width: 992px) and (max-width: 1260px) {
+  .cyber-navbar .navbar-collapse {
+    display: flex;
+    justify-content: flex-end;
+    min-width: 0;
+  }
+
+  .cyber-navbar .navbar-nav {
+    width: 100%;
+    max-width: 860px;
+    min-width: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    row-gap: 4px;
+  }
+
+  .cyber-nav-link {
+    font-size: 0.74rem;
+    padding: 6px 10px !important;
+  }
+}
+
 @keyframes cyber-menu-slide {
   0% {
     opacity: 0;

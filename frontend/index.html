@@ -38,7 +38,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
   <!-- Tu archivo de estilos personalizados -->
   <link rel="stylesheet" href="style.min.css?v=20260701" />
-  <link rel="stylesheet" href="theme-mode.css?v=20260701" />
+  <link rel="stylesheet" href="theme-mode.css?v=20260701-sA" />
   <link rel="icon" type="image/webp" href="/assets/icons/rani.webp">
   <style>
     /* Override local: asegurar visibilidad del badge animado en redes */
@@ -257,6 +257,157 @@
     .dev-log-ticker-container .ticker-content {
       animation-duration: 54s !important;
     }
+    
+      /* Light mode hard-fix for sections with local dark cascade */
+      body[data-theme-mode="light"] #gaming.section-gaming-principal,
+      body.theme-light #gaming.section-gaming-principal,
+      body[data-theme-mode="light"] #favoritos-footer.section-favorites,
+      body.theme-light #favoritos-footer.section-favorites {
+        background: linear-gradient(180deg, rgba(239, 246, 245, 0.95), rgba(235, 241, 243, 0.93), rgba(243, 236, 242, 0.93)) !important;
+        color: #2b3648 !important;
+      }
+    
+      body[data-theme-mode="light"] #favoritos-footer.section-favorites::before,
+      body.theme-light #favoritos-footer.section-favorites::before {
+        background: repeating-linear-gradient(0deg, rgba(0, 202, 222, 0.05) 0px, transparent 1px, transparent 2px, rgba(0, 202, 222, 0.05) 3px) !important;
+        opacity: 0.18 !important;
+      }
+    
+      body[data-theme-mode="light"] .library-screen-frame,
+      body[data-theme-mode="light"] .twitch-schedule-card,
+      body.theme-light .library-screen-frame,
+      body.theme-light .twitch-schedule-card {
+        background: rgba(255, 253, 247, 0.95) !important;
+        border-color: rgba(72, 91, 117, 0.2) !important;
+        color: #2b3648 !important;
+      }
+    
+      body[data-theme-mode="light"] #gaming.text-white,
+      body[data-theme-mode="light"] #favoritos-footer.text-white,
+      body.theme-light #gaming.text-white,
+      body.theme-light #favoritos-footer.text-white {
+        color: #2b3648 !important;
+      }
+    
+      body[data-theme-mode="light"] #redes-sociales .title-instagram,
+      body.theme-light #redes-sociales .title-instagram {
+        color: #9b2a62 !important;
+      }
+    
+      body[data-theme-mode="light"] #redes-sociales .title-tiktok,
+      body.theme-light #redes-sociales .title-tiktok {
+        color: #145861 !important;
+      }
+    
+      body[data-theme-mode="light"] #redes-sociales .title-wattpad,
+      body.theme-light #redes-sociales .title-wattpad {
+        color: #a55a11 !important;
+      }
+    
+      body[data-theme-mode="light"] #redes-sociales .title-pinterest,
+      body.theme-light #redes-sociales .title-pinterest {
+        color: #b13d58 !important;
+      }
+
+      body[data-theme-mode="light"] #header-inicio,
+      body.theme-light #header-inicio {
+        background: linear-gradient(180deg, rgba(246, 250, 246, 0.98), rgba(232, 244, 239, 0.96), rgba(243, 232, 239, 0.95)) !important;
+        color: #2b3648 !important;
+      }
+
+      body[data-theme-mode="light"] #header-inicio .header-bg-blur,
+      body.theme-light #header-inicio .header-bg-blur {
+        filter: blur(8px) brightness(1.06) saturate(0.78) !important;
+        opacity: 0.24 !important;
+      }
+
+      body[data-theme-mode="light"] #header-inicio .header-gradient-overlay,
+      body.theme-light #header-inicio .header-gradient-overlay {
+        background: linear-gradient(180deg, rgba(244, 251, 248, 0.9) 0%, rgba(244, 251, 248, 0.42) 50%, rgba(246, 238, 244, 0.84) 100%) !important;
+      }
+
+      body[data-theme-mode="light"] #header-inicio h1,
+      body.theme-light #header-inicio h1 {
+        background: none !important;
+        -webkit-background-clip: border-box !important;
+        background-clip: border-box !important;
+        -webkit-text-fill-color: #1f2b3d !important;
+        color: #1f2b3d !important;
+        text-shadow: 0 2px 10px rgba(31, 43, 61, 0.12) !important;
+        border-left: 0 !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+      }
+
+      body[data-theme-mode="light"] #header-inicio :where(.lead, p, .text-light, .text-white, .text-white-50),
+      body.theme-light #header-inicio :where(.lead, p, .text-light, .text-white, .text-white-50) {
+        color: #2b3648 !important;
+      }
+
+      body[data-theme-mode="light"] #header-inicio .cyber-quote-card,
+      body.theme-light #header-inicio .cyber-quote-card {
+        background: rgba(255, 253, 247, 0.96) !important;
+        border-color: rgba(72, 91, 117, 0.22) !important;
+        border-left-color: rgba(0, 202, 222, 0.44) !important;
+        color: #2b3648 !important;
+      }
+
+      body[data-theme-mode="light"] #header-inicio .quote-author,
+      body.theme-light #header-inicio .quote-author {
+        color: #145861 !important;
+      }
+
+      body[data-theme-mode="light"] .cyber-quote-card,
+      body.theme-light .cyber-quote-card {
+        background: rgba(255, 253, 247, 0.95) !important;
+        border-color: rgba(72, 91, 117, 0.2) !important;
+        border-left-color: rgba(0, 202, 222, 0.42) !important;
+        color: #2b3648 !important;
+      }
+
+      body[data-theme-mode="light"] #galeria.section-emotes-vault,
+      body.theme-light #galeria.section-emotes-vault,
+      body[data-theme-mode="light"] #setup.section-setup-hud,
+      body.theme-light #setup.section-setup-hud {
+        background: linear-gradient(180deg, rgba(239, 246, 245, 0.95), rgba(235, 241, 243, 0.93), rgba(243, 236, 242, 0.93)) !important;
+        color: #2b3648 !important;
+      }
+
+      body[data-theme-mode="light"] #galeria :where(.text-white, .text-white-50, .text-light),
+      body.theme-light #galeria :where(.text-white, .text-white-50, .text-light),
+      body[data-theme-mode="light"] #setup :where(.text-white, .text-white-50, .text-light),
+      body.theme-light #setup :where(.text-white, .text-white-50, .text-light) {
+        color: #2b3648 !important;
+      }
+
+      body[data-theme-mode="light"] #galeria .emote-ticker-slot,
+      body.theme-light #galeria .emote-ticker-slot,
+      body[data-theme-mode="light"] #setup .setup-frame-container,
+      body[data-theme-mode="light"] #setup .hud-spec-block,
+      body.theme-light #setup .setup-frame-container,
+      body.theme-light #setup .hud-spec-block {
+        background: rgba(255, 253, 247, 0.95) !important;
+        border-color: rgba(72, 91, 117, 0.2) !important;
+        color: #2b3648 !important;
+        box-shadow: 0 10px 24px rgba(39, 52, 70, 0.12) !important;
+      }
+
+      body[data-theme-mode="light"] #setup .custom-hud-table,
+      body[data-theme-mode="light"] #setup .custom-hud-table td,
+      body.theme-light #setup .custom-hud-table,
+      body.theme-light #setup .custom-hud-table td {
+        color: #2b3648 !important;
+      }
+
+      body[data-theme-mode="light"] .wave-transition-container,
+      body.theme-light .wave-transition-container {
+        background: linear-gradient(180deg, rgba(252, 235, 250, 0.95), rgba(239, 246, 245, 0.95)) !important;
+      }
+
+      body[data-theme-mode="light"] .wave-transition-container .wave-fill,
+      body.theme-light .wave-transition-container .wave-fill {
+        fill: #cfe0de !important;
+      }
 
     /* Global admin modal polish inspired by bitacora controls */
     .bitacora-skin-modal .modal-title {
@@ -616,239 +767,15 @@
       }
     }
 
-    .theme-mode-switcher {
-      position: fixed !important;
-      left: 14px;
-      top: 50svh;
-      transform: translateY(-50%);
-      z-index: 1085;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      padding: 8px;
-      border: 1px solid rgba(0, 240, 255, 0.35);
-      background: linear-gradient(180deg, rgba(4, 8, 18, 0.88), rgba(9, 4, 18, 0.86));
-      box-shadow: 0 0 18px rgba(0, 240, 255, 0.18), inset 0 0 12px rgba(0, 240, 255, 0.1);
-      backdrop-filter: blur(6px);
-      will-change: transform;
-    }
-
-    .theme-mode-btn {
-      width: 40px;
-      height: 40px;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      background: rgba(0, 0, 0, 0.34);
-      color: #d8ecff;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1rem;
-      transition: all 0.22s ease;
-    }
-
-    .theme-mode-btn:hover {
-      transform: translateX(2px) scale(1.04);
-      border-color: rgba(0, 240, 255, 0.75);
-      color: #ffffff;
-      box-shadow: 0 0 12px rgba(0, 240, 255, 0.24);
-    }
-
-    .theme-mode-btn.is-active {
-      border-color: rgba(0, 240, 255, 0.9);
-      color: #00f0ff;
-      box-shadow: 0 0 14px rgba(0, 240, 255, 0.35), inset 0 0 12px rgba(0, 240, 255, 0.2);
-      background: rgba(0, 14, 18, 0.78);
-    }
-
-    body,
-    .cyber-navbar,
-    section,
-    #header-inicio,
-    .card,
-    .modal-content,
-    .social-band,
-    .twitch-schedule-card,
-    .library-screen-frame,
-    .cyber-quote-card {
-      transition: background-color 0.35s ease, color 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease, filter 0.35s ease;
-    }
-
-    body.theme-light {
-      background: radial-gradient(circle at 8% 2%, #fff9ec 0%, #efe3c9 44%, #d8c9ad 100%) !important;
-      color: #2f261a;
-    }
-
-    body.theme-light .cyber-navbar,
-    body.theme-light .bitacora-skin-modal,
-    body.theme-light .social-band,
-    body.theme-light .twitch-schedule-card,
-    body.theme-light .library-screen-frame,
-    body.theme-light .cyber-quote-card,
-    body.theme-light .card {
-      background-color: rgba(255, 248, 233, 0.95) !important;
-      border-color: rgba(93, 77, 47, 0.26) !important;
-      box-shadow: 0 14px 28px rgba(70, 57, 37, 0.13);
-    }
-
-    body.theme-light .cyber-navbar {
-      background: linear-gradient(180deg, rgba(248, 239, 217, 0.97), rgba(229, 214, 181, 0.96)) !important;
-      border-bottom: 1px solid rgba(96, 80, 47, 0.28) !important;
-    }
-
-    body.theme-light .social-band,
-    body.theme-light .cyber-quote-card,
-    body.theme-light .library-screen-frame,
-    body.theme-light .twitch-schedule-card {
-      background-color: rgba(246, 236, 214, 0.93) !important;
-      border-color: rgba(71, 96, 55, 0.34) !important;
-      box-shadow: 0 12px 24px rgba(66, 82, 47, 0.15);
-    }
-
-    body.theme-light .text-white,
-    body.theme-light h1,
-    body.theme-light h2,
-    body.theme-light h3,
-    body.theme-light h4,
-    body.theme-light h5,
-    body.theme-light h6 {
-      color: #2b2216 !important;
-      text-shadow: none !important;
-    }
-
-    body.theme-light .text-white-50,
-    body.theme-light .lead,
-    body.theme-light p {
-      color: rgba(71, 59, 40, 0.88) !important;
-    }
-
-    body.theme-light .text-neon-cyan,
-    body.theme-light .text-neon-magenta,
-    body.theme-light .text-warning,
-    body.theme-light .text-info {
-      filter: saturate(0.6) brightness(0.72);
-    }
-
-    body.theme-light .text-neon-green,
-    body.theme-light .text-success {
-      color: #466a2d !important;
-      text-shadow: 0 0 6px rgba(70, 106, 45, 0.2) !important;
-    }
-
-    body.theme-light .text-neon-cyan,
-    body.theme-light .text-info,
-    body.theme-light a {
-      color: #355f47 !important;
-    }
-
-    body.theme-light .btn-outline-info {
-      color: #355f47 !important;
-      border-color: rgba(53, 95, 71, 0.45) !important;
-    }
-
-    body.theme-light .btn-outline-info:hover {
-      color: #f7efdb !important;
-      background-color: #355f47 !important;
-      border-color: #355f47 !important;
-    }
-
-    body.theme-light .theme-mode-switcher {
-      border-color: rgba(91, 75, 45, 0.34);
-      background: linear-gradient(180deg, rgba(244, 234, 209, 0.97), rgba(220, 204, 168, 0.95));
-      box-shadow: 0 0 20px rgba(88, 72, 44, 0.22), inset 0 0 12px rgba(106, 91, 61, 0.15);
-    }
-
-    body.theme-light .theme-mode-btn {
-      background: rgba(248, 239, 218, 0.93);
-      color: #463621;
-      border-color: rgba(96, 80, 47, 0.34);
-    }
-
-    body.theme-light .theme-mode-btn.is-active {
-      color: #466a2d;
-      border-color: rgba(76, 111, 44, 0.76);
-      box-shadow: 0 0 14px rgba(81, 114, 47, 0.32), inset 0 0 10px rgba(101, 134, 64, 0.21);
-    }
-
-    body.theme-dark {
-      background: radial-gradient(circle at 50% -20%, #121f3f 0%, #0a132a 42%, #060811 100%) !important;
-      color: #e8efff;
-    }
-
-    body.theme-dark .cyber-navbar,
-    body.theme-dark .bitacora-skin-modal,
-    body.theme-dark .social-band,
-    body.theme-dark .twitch-schedule-card,
-    body.theme-dark .library-screen-frame,
-    body.theme-dark .cyber-quote-card,
-    body.theme-dark .card {
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.45);
-      background-color: rgba(9, 16, 33, 0.92) !important;
-      border-color: rgba(234, 196, 74, 0.3) !important;
-    }
-
-    body.theme-dark .cyber-navbar {
-      background: linear-gradient(180deg, rgba(13, 23, 48, 0.95), rgba(8, 14, 32, 0.92)) !important;
-      border-bottom: 1px solid rgba(235, 197, 75, 0.3) !important;
-    }
-
-    body.theme-dark .social-band,
-    body.theme-dark .cyber-quote-card,
-    body.theme-dark .library-screen-frame,
-    body.theme-dark .twitch-schedule-card {
-      background-color: rgba(8, 16, 34, 0.88) !important;
-      border-color: rgba(226, 82, 82, 0.28) !important;
-      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.42);
-    }
-
-    body.theme-dark .text-neon-cyan,
-    body.theme-dark .text-info {
-      color: #62b6ff !important;
-      text-shadow: 0 0 10px rgba(98, 182, 255, 0.42) !important;
-    }
-
-    body.theme-dark .text-neon-magenta,
-    body.theme-dark .text-danger {
-      color: #ff5d6c !important;
-      text-shadow: 0 0 10px rgba(255, 93, 108, 0.36) !important;
-    }
-
-    body.theme-dark .text-warning,
-    body.theme-dark .text-neon-yellow {
-      color: #ffd45e !important;
-      text-shadow: 0 0 10px rgba(255, 212, 94, 0.34) !important;
-    }
-
-    body.theme-dark .theme-mode-switcher {
-      border-color: rgba(255, 207, 72, 0.34);
-      background: linear-gradient(180deg, rgba(9, 16, 35, 0.95), rgba(10, 14, 27, 0.94));
-      box-shadow: 0 0 18px rgba(79, 156, 255, 0.26), inset 0 0 12px rgba(222, 74, 74, 0.16);
-    }
-
-    body.theme-dark .theme-mode-btn {
-      border-color: rgba(80, 154, 255, 0.35);
-      color: #bedeff;
-      background: rgba(8, 18, 36, 0.88);
-    }
-
-    body.theme-dark .theme-mode-btn.is-active {
-      color: #8bc8ff;
-      border-color: rgba(122, 196, 255, 0.84);
-      box-shadow: 0 0 14px rgba(107, 184, 255, 0.42), inset 0 0 10px rgba(86, 169, 248, 0.25);
-    }
-
-    @media (max-width: 768px) {
-      .theme-mode-switcher {
-        left: 8px;
-        gap: 8px;
-        padding: 6px;
-      }
-
-      .theme-mode-btn {
-        width: 34px;
-        height: 34px;
-        font-size: 0.9rem;
+    @media (max-width: 576px) {
+      .patreon-pulse-card .text-warning,
+      .patreon-pulse-card .text-white-50 {
+        overflow-wrap: anywhere;
+        word-break: break-word;
       }
     }
+
+
 
     
   </style>
@@ -875,7 +802,7 @@
     <div class="cyber-nav-border-anim"></div>
     <div class="container">
       <a class="navbar-brand font-orbitron" href="#">
-        <span class="brand-bracket">[</span><span class="brand-text">YAIHI_NODE</span><span class="brand-bracket">]</span>
+        <span class="brand-bracket">[</span><span class="brand-text text-neon-magenta">YAIHI_NODE</span><span class="brand-bracket">]</span>
       </a>
       <button class="navbar-toggler cyber-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
         <span class="navbar-toggler-icon"></span>
@@ -1050,7 +977,7 @@
           <div class="text-warning fw-bold font-orbitron text-uppercase small">[ PATREON_CHANNEL // SUPPORT_NODE ]</div>
           <p class="mb-0 text-white-50 font-monospace" style="font-size:0.82rem;">Si te gusta este rincón, puedes apoyar el proyecto para mejorar contenido, directos y secciones nuevas.</p>
         </div>
-        <a href="https://www.patreon.com/" target="_blank" rel="noopener" class="btn btn-sm rounded-0 font-monospace text-uppercase btn-patreon-join">[ UNIRME_EN_PATREON ]</a>
+        <a href="https://www.patreon.com/cw/yai1221?utm_campaign=creatorshare_creator" target="_blank" rel="noopener" class="btn btn-sm rounded-0 font-monospace text-uppercase btn-patreon-join">[ UNIRME_EN_PATREON ]</a>
       </div>
     </div>
   </section>
@@ -1239,7 +1166,7 @@
               <img src="assets/images/perfilweb.png" class="rounded-circle img-fluid" alt="Perfil" style="width: 100%; height: 100%; object-fit: cover;">
             </div>
             <div>
-              <a href="https://www.pinterest.com/" target="_blank" class="m-0 fw-bold fav-link text-decoration-none" style="color:#ff8a9a;">@yaihi</a>
+              <a href="https://es.pinterest.com/yai_book210/" target="_blank" class="m-0 fw-bold fav-link text-decoration-none" style="color:#ff8a9a;">@yai_book210</a>
               <span class="text-xs text-white-50 font-monospace">Moodboards, inspiración y vibes</span>
             </div>
           </div>
@@ -1248,7 +1175,7 @@
           </div>
         </div>
         <div class="mt-4 pt-3 border-top border-secondary border-opacity-25">
-          <a href="https://www.pinterest.com/" target="_blank" class="btn btn-sm w-100 rounded-0 font-monospace text-uppercase btn-connect-pinterest">[ ABRIR_TABLONES ]</a>
+          <a href="https://es.pinterest.com/yai_book210/" target="_blank" class="btn btn-sm w-100 rounded-0 font-monospace text-uppercase btn-connect-pinterest">[ ABRIR_TABLONES ]</a>
         </div>
       </div>
 
@@ -1896,7 +1823,7 @@
     })();
   </script>
   <script src="deploy-version.js"></script>
-  <script src="theme-mode.js?v=20260701"></script>
+  <script src="theme-mode.js?v=20260701-sA"></script>
   <script src="terminal-loader.js"></script>
 
 
@@ -2680,3 +2607,4 @@
 </body>
 
 </html>
+

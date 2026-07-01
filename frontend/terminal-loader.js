@@ -304,7 +304,7 @@
     }
   });
 
-  // ðŸŒŸ FUNCIÃ“N AUXILIAR PARA RECONECTAR SWIPER CUANDO APAREZCA EN PANTALLA
+  // 🌟 FUNCIÓN AUXILIAR PARA RECONECTAR SWIPER CUANDO APAREZCA EN PANTALLA
   function inicializarSwiperFavoritos() {
     if (swiperFavoritos) {
       console.log("[HUD_LOADER]: Destruyendo instancia previa de Swiper...");
@@ -317,7 +317,7 @@
       
       swiperFavoritos = new Swiper(".mySwiperBooks", {
         direction: "horizontal",  // Movimiento horizontal continuo
-        slidesPerView: 1,         // 1 libro en pantallas mÃ³viles muy pequeÃ±as
+        slidesPerView: 1,         // 1 libro en pantallas móviles muy pequeñas
         spaceBetween: 20,         // Margen entre libros
         grabCursor: true,
         loop: true,               // Bucle infinito
@@ -329,11 +329,11 @@
           el: ".swiper-pagination",
           clickable: true,
         },
-        // ðŸ“± Ajuste dinÃ¡mico segÃºn el ancho de la pantalla:
+        // 📱 Ajuste dinámico según el ancho de la pantalla:
         breakpoints: {
           400: { slidesPerView: 2, spaceBetween: 15 },
           768: { slidesPerView: 3, spaceBetween: 20 },
-          1024: { slidesPerView: 4, spaceBetween: 25 } // ðŸ–¥ï¸ En PC muestra 4 a la vez tal cual tu boceto
+          1024: { slidesPerView: 4, spaceBetween: 25 } // 🖥️ En PC muestra 4 a la vez tal cual tu boceto
         }
       });
     }
@@ -341,14 +341,14 @@
 
   async function cargarFicheroBinario(urlPath, botonActivo) {
     try {
-      // Destruir el swiper si existe antes de cambiar de pÃ¡gina/contenido
+      // Destruir el swiper si existe antes de cambiar de página/contenido
       if (swiperFavoritos) {
         console.log("[HUD_LOADER]: Destruyendo Swiper activo por cambio de cartucho...");
         swiperFavoritos.destroy(true, true);
         swiperFavoritos = null;
       }
 
-      // 1. Efecto estÃ©tico de apagado/parpadeo de pantalla
+      // 1. Efecto estético de apagado/parpadeo de pantalla
       pantallaContenido.classList.add("fade-out");
       logTerminal.textContent = `> Requesting sector: ${urlPath.toUpperCase()}...`;
       
@@ -362,23 +362,23 @@
       const parser = new DOMParser();
       const doc = parser.parseFromString(htmlText, "text/html");
       
-      // Buscamos el contenedor donde estÃ¡n las listas de libros en la subpÃ¡gina
+      // Buscamos el contenedor donde están las listas de libros en la subpágina
       const nuevoContenido = doc.getElementById("detalle-favorito") || doc.body;
 
-      // 4. Esperamos un pelÃ­n para simular latencia de descompresiÃ³n de datos
+      // 4. Esperamos un pelín para simular latencia de descompresión de datos
       setTimeout(() => {
         pantallaContenido.innerHTML = nuevoContenido.innerHTML;
         pathTerminal.textContent = `[ SCREEN_SRC: /read/${urlPath} ]`;
         logTerminal.textContent = `> Sector ${botonActivo.querySelector('.btn-label').textContent.toUpperCase()} loaded [OK]`;
         pantallaContenido.classList.remove("fade-out");
         
-        // ðŸ”§ CORREGIDO: Arreglado el typo 'antallaContenido' a 'pantallaContenido'
+        // 🔧 CORREGIDO: Arreglado el typo 'antallaContenido' a 'pantallaContenido'
         pantallaContenido.scrollTop = 0; 
   
-        // ðŸ”¥ Â¡LA MAGIA OCURRE AQUÃ!: Ahora que el HTML ya estÃ¡ fÃ­sicamente renderizado en el index, despertamos a Swiper
+        // 🔥 ¡LA MAGIA OCURRE AQUÍ!: Ahora que el HTML ya está físicamente renderizado en el index, despertamos a Swiper
         inicializarSwiperFavoritos();
 
-        // ðŸ“š SYNC DATA SEGMENT WITH LIBRARY DATABASE
+        // 📚 SYNC DATA SEGMENT WITH LIBRARY DATABASE
         cargarBibliotecaReal(urlPath);
 
       }, 200);
@@ -387,8 +387,8 @@
       console.error(error);
       pantallaContenido.innerHTML = `
         <div class="text-danger font-monospace p-4 border border-danger border-opacity-25 bg-black-25">
-          <h5 class="fw-bold">[ âŒ CRITICAL_LOAD_ERROR ]</h5>
-          <p class="small m-0">No se pudo acceder a los fragmentos del nodo fÃ­sico del bÃºnker. AsegÃºrate de que el archivo '${urlPath}' existe en el servidor.</p>
+          <h5 class="fw-bold">[ ❌ CRITICAL_LOAD_ERROR ]</h5>
+          <p class="small m-0">No se pudo acceder a los fragmentos del nodo físico del búnker. Asegúrate de que el archivo '${urlPath}' existe en el servidor.</p>
         </div>
       `;
       pantallaContenido.classList.remove("fade-out");
@@ -399,7 +399,7 @@
   // Configurar los listeners para cada ranura de cartucho
   botonesCartucho.forEach(boton => {
     boton.addEventListener("click", () => {
-      if (boton.classList.contains("active")) return; // Ya estÃ¡ cargado
+      if (boton.classList.contains("active")) return; // Ya está cargado
 
       // Cambiar estados visuales de los botones
       botonesCartucho.forEach(b => {
@@ -410,19 +410,19 @@
       boton.classList.add("active");
       boton.querySelector(".status-icon").className = "bi bi-play-fill ms-auto status-icon";
 
-      // Ejecutar la carga asÃ­ncrona
+      // Ejecutar la carga asíncrona
       const destinoHTML = boton.getAttribute("data-target");
       cargarFicheroBinario(destinoHTML, boton);
     });
   });
 
-  // Carga inicial automÃ¡tica del primer cartucho por defecto
+  // Carga inicial automática del primer cartucho por defecto
   const primerCartucho = document.querySelector("#library-cartridge-selector .cartridge-btn.active");
   if (primerCartucho) {
     cargarFicheroBinario(primerCartucho.getAttribute("data-target"), primerCartucho);
   }
 
-  // ðŸŒˆ LÃ“GICA DE ROTACIÃ“N NEÃ“N RGB ULTRA-FLUIDA VÃA JS Y VARIABLES CSS
+  // 🌈 LÓGICA DE ROTACIÓN NEÓN RGB ULTRA-FLUIDA VÍA JS Y VARIABLES CSS
   const wrapper = document.querySelector('.neon-rgb-frame-wrapper');
   if (wrapper) {
     const spinner = wrapper.querySelector('.neon-rgb-border-spin');
@@ -430,18 +430,18 @@
       let currentAngle = 0;
       let lastTime = performance.now();
       let direction = 1; // 1 = forward, -1 = reverse
-      const SPEED = 90;  // grados por segundo (360deg / 4s de duraciÃ³n)
+      const SPEED = 90;  // grados por segundo (360deg / 4s de duración)
 
       function animate(time) {
         const dt = (time - lastTime) / 1000; // delta time en segundos
         lastTime = time;
 
-        // Limitar dt para evitar saltos si el navegador suspende la pestaÃ±a
+        // Limitar dt para evitar saltos si el navegador suspende la pestaña
         const safeDt = Math.min(dt, 0.1);
 
         currentAngle += direction * SPEED * safeDt;
         
-        // Mantener el Ã¡ngulo en el rango [0, 360)
+        // Mantener el ángulo en el rango [0, 360)
         currentAngle = (currentAngle % 360 + 360) % 360;
 
         spinner.style.setProperty('--rotation', `${currentAngle}deg`);
@@ -457,7 +457,7 @@
         direction = 1;
       });
 
-      // Iniciar el bucle de rotaciÃ³n
+      // Iniciar el bucle de rotación
       requestAnimationFrame((time) => {
         lastTime = time;
         requestAnimationFrame(animate);
@@ -465,7 +465,7 @@
     }
   }
 
-  // ðŸ¸ CARGA DINÃMICA DE EMOTES DESDE ASSETS/ICONS
+  // 🐸 CARGA DINÁMICA DE EMOTES DESDE ASSETS/ICONS
   function resolveEmoteImageSrc(rawValue) {
     const value = String(rawValue || '').trim();
     if (!value) return '';
@@ -528,7 +528,7 @@
     const fila1 = emotes.slice(0, midPoint);
     const fila2 = emotes.slice(midPoint);
 
-    // FunciÃ³n auxiliar para construir el contenido HTML de una fila (duplicado para el loop infinito)
+    // Función auxiliar para construir el contenido HTML de una fila (duplicado para el loop infinito)
     function crearFilaHTML(listaEmotes, esIzquierda) {
       const trackClass = esIzquierda ? 'track-left' : 'track-right';
       
@@ -1166,7 +1166,7 @@
                         <span class="${colorClass} font-monospace text-xs d-block mb-1">[ COMPLETED_RECORD // CORE_${String(index + 1).padStart(2, '0')} ]</span>
                         <h3 class="fw-bold ${titleClass} text-uppercase m-0 h4">${libro.titulo}</h3>
                         <div class="text-white-50 small mt-1 font-monospace">
-                          POR <span class="${autorClass}">${libro.autor}</span> // GÃ‰NERO: <span class="${generoClass}">${libro.genero || 'CYBERPUNK'}</span>
+                          POR <span class="${autorClass}">${libro.autor}</span> // GÉNERO: <span class="${generoClass}">${libro.genero || 'CYBERPUNK'}</span>
                         </div>
                       </div>
                       <div class="d-flex align-items-center gap-3">
@@ -1205,10 +1205,10 @@
 
           librosTbr.forEach((libro, index) => {
             const hype = parseInt(libro.hype) || 90;
-            let badgeText = "STANDBY_DECK ðŸ’¾";
-            if (hype >= 90) badgeText = "CRITICAL_HYPE ðŸ”¥";
-            else if (hype >= 75) badgeText = "COZY_READ â˜•";
-            else if (hype >= 60) badgeText = "STUDY_CORE ðŸŒŒ";
+            let badgeText = "STANDBY_DECK 💾";
+            if (hype >= 90) badgeText = "CRITICAL_HYPE 🔥";
+            else if (hype >= 75) badgeText = "COZY_READ ☕";
+            else if (hype >= 60) badgeText = "STUDY_CORE 🌌";
 
             const queueState = index === 0 ? 'NEXT_LOAD' : index === 1 ? 'ACTIVE_QUEUE' : 'BUFFER_STANDBY';
             const buyLink = `https://www.amazon.es/s?k=${encodeURIComponent(libro.titulo + ' ' + libro.autor)}`;
@@ -1507,7 +1507,7 @@
                     </h2>
 
                     <h5 class="fw-medium mb-4 font-monospace ${autorClass}" style="font-size: 13px">
-                      // SAGA: CYBER_NETWORKS // POR: ${libro.autor} // GÃ‰NERO: <span class="${generoClass}">${libro.genero || 'SCI-FI'}</span>
+                      // SAGA: CYBER_NETWORKS // POR: ${libro.autor} // GÉNERO: <span class="${generoClass}">${libro.genero || 'SCI-FI'}</span>
                     </h5>
 
                     <!-- Caja de Sinopsis Cyber-Datapad -->
@@ -1517,7 +1517,7 @@
                       </p>
                     </div>
 
-                    <!-- Botones de AcciÃ³n HUD -->
+                    <!-- Botones de Acción HUD -->
                     <div class="d-flex flex-wrap gap-3 align-items-center">
                       ${wattpadBtn}
                       ${amazonBtn}
@@ -1788,7 +1788,7 @@
   function pickCustomColorToDelete() {
     const stored = getStoredCustomModalColors();
     if (!stored.length) {
-      alert('⚠ No hay colores custom guardados.');
+      alert('? No hay colores custom guardados.');
       return '';
     }
 
@@ -1797,7 +1797,7 @@
     if (answer === null) return '';
     const index = Number.parseInt(String(answer).trim(), 10);
     if (!Number.isInteger(index) || index < 1 || index > stored.length) {
-      alert('⚠ Selección inválida.');
+      alert('Selección inválida.');
       return '';
     }
 
@@ -1820,7 +1820,7 @@
       paletteBtn.type = 'button';
       paletteBtn.className = 'btn btn-outline-light btn-sm mt-2 rounded-0 font-monospace';
       paletteBtn.style.fontSize = '0.65rem';
-      paletteBtn.innerHTML = '[ 🎨 PALETA ] <span class="palette-swatch" aria-hidden="true" style="display:inline-block;width:11px;height:11px;margin-left:6px;border:1px solid rgba(255,255,255,0.65);vertical-align:middle;"></span>';
+      paletteBtn.innerHTML = '[ ?? PALETA ] <span class="palette-swatch" aria-hidden="true" style="display:inline-block;width:11px;height:11px;margin-left:6px;border:1px solid rgba(255,255,255,0.65);vertical-align:middle;"></span>';
 
       const saveColorBtn = document.createElement('button');
       saveColorBtn.type = 'button';
@@ -1894,7 +1894,7 @@
       saveColorBtn.addEventListener('click', () => {
         const pending = normalizeHex(select.dataset.pendingCustomColor || '');
         if (!pending) {
-          alert('⚠ Primero elige un color con [ 🎨 PALETA ].');
+          alert('? Primero elige un color con [ ?? PALETA ].');
           return;
         }
 
@@ -1912,7 +1912,7 @@
         if (!targetHex) return;
         const deleted = removeColorFromPersistentPalette(targetHex);
         if (!deleted) {
-          alert('⚠ No se pudo eliminar ese color custom.');
+          alert('? No se pudo eliminar ese color custom.');
           return;
         }
         refreshCustomOptionsFromStorage();
@@ -2120,14 +2120,14 @@
           <div class="col-xl-11 my-5">
             <div class="card card-gaming-author border-0 h-100 overflow-hidden">
               <div class="row g-0 h-100">
-                <!-- Izquierda: VÃ­deo de YouTube Incrustado -->
+                <!-- Izquierda: Vídeo de YouTube Incrustado -->
                 <div class="col-md-6 video-gaming-container">
                   <div class="ratio ratio-16x9 h-100 min-h-video">
                     <iframe src="${embedUrl}" title="Entrevista ${ent.nombre}" allowfullscreen></iframe>
                   </div>
                 </div>
 
-                <!-- Derecha: Datos del Autor (Estilo SelecciÃ³n de Personaje) -->
+                <!-- Derecha: Datos del Autor (Estilo Selección de Personaje) -->
                 <div class="col-md-6 d-flex flex-column justify-content-between p-4 bg-black-card position-relative">
                   <div class="gaming-corner-top"></div>
                   ${isAdmin ? `<button class="btn btn-outline-info btn-sm rounded-0 text-uppercase font-monospace btn-edit-interview" data-id="${ent.id}" style="position: absolute; top: 10px; right: 10px; z-index: 10; font-size: 0.62rem; padding: 2px 6px;">[ EDITAR ]</button>` : ''}
@@ -2150,7 +2150,7 @@
                     </p>
                   </div>
 
-                  <!-- Red Social / Enlace Estilo BotÃ³n de AcciÃ³n Coaxial -->
+                  <!-- Red Social / Enlace Estilo Botón de Acción Coaxial -->
                   <div class="mt-3 pt-3 border-top border-gaming-divider">
                     <a href="${ent.socialUrl}" target="_blank"
                       class="btn ${btnSocialClass} w-100 text-uppercase fw-bold rounded-0 d-flex justify-content-between align-items-center px-3">
@@ -2262,12 +2262,12 @@
           e.preventDefault();
           if (!isAdmin) return;
           const gameId = this.getAttribute("data-id");
-          if (!confirm("Â¿Eliminar este juego del registro?")) return;
-          const code = prompt("INGRESE CÃ“DIGO DE ACCESO DE SEGURIDAD PARA ELIMINAR EL JUEGO:");
+          if (!confirm("¿Eliminar este juego del registro?")) return;
+          const code = prompt("INGRESE CÓDIGO DE ACCESO DE SEGURIDAD PARA ELIMINAR EL JUEGO:");
           if (code === "bunker2026") {
             eliminarJuego(gameId, code);
           } else if (code !== null) {
-            alert("CÃ“DIGO DE ACCESO INCORRECTO. ACCESO DENEGADO.");
+            alert("CÓDIGO DE ACCESO INCORRECTO. ACCESO DENEGADO.");
           }
         });
       });
@@ -2317,9 +2317,9 @@
     const bookId = btn.getAttribute("data-id");
     if (!bookId) return;
 
-    if (!confirm("Â¿EstÃ¡ seguro de que desea eliminar este libro del registro?")) return;
+    if (!confirm("¿Está seguro de que desea eliminar este libro del registro?")) return;
 
-    const code = prompt("INGRESE CÃ“DIGO DE ACCESO DE SEGURIDAD PARA ELIMINAR EL LIBRO:");
+    const code = prompt("INGRESE CÓDIGO DE ACCESO DE SEGURIDAD PARA ELIMINAR EL LIBRO:");
     if (code === "bunker2026") {
       try {
         const response = await fetch("/api/biblioteca/eliminar", {
@@ -2351,7 +2351,7 @@
         logTerminal.textContent = `> ERR: Purge operation failed on library register.`;
       }
     } else if (code !== null) {
-      alert("CÃ“DIGO DE ACCESO INCORRECTO. ACCESO DENEGADO.");
+      alert("CÓDIGO DE ACCESO INCORRECTO. ACCESO DENEGADO.");
     }
   });
 
@@ -2365,9 +2365,9 @@
     const quoteId = btn.getAttribute("data-id");
     if (!quoteId) return;
 
-    if (!confirm("Â¿EstÃ¡ seguro de que desea eliminar esta cita del registro?")) return;
+    if (!confirm("¿Está seguro de que desea eliminar esta cita del registro?")) return;
 
-    const code = prompt("INGRESE CÃ“DIGO DE ACCESO DE SEGURIDAD PARA ELIMINAR LA CITA:");
+    const code = prompt("INGRESE CÓDIGO DE ACCESO DE SEGURIDAD PARA ELIMINAR LA CITA:");
     if (code === "bunker2026") {
       try {
         const response = await fetch("/api/citas/eliminar", {
@@ -2399,7 +2399,7 @@
         logTerminal.textContent = `> ERR: Purge operation failed on quote register.`;
       }
     } else if (code !== null) {
-      alert("CÃ“DIGO DE ACCESO INCORRECTO. ACCESO DENEGADO.");
+      alert("CÓDIGO DE ACCESO INCORRECTO. ACCESO DENEGADO.");
     }
   });
 
@@ -2636,7 +2636,7 @@
 
       const password = document.getElementById('modal-password-emote')?.value || '';
       if (!password) {
-        alert('⚠ Introduce el código de acceso primero.');
+        alert('¿Introduce el código de acceso primero?');
         return;
       }
 
@@ -2711,7 +2711,7 @@
   });
 
   // ============================================================
-  // ðŸ“¡ SOCIAL FEEDS - Embed/iframe rendering with bouncy badge
+  // 📡 SOCIAL FEEDS - Embed/iframe rendering with bouncy badge
   // ============================================================
 
   async function cargarRedes() {
@@ -2737,11 +2737,11 @@
               wrapper.innerHTML += `<button type="button" class="btn btn-outline-info btn-sm rounded-0 text-uppercase font-monospace btn-edit-social" data-id="${item.id}" data-red="${redKey}" style="position:absolute; top: 8px; right: 8px; z-index: 20; font-size: 0.6rem; padding: 2px 5px;">[ EDITAR ]</button>`;
             }
             
-            // Badge "Â¡NUEVO POST!" on the first (newest) item
+            // Badge "¡NUEVO POST!" on the first (newest) item
             if (index === 0) {
               wrapper.innerHTML += `
                 <span class="badge-nuevo-post">
-                  <i class="bi bi-stars me-1"></i>Â¡NUEVO POST!
+                  <i class="bi bi-stars me-1"></i>¡NUEVO POST!
                 </span>
               `;
             }
@@ -2830,7 +2830,7 @@
   }
 
   // ============================================================
-  // ðŸ” MODAL REDES SOCIALES - Ctrl + Shift + R
+  // 🔐 MODAL REDES SOCIALES - Ctrl + Shift + R
   // ============================================================
 
   // Keyboard shortcut
@@ -2897,7 +2897,7 @@
             html += `
               <div class="d-flex justify-content-between align-items-start ps-4 mb-2 py-1 border-start border-secondary border-opacity-25">
                 <div style="font-size: 0.7rem; max-width: 80%;">
-                  <div class="text-white">${idx === 0 ? '<span class="badge bg-info bg-opacity-25 text-info me-1" style="font-size: 0.6rem;">ÃšLTIMO</span>' : ''}${fecha}</div>
+                  <div class="text-white">${idx === 0 ? '<span class="badge bg-info bg-opacity-25 text-info me-1" style="font-size: 0.6rem;">ÚLTIMO</span>' : ''}${fecha}</div>
                   <div class="text-white-50 text-truncate" style="max-width: 350px;">${preview.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
                 </div>
                 <button class="btn btn-outline-danger btn-sm px-2 py-0 border-0 delete-post-btn" data-red="${red}" data-id="${post.id}" style="font-size: 0.65rem;">
@@ -2919,11 +2919,11 @@
           const password = document.getElementById('modal-password-red').value;
 
           if (!password) {
-            alert('âš  Introduce el cÃ³digo de acceso primero.');
+            alert('⚠ Introduce el código de acceso primero.');
             return;
           }
 
-          if (!confirm(`Â¿Eliminar este post de ${red.toUpperCase()}?`)) return;
+          if (!confirm(`¿Eliminar este post de ${red.toUpperCase()}?`)) return;
 
           try {
             const res = await fetch(`/api/redes/eliminar/${red}/${id}`, {
@@ -2936,10 +2936,10 @@
               cargarPreviewPosts();
               cargarRedes();
             } else {
-              alert('âŒ ' + (result.error || 'Error desconocido.'));
+              alert('❌ ' + (result.error || 'Error desconocido.'));
             }
           } catch (err) {
-            alert('âŒ Error de conexiÃ³n.');
+            alert('❌ Error de conexión.');
           }
         });
       });
@@ -2969,7 +2969,7 @@
         if (contentType === 'embed') {
           embedHtml = document.getElementById("red-embed-html").value.trim();
           if (!embedHtml) {
-            alert('âš  Pega el cÃ³digo embed/HTML.');
+            alert('⚠ Pega el código embed/HTML.');
             return;
           }
         } else {
@@ -2977,7 +2977,7 @@
           const imageUrlText = document.getElementById("red-image-url").value.trim();
           
           if (!url) {
-            alert('âš  Introduce la URL del post.');
+            alert('⚠ Introduce la URL del post.');
             return;
           }
 
@@ -3004,12 +3004,12 @@
               <i class="bi bi-box-arrow-up-right text-neon-cyan"></i>
               <span class="small font-monospace text-truncate text-white-50">${url}</span>
             </div>
-            <div class="mt-2 text-xs text-neon-cyan">Haz click para ver el post â†’</div>
+            <div class="mt-2 text-xs text-neon-cyan">Haz click para ver el post →</div>
           </a>`;
         }
 
         if (!password) {
-          alert('âš  Introduce el cÃ³digo de acceso.');
+          alert('⚠ Introduce el código de acceso.');
           return;
         }
 
@@ -3044,12 +3044,12 @@
             if (modalEl) {
               hideModalSafe(modalEl);
             }
-            alert('âœ… ' + result.message);
+            alert('✅ ' + result.message);
           } else {
-            alert('âŒ ' + (result.error || 'Error desconocido.'));
+            alert('❌ ' + (result.error || 'Error desconocido.'));
           }
         } catch (err) {
-          alert('âŒ Error de conexiÃ³n con el servidor.');
+          alert('❌ Error de conexión con el servidor.');
         }
       };
 
@@ -3083,12 +3083,12 @@
       const isEdit = Boolean(id);
 
       if (!rarity || !password) {
-        alert('⚠ Completa rareza y password.');
+        alert('? Completa rareza y password.');
         return;
       }
 
       if (!isEdit && !selectedFile) {
-        alert('⚠ Debes subir una imagen desde tu PC para crear el emote.');
+        alert('? Debes subir una imagen desde tu PC para crear el emote.');
         return;
       }
 
@@ -3144,10 +3144,10 @@
     });
   }
 
-  // InicializaciÃ³n de logs en carga
+  // Inicialización de logs en carga
   cargarLogsYVisores(true);
 
-  // Auto-sync del monitor de estado para reflejar cambios hechos en cualquier pestaÃ±a/sesiÃ³n.
+  // Auto-sync del monitor de estado para reflejar cambios hechos en cualquier pestaña/sesión.
   setInterval(() => {
     cargarLogsYVisores();
   }, 8000);
@@ -3165,12 +3165,12 @@
   // Ejecutamos la carga inicial
   inicializarMarquesinaEmotes();
 
-  // ðŸª GestiÃ³n del Banner de Cookies Cyberpunk
+  // 🍪 Gestión del Banner de Cookies Cyberpunk
   const cookieBanner = document.getElementById("cookie-banner");
   const acceptCookiesBtn = document.getElementById("accept-cookies");
   if (cookieBanner && acceptCookiesBtn) {
     if (!localStorage.getItem("cookieConsent")) {
-      // Retrasar la apariciÃ³n del banner 1.5s para que no interrumpa el efecto de carga inicial
+      // Retrasar la aparición del banner 1.5s para que no interrumpa el efecto de carga inicial
       setTimeout(() => {
         cookieBanner.classList.remove("d-none");
       }, 1500);
@@ -3181,3 +3181,4 @@
     });
   }
 });
+
