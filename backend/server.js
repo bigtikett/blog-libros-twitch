@@ -1765,6 +1765,40 @@ app.post('/api/entrevistas/editar', async (req, res) => {
   }
 });
 
+app.post('/api/entrevistas/eliminar', async (req, res) => {
+  try {
+    const { id, password } = req.body || {};
+
+    if (password !== BIBLIOTECA_PASSWORD) {
+      return res.status(401).json({ error: 'Código de acceso incorrecto. Interrupción del sector.' });
+    }
+    if (!id) {
+      return res.status(400).json({ error: 'ID de entrevista requerido para eliminar.' });
+    }
+
+    const datosActuales = await getCollection('entrevistas', RUTA_ENTREVISTAS, []);
+    const entrevistaAEliminar = datosActuales.find(entry => entry.id === id);
+    if (!entrevistaAEliminar) {
+      return res.status(404).json({ error: 'Entrevista no encontrada.' });
+    }
+
+    const actualizados = datosActuales.filter(entry => entry.id !== id);
+    await saveCollection('entrevistas', actualizados, RUTA_ENTREVISTAS);
+
+    await agregarLog(
+      'FAVORITOS',
+      `Eliminada entrevista: ${entrevistaAEliminar.nombre} [OFFLINE]`,
+      `La entrevista con "${entrevistaAEliminar.nombre}" fue purgada del registro.`,
+      'text-danger'
+    );
+
+    res.json({ success: true, message: 'Terminal: Registro de entrevista eliminado.', id });
+  } catch (error) {
+    console.error('Error eliminando entrevista:', error);
+    res.status(500).json({ error: 'Fallo al eliminar el bloque de datos.' });
+  }
+});
+
 // ========================================================
 // 🎮 ENDPOINTS PARA JUEGOS (GET / POST / ELIMINAR)
 // ========================================================
@@ -1788,8 +1822,28 @@ app.post('/api/juegos/nuevo', async (req, res) => {
 
     const datosActuales = await getCollection('juegos', RUTA_JUEGOS, []);
 
+    if (nuevoJuego.coverFileData && nuevoJuego.coverFileName) {
+      nuevoJuego.imagen = await uploadCoverAndGetUrl(
+        nuevoJuego.coverFileData,
+        nuevoJuego.coverFileName,
+        'games',
+        IMG_FAVORITOS_DIR,
+        '/img/favoritos'
+      ) || (nuevoJuego.imagen || '');
+    } else if (typeof nuevoJuego.imagen === 'string' && /^data:image\//i.test(nuevoJuego.imagen)) {
+      nuevoJuego.imagen = await uploadCoverAndGetUrl(
+        nuevoJuego.imagen,
+        `game-${Date.now()}.png`,
+        'games',
+        IMG_FAVORITOS_DIR,
+        '/img/favoritos'
+      ) || nuevoJuego.imagen;
+    }
+
     nuevoJuego.id = `juego-${Date.now()}`;
-    
+
+    delete nuevoJuego.coverFileData;
+    delete nuevoJuego.coverFileName;
     delete nuevoJuego.password;
 
     datosActuales.push(nuevoJuego);
@@ -1824,12 +1878,40 @@ app.post('/api/juegos/editar', async (req, res) => {
       return res.status(404).json({ error: 'Juego no encontrado en el registro.' });
     }
 
+    const juegoActual = datosActuales[index];
+    let imagenActualizada = String(juegoActual.imagen || '');
+
+    if (cambiosJuego.coverFileData && cambiosJuego.coverFileName) {
+      imagenActualizada = await uploadCoverAndGetUrl(
+        cambiosJuego.coverFileData,
+        cambiosJuego.coverFileName,
+        'games',
+        IMG_FAVORITOS_DIR,
+        '/img/favoritos'
+      ) || imagenActualizada;
+      await deleteCoverFromR2IfNeeded(juegoActual.imagen);
+    } else if (typeof cambiosJuego.imagen === 'string' && /^data:image\//i.test(cambiosJuego.imagen)) {
+      imagenActualizada = await uploadCoverAndGetUrl(
+        cambiosJuego.imagen,
+        `game-${Date.now()}.png`,
+        'games',
+        IMG_FAVORITOS_DIR,
+        '/img/favoritos'
+      ) || imagenActualizada;
+      await deleteCoverFromR2IfNeeded(juegoActual.imagen);
+    } else if (typeof cambiosJuego.imagen === 'string' && cambiosJuego.imagen.trim()) {
+      imagenActualizada = cambiosJuego.imagen.trim();
+    }
+
     const juegoEditado = {
-      ...datosActuales[index],
+      ...juegoActual,
       ...cambiosJuego,
-      id
+      id,
+      imagen: imagenActualizada
     };
     delete juegoEditado.password;
+    delete juegoEditado.coverFileData;
+    delete juegoEditado.coverFileName;
 
     datosActuales[index] = juegoEditado;
     await saveCollection('juegos', datosActuales, RUTA_JUEGOS);
@@ -1856,6 +1938,8 @@ app.post('/api/juegos/eliminar', async (req, res) => {
     if (!juegoAEliminar) {
       return res.status(404).json({ error: 'Juego no encontrado en el registro.' });
     }
+
+    await deleteCoverFromR2IfNeeded(juegoAEliminar.imagen);
 
     datosActuales = datosActuales.filter(j => j.id !== id);
     await saveCollection('juegos', datosActuales, RUTA_JUEGOS);
@@ -1909,24 +1993,16 @@ app.post('/api/redes/nuevo', async (req, res) => {
 
     // Procesar la subida del archivo si viene en base64
     if (imageFileData && imageFileName) {
-      const base64Data = imageFileData.replace(/^data:image\/\w+;base64,/, "");
-      const buffer = Buffer.from(base64Data, 'base64');
-      
-      const dirFavoritos = IMG_FAVORITOS_DIR;
-      if (!fs.existsSync(dirFavoritos)) {
-        fs.mkdirSync(dirFavoritos, { recursive: true });
+      const uploadedImageUrl = await uploadCoverAndGetUrl(
+        imageFileData,
+        imageFileName,
+        `redes/${red}`,
+        IMG_FAVORITOS_DIR,
+        '/img/favoritos'
+      );
+      if (uploadedImageUrl) {
+        cleanEmbed = cleanEmbed.replace(/__IMAGE_PLACEHOLDER__/g, uploadedImageUrl);
       }
-      
-      const extension = path.extname(imageFileName) || '.jpg';
-      const nombreLimpio = path.basename(imageFileName, extension).replace(/[^a-z0-9]/gi, '_').toLowerCase();
-      const nombreArchivo = `${Date.now()}-${nombreLimpio}${extension}`;
-      const rutaFisica = path.join(dirFavoritos, nombreArchivo);
-      
-      fs.writeFileSync(rutaFisica, buffer);
-      
-      // Reemplazar el placeholder de la imagen con la ruta estática
-      const relativePath = `/img/favoritos/${nombreArchivo}`;
-      cleanEmbed = cleanEmbed.replace(/__IMAGE_PLACEHOLDER__/g, relativePath);
     }
 
     const datos = await getCollection('redes', RUTA_REDES, { instagram: [], tiktok: [], wattpad: [] });
@@ -1988,6 +2064,8 @@ app.post('/api/redes/editar/:red/:id', async (req, res) => {
     }
 
     if (imageFileData && imageFileName) {
+      const currentEmbed = String(datos[red][index].embedHtml || '');
+      const currentImgMatch = currentEmbed.match(/(?:src|href)=["']([^"']+)["']/i);
       const uploadedImageUrl = await uploadCoverAndGetUrl(
         imageFileData,
         imageFileName,
@@ -1995,7 +2073,12 @@ app.post('/api/redes/editar/:red/:id', async (req, res) => {
         IMG_FAVORITOS_DIR,
         '/img/favoritos'
       );
-      cleanEmbed = cleanEmbed.replace(/__IMAGE_PLACEHOLDER__/g, uploadedImageUrl);
+      if (uploadedImageUrl) {
+        cleanEmbed = cleanEmbed.replace(/__IMAGE_PLACEHOLDER__/g, uploadedImageUrl);
+      }
+      if (currentImgMatch && currentImgMatch[1]) {
+        await deleteCoverFromR2IfNeeded(currentImgMatch[1]);
+      }
     }
 
     datos[red][index] = {
@@ -2039,6 +2122,11 @@ app.delete('/api/redes/eliminar/:red/:id', async (req, res) => {
     }
 
     const [postEliminado] = datos[red].splice(index, 1);
+    const embed = String(postEliminado?.embedHtml || '');
+    const imageMatch = embed.match(/(?:src|href)=["']([^"']+)["']/i);
+    if (imageMatch && imageMatch[1]) {
+      await deleteCoverFromR2IfNeeded(imageMatch[1]);
+    }
 
     await saveCollection('redes', datos, RUTA_REDES);
 

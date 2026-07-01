@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", () => {
+﻿document.addEventListener("DOMContentLoaded", () => {
   const botonesCartucho = document.querySelectorAll("#library-cartridge-selector .cartridge-btn");
   const pantallaContenido = document.getElementById("terminal-screen-content");
   const pathTerminal = document.getElementById("terminal-path");
@@ -9,8 +9,256 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let swiperFavoritos = null;
 
+  const ACCESS_CODE = "bunker2026";
   const ADMIN_SESSION_KEY = "bunker_admin_authenticated";
   let isAdmin = sessionStorage.getItem(ADMIN_SESSION_KEY) === "1";
+  let lastIndexAdminState = isAdmin;
+
+  function updateAdminIndicators() {
+    const indicatorIds = [
+      "index-admin-indicator-lib",
+      "index-admin-indicator-ent",
+      "index-admin-indicator-game",
+      "index-admin-indicator-red"
+    ];
+
+    indicatorIds.forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = isAdmin ? "[ ADMIN: ON ]" : "[ ADMIN: OFF ]";
+      el.className = "small fw-bold";
+      el.style.color = isAdmin ? "#4cffb2" : "#ff6f8f";
+      el.style.textShadow = isAdmin
+        ? "0 0 8px rgba(76,255,178,0.65), 0 0 14px rgba(76,255,178,0.35)"
+        : "0 0 8px rgba(255,111,143,0.6), 0 0 14px rgba(255,111,143,0.3)";
+      el.style.transition = "color 0.22s ease, text-shadow 0.22s ease";
+
+      if (isAdmin && !lastIndexAdminState && typeof el.animate === "function") {
+        el.animate(
+          [
+            { opacity: 0.35, transform: "scale(0.96)" },
+            { opacity: 1, transform: "scale(1.08)" },
+            { opacity: 1, transform: "scale(1)" }
+          ],
+          { duration: 220, easing: "ease-out" }
+        );
+      }
+    });
+
+    lastIndexAdminState = isAdmin;
+  }
+
+  function activarModoAdmin() {
+    sessionStorage.setItem(ADMIN_SESSION_KEY, "1");
+    isAdmin = true;
+
+    ["modal-password", "modal-password-entrevista", "modal-password-juego", "modal-password-red"].forEach((id) => {
+      const passInput = document.getElementById(id);
+      if (passInput) passInput.value = ACCESS_CODE;
+    });
+
+    cargarJuegos();
+    cargarEntrevistas();
+    cargarRedes();
+
+    const activeCartridge = document.querySelector("#library-cartridge-selector .cartridge-btn.active");
+    if (activeCartridge) {
+      cargarFicheroBinario(activeCartridge.getAttribute("data-target"), activeCartridge);
+    }
+
+    refreshEditModeBadges();
+    updateAdminIndicators();
+  }
+
+  function desactivarModoAdmin() {
+    sessionStorage.removeItem(ADMIN_SESSION_KEY);
+    isAdmin = false;
+
+    ["modal-password", "modal-password-entrevista", "modal-password-juego", "modal-password-red"].forEach((id) => {
+      const passInput = document.getElementById(id);
+      if (passInput) passInput.value = "";
+    });
+
+    cargarJuegos();
+    cargarEntrevistas();
+    cargarRedes();
+
+    const activeCartridge = document.querySelector("#library-cartridge-selector .cartridge-btn.active");
+    if (activeCartridge) {
+      cargarFicheroBinario(activeCartridge.getAttribute("data-target"), activeCartridge);
+    }
+
+    refreshEditModeBadges();
+    updateAdminIndicators();
+  }
+
+  function openAdminModal(modalId, passInputId, onOpened) {
+    const modalEl = document.getElementById(modalId);
+    if (!modalEl) return;
+    showModalSafe(modalEl);
+
+    const passInput = document.getElementById(passInputId);
+    if (passInput && isAdmin) passInput.value = ACCESS_CODE;
+
+    if (typeof onOpened === "function") onOpened();
+  }
+
+  function requestAdminAccess(onSuccess, promptMessage = "INGRESE CÓDIGO DE ACCESO DE SEGURIDAD:") {
+    if (isAdmin) {
+      if (typeof onSuccess === "function") onSuccess();
+      return;
+    }
+
+    const code = prompt(promptMessage);
+    if (code === ACCESS_CODE) {
+      activarModoAdmin();
+      if (typeof onSuccess === "function") onSuccess();
+      return;
+    }
+
+    if (code !== null) {
+      alert("CÓDIGO DE ACCESO INCORRECTO. ACCESO DENEGADO.");
+    }
+  }
+
+  function isTypingContext(target) {
+    if (!target) return false;
+    const tag = String(target.tagName || "").toLowerCase();
+    return tag === "input" || tag === "textarea" || tag === "select" || target.isContentEditable;
+  }
+
+  function matchesAdminShortcut(event, key) {
+    const pressedKey = String(event.key || "").toLowerCase();
+    if (pressedKey !== key) return false;
+
+    // Keep legacy Ctrl+Shift and add Alt+Shift for browsers that reserve Ctrl+Shift combos.
+    const ctrlShift = event.ctrlKey && event.shiftKey && !event.altKey;
+    const altShift = event.altKey && event.shiftKey && !event.ctrlKey;
+    return ctrlShift || altShift;
+  }
+
+  function showModalSafe(modalEl) {
+    if (!modalEl) return;
+    const modalApi = window.bootstrap && window.bootstrap.Modal;
+    if (modalApi && typeof modalApi.getOrCreateInstance === "function") {
+      modalApi.getOrCreateInstance(modalEl).show();
+      return;
+    }
+
+    // Fallback for local/dev scenarios where Bootstrap JS is not available.
+    modalEl.classList.add("show");
+    modalEl.style.display = "block";
+    modalEl.removeAttribute("aria-hidden");
+    modalEl.setAttribute("aria-modal", "true");
+    document.body.classList.add("modal-open");
+    if (!document.querySelector(".modal-backdrop.fallback-modal-backdrop")) {
+      const backdrop = document.createElement("div");
+      backdrop.className = "modal-backdrop fade show fallback-modal-backdrop";
+      document.body.appendChild(backdrop);
+    }
+  }
+
+  function hideModalSafe(modalEl) {
+    if (!modalEl) return;
+    const modalApi = window.bootstrap && window.bootstrap.Modal;
+    if (modalApi && typeof modalApi.getOrCreateInstance === "function") {
+      modalApi.getOrCreateInstance(modalEl).hide();
+      return;
+    }
+
+    modalEl.classList.remove("show");
+    modalEl.style.display = "none";
+    modalEl.setAttribute("aria-hidden", "true");
+    modalEl.removeAttribute("aria-modal");
+    document.body.classList.remove("modal-open");
+    document.querySelectorAll(".modal-backdrop.fallback-modal-backdrop").forEach((el) => el.remove());
+  }
+
+  ["modal-password", "modal-password-entrevista", "modal-password-juego", "modal-password-red"].forEach((id) => {
+    const passInput = document.getElementById(id);
+    if (!passInput) return;
+    passInput.addEventListener("input", () => {
+      if (passInput.value === ACCESS_CODE && !isAdmin) {
+        activarModoAdmin();
+      }
+    });
+  });
+
+  document.querySelectorAll(".btn-close-admin-mode").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      desactivarModoAdmin();
+      const modalId = btn.getAttribute("data-modal-id");
+      if (!modalId) return;
+      const modalEl = document.getElementById(modalId);
+      if (!modalEl) return;
+      hideModalSafe(modalEl);
+    });
+  });
+
+  updateAdminIndicators();
+
+  const EDIT_MODE_FIELDS = [
+    { inputId: "lib-id-editar", badgeId: "lib-edit-mode-badge", formId: "form-nuevo-libro", createLabel: "[ INJECT_BOOK_RECORD ]" },
+    { inputId: "cita-id-editar", badgeId: "cita-edit-mode-badge", formId: "form-nueva-cita", createLabel: "[ INJECT_QUOTE_RECORD ]" },
+    { inputId: "ent-id-editar", badgeId: "ent-edit-mode-badge", formId: "form-nueva-entrevista", createLabel: "[ INJECT_INTERVIEW_RECORD ]" },
+    { inputId: "game-id-editar", badgeId: "game-edit-mode-badge", formId: "form-nuevo-juego", createLabel: "[ INJECT_GAME_RECORD ]" },
+    { inputId: "red-id-editar", badgeId: "red-edit-mode-badge", formId: "form-nueva-red", createLabel: "[ INJECT_POST ]" }
+  ];
+
+  function setEditModeUIState(config) {
+    const input = document.getElementById(config.inputId);
+    if (!input) return;
+
+    const isEditMode = !!String(input.value || "").trim();
+    const badge = document.getElementById(config.badgeId);
+    if (badge) {
+      badge.classList.toggle("d-none", !isEditMode);
+    }
+
+    const form = document.getElementById(config.formId);
+    const submitBtn = form ? form.querySelector('button[type="submit"]') : null;
+    if (submitBtn) {
+      if (!submitBtn.dataset.createLabel) {
+        submitBtn.dataset.createLabel = config.createLabel || submitBtn.textContent.trim();
+      }
+      submitBtn.textContent = isEditMode ? "[ GUARDAR CAMBIOS ]" : submitBtn.dataset.createLabel;
+    }
+  }
+
+  function setEditModeBadgeState(inputId, badgeId) {
+    const config = EDIT_MODE_FIELDS.find((item) => item.inputId === inputId && item.badgeId === badgeId);
+    if (config) {
+      setEditModeUIState(config);
+      return;
+    }
+
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    const isEditMode = !!String(input.value || "").trim();
+    const badge = document.getElementById(badgeId);
+    if (badge) {
+      badge.classList.toggle("d-none", !isEditMode);
+    }
+  }
+
+  function refreshEditModeBadges() {
+    EDIT_MODE_FIELDS.forEach((config) => {
+      setEditModeUIState(config);
+    });
+  }
+
+  function wireEditModeBadges() {
+    EDIT_MODE_FIELDS.forEach((config) => {
+      const input = document.getElementById(config.inputId);
+      if (!input) return;
+      const syncBadge = () => setEditModeUIState(config);
+      input.addEventListener("input", syncBadge);
+      input.addEventListener("change", syncBadge);
+      syncBadge();
+    });
+  }
+
+  wireEditModeBadges();
 
 
   function setLogsCanvasOpen(isOpen) {
@@ -38,7 +286,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // 🌟 FUNCIÓN AUXILIAR PARA RECONECTAR SWIPER CUANDO APAREZCA EN PANTALLA
+  // ðŸŒŸ FUNCIÃ“N AUXILIAR PARA RECONECTAR SWIPER CUANDO APAREZCA EN PANTALLA
   function inicializarSwiperFavoritos() {
     if (swiperFavoritos) {
       console.log("[HUD_LOADER]: Destruyendo instancia previa de Swiper...");
@@ -51,7 +299,7 @@ document.addEventListener("DOMContentLoaded", () => {
       
       swiperFavoritos = new Swiper(".mySwiperBooks", {
         direction: "horizontal",  // Movimiento horizontal continuo
-        slidesPerView: 1,         // 1 libro en pantallas móviles muy pequeñas
+        slidesPerView: 1,         // 1 libro en pantallas mÃ³viles muy pequeÃ±as
         spaceBetween: 20,         // Margen entre libros
         grabCursor: true,
         loop: true,               // Bucle infinito
@@ -63,11 +311,11 @@ document.addEventListener("DOMContentLoaded", () => {
           el: ".swiper-pagination",
           clickable: true,
         },
-        // 📱 Ajuste dinámico según el ancho de la pantalla:
+        // ðŸ“± Ajuste dinÃ¡mico segÃºn el ancho de la pantalla:
         breakpoints: {
           400: { slidesPerView: 2, spaceBetween: 15 },
           768: { slidesPerView: 3, spaceBetween: 20 },
-          1024: { slidesPerView: 4, spaceBetween: 25 } // 🖥️ En PC muestra 4 a la vez tal cual tu boceto
+          1024: { slidesPerView: 4, spaceBetween: 25 } // ðŸ–¥ï¸ En PC muestra 4 a la vez tal cual tu boceto
         }
       });
     }
@@ -75,14 +323,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function cargarFicheroBinario(urlPath, botonActivo) {
     try {
-      // Destruir el swiper si existe antes de cambiar de página/contenido
+      // Destruir el swiper si existe antes de cambiar de pÃ¡gina/contenido
       if (swiperFavoritos) {
         console.log("[HUD_LOADER]: Destruyendo Swiper activo por cambio de cartucho...");
         swiperFavoritos.destroy(true, true);
         swiperFavoritos = null;
       }
 
-      // 1. Efecto estético de apagado/parpadeo de pantalla
+      // 1. Efecto estÃ©tico de apagado/parpadeo de pantalla
       pantallaContenido.classList.add("fade-out");
       logTerminal.textContent = `> Requesting sector: ${urlPath.toUpperCase()}...`;
       
@@ -96,23 +344,23 @@ document.addEventListener("DOMContentLoaded", () => {
       const parser = new DOMParser();
       const doc = parser.parseFromString(htmlText, "text/html");
       
-      // Buscamos el contenedor donde están las listas de libros en la subpágina
+      // Buscamos el contenedor donde estÃ¡n las listas de libros en la subpÃ¡gina
       const nuevoContenido = doc.getElementById("detalle-favorito") || doc.body;
 
-      // 4. Esperamos un pelín para simular latencia de descompresión de datos
+      // 4. Esperamos un pelÃ­n para simular latencia de descompresiÃ³n de datos
       setTimeout(() => {
         pantallaContenido.innerHTML = nuevoContenido.innerHTML;
         pathTerminal.textContent = `[ SCREEN_SRC: /read/${urlPath} ]`;
         logTerminal.textContent = `> Sector ${botonActivo.querySelector('.btn-label').textContent.toUpperCase()} loaded [OK]`;
         pantallaContenido.classList.remove("fade-out");
         
-        // 🔧 CORREGIDO: Arreglado el typo 'antallaContenido' a 'pantallaContenido'
+        // ðŸ”§ CORREGIDO: Arreglado el typo 'antallaContenido' a 'pantallaContenido'
         pantallaContenido.scrollTop = 0; 
   
-        // 🔥 ¡LA MAGIA OCURRE AQUÍ!: Ahora que el HTML ya está físicamente renderizado en el index, despertamos a Swiper
+        // ðŸ”¥ Â¡LA MAGIA OCURRE AQUÃ!: Ahora que el HTML ya estÃ¡ fÃ­sicamente renderizado en el index, despertamos a Swiper
         inicializarSwiperFavoritos();
 
-        // 📚 SYNC DATA SEGMENT WITH LIBRARY DATABASE
+        // ðŸ“š SYNC DATA SEGMENT WITH LIBRARY DATABASE
         cargarBibliotecaReal(urlPath);
 
       }, 200);
@@ -121,8 +369,8 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error(error);
       pantallaContenido.innerHTML = `
         <div class="text-danger font-monospace p-4 border border-danger border-opacity-25 bg-black-25">
-          <h5 class="fw-bold">[ ❌ CRITICAL_LOAD_ERROR ]</h5>
-          <p class="small m-0">No se pudo acceder a los fragmentos del nodo físico del búnker. Asegúrate de que el archivo '${urlPath}' existe en el servidor.</p>
+          <h5 class="fw-bold">[ âŒ CRITICAL_LOAD_ERROR ]</h5>
+          <p class="small m-0">No se pudo acceder a los fragmentos del nodo fÃ­sico del bÃºnker. AsegÃºrate de que el archivo '${urlPath}' existe en el servidor.</p>
         </div>
       `;
       pantallaContenido.classList.remove("fade-out");
@@ -133,7 +381,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Configurar los listeners para cada ranura de cartucho
   botonesCartucho.forEach(boton => {
     boton.addEventListener("click", () => {
-      if (boton.classList.contains("active")) return; // Ya está cargado
+      if (boton.classList.contains("active")) return; // Ya estÃ¡ cargado
 
       // Cambiar estados visuales de los botones
       botonesCartucho.forEach(b => {
@@ -144,19 +392,19 @@ document.addEventListener("DOMContentLoaded", () => {
       boton.classList.add("active");
       boton.querySelector(".status-icon").className = "bi bi-play-fill ms-auto status-icon";
 
-      // Ejecutar la carga asíncrona
+      // Ejecutar la carga asÃ­ncrona
       const destinoHTML = boton.getAttribute("data-target");
       cargarFicheroBinario(destinoHTML, boton);
     });
   });
 
-  // Carga inicial automática del primer cartucho por defecto
+  // Carga inicial automÃ¡tica del primer cartucho por defecto
   const primerCartucho = document.querySelector("#library-cartridge-selector .cartridge-btn.active");
   if (primerCartucho) {
     cargarFicheroBinario(primerCartucho.getAttribute("data-target"), primerCartucho);
   }
 
-  // 🌈 LÓGICA DE ROTACIÓN NEÓN RGB ULTRA-FLUIDA VÍA JS Y VARIABLES CSS
+  // ðŸŒˆ LÃ“GICA DE ROTACIÃ“N NEÃ“N RGB ULTRA-FLUIDA VÃA JS Y VARIABLES CSS
   const wrapper = document.querySelector('.neon-rgb-frame-wrapper');
   if (wrapper) {
     const spinner = wrapper.querySelector('.neon-rgb-border-spin');
@@ -164,18 +412,18 @@ document.addEventListener("DOMContentLoaded", () => {
       let currentAngle = 0;
       let lastTime = performance.now();
       let direction = 1; // 1 = forward, -1 = reverse
-      const SPEED = 90;  // grados por segundo (360deg / 4s de duración)
+      const SPEED = 90;  // grados por segundo (360deg / 4s de duraciÃ³n)
 
       function animate(time) {
         const dt = (time - lastTime) / 1000; // delta time en segundos
         lastTime = time;
 
-        // Limitar dt para evitar saltos si el navegador suspende la pestaña
+        // Limitar dt para evitar saltos si el navegador suspende la pestaÃ±a
         const safeDt = Math.min(dt, 0.1);
 
         currentAngle += direction * SPEED * safeDt;
         
-        // Mantener el ángulo en el rango [0, 360)
+        // Mantener el Ã¡ngulo en el rango [0, 360)
         currentAngle = (currentAngle % 360 + 360) % 360;
 
         spinner.style.setProperty('--rotation', `${currentAngle}deg`);
@@ -191,7 +439,7 @@ document.addEventListener("DOMContentLoaded", () => {
         direction = 1;
       });
 
-      // Iniciar el bucle de rotación
+      // Iniciar el bucle de rotaciÃ³n
       requestAnimationFrame((time) => {
         lastTime = time;
         requestAnimationFrame(animate);
@@ -199,12 +447,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // 🐸 CARGA DINÁMICA DE EMOTES DESDE ASSETS/ICONS
+  // ðŸ¸ CARGA DINÃMICA DE EMOTES DESDE ASSETS/ICONS
   function inicializarMarquesinaEmotes() {
     const container = document.getElementById('emotes-marquee-container');
     if (!container) return;
 
-    // Lista fija de iconos leída del directorio assets/icons
+    // Lista fija de iconos leÃ­da del directorio assets/icons
     const emotes = [
       { file: 'ranidk.jfif', rarity: 'SUB', color: 'bg-neon-cyan' },
       { file: 'ranifire.jfif', rarity: 'HOT', color: 'bg-neon-magenta' },
@@ -230,7 +478,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const fila1 = emotes.slice(0, midPoint);
     const fila2 = emotes.slice(midPoint);
 
-    // Función auxiliar para construir el contenido HTML de una fila (duplicado para el loop infinito)
+    // FunciÃ³n auxiliar para construir el contenido HTML de una fila (duplicado para el loop infinito)
     function crearFilaHTML(listaEmotes, esIzquierda) {
       const trackClass = esIzquierda ? 'track-left' : 'track-right';
       
@@ -264,31 +512,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 1. Keyboard Shortcut: Ctrl + Shift + B to toggle Modal with password verification
   document.addEventListener("keydown", (e) => {
-    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "b") {
+    if (isTypingContext(e.target)) return;
+    if (matchesAdminShortcut(e, "b")) {
       e.preventDefault();
-      const code = prompt("INGRESE CÓDIGO DE ACCESO DE SEGURIDAD:");
-      if (code === "bunker2026") {
-        sessionStorage.setItem(ADMIN_SESSION_KEY, "1");
-        isAdmin = true;
-
-        // Re-load dynamic views immediately to display delete buttons
-        cargarJuegos();
-        const activeCartridge = document.querySelector("#library-cartridge-selector .cartridge-btn.active");
-        if (activeCartridge) {
-          cargarFicheroBinario(activeCartridge.getAttribute("data-target"), activeCartridge);
-        }
-
-        const modalEl = document.getElementById("modal-nuevo-libro");
-        if (modalEl) {
-          const modalInst = bootstrap.Modal.getOrCreateInstance(modalEl);
-          modalInst.show();
-          // Auto-fill password input in modal
-          const passInput = document.getElementById("modal-password");
-          if (passInput) passInput.value = code;
-        }
-      } else if (code !== null) {
-        alert("CÓDIGO DE ACCESO INCORRECTO. ACCESO DENEGADO.");
-      }
+      requestAdminAccess(() => {
+        openAdminModal("modal-nuevo-libro", "modal-password");
+      });
     }
   });
 
@@ -358,7 +587,10 @@ document.addEventListener("DOMContentLoaded", () => {
       const file = fileInput ? fileInput.files[0] : null;
 
       const submitData = (coverData = null, fileName = null) => {
+        const editId = (document.getElementById("lib-id-editar")?.value || "").trim();
+        const manualCoverInput = document.getElementById("lib-cover");
         const datosLibro = {
+          id: editId || undefined,
           titulo: document.getElementById("lib-titulo").value.toUpperCase(),
           colorTitulo: document.getElementById("lib-color-titulo") ? document.getElementById("lib-color-titulo").value : "white",
           autor: document.getElementById("lib-autor").value.toUpperCase(),
@@ -372,7 +604,7 @@ document.addEventListener("DOMContentLoaded", () => {
           colorHype: document.getElementById("lib-color-hype") ? document.getElementById("lib-color-hype").value : "yellow",
           resena: document.getElementById("lib-resena").value,
           colorResena: document.getElementById("lib-color-resena") ? document.getElementById("lib-color-resena").value : "white",
-          cover: document.getElementById("lib-cover").value || "/assets/images/jony.jpg",
+          cover: (manualCoverInput?.value || "").trim(),
           password: document.getElementById("modal-password").value,
           favorito: document.getElementById("lib-favorito").checked,
           podio: document.getElementById("lib-podio").value ? parseInt(document.getElementById("lib-podio").value) : null,
@@ -382,7 +614,9 @@ document.addEventListener("DOMContentLoaded", () => {
           coverFileName: fileName
         };
 
-        fetch("/api/biblioteca/nuevo", {
+        const endpoint = editId ? "/api/biblioteca/editar" : "/api/biblioteca/nuevo";
+
+        fetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(datosLibro)
@@ -400,12 +634,14 @@ document.addEventListener("DOMContentLoaded", () => {
               
               // Reset form and close modal
               formNuevoLibro.reset();
+              const inputEditId = document.getElementById("lib-id-editar");
+              if (inputEditId) inputEditId.value = "";
+              setEditModeBadgeState("lib-id-editar", "lib-edit-mode-badge");
               if (podioContainer) podioContainer.classList.add("d-none");
               if (ownBookLinksContainer) ownBookLinksContainer.classList.add("d-none");
               const modalEl = document.getElementById("modal-nuevo-libro");
               if (modalEl) {
-                const modalInst = bootstrap.Modal.getInstance(modalEl);
-                if (modalInst) modalInst.hide();
+                hideModalSafe(modalEl);
               }
 
               // Reload current deck/cartridge if it's leidos.html, tbr.html or favoritos.html
@@ -448,7 +684,10 @@ document.addEventListener("DOMContentLoaded", () => {
     formNuevaCita.addEventListener("submit", function (e) {
       e.preventDefault();
 
+      const editId = (document.getElementById("cita-id-editar")?.value || "").trim();
+
       const datosCita = {
+        id: editId || undefined,
         texto: document.getElementById("cita-texto").value,
         colorTexto: document.getElementById("cita-color-texto") ? document.getElementById("cita-color-texto").value : "white",
         autor: document.getElementById("cita-autor").value.toUpperCase(),
@@ -461,7 +700,9 @@ document.addEventListener("DOMContentLoaded", () => {
         password: document.getElementById("modal-password").value
       };
 
-      fetch("/api/citas/nuevo", {
+      const endpoint = editId ? "/api/citas/editar" : "/api/citas/nuevo";
+
+      fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(datosCita)
@@ -478,10 +719,12 @@ document.addEventListener("DOMContentLoaded", () => {
             logTerminal.textContent = `> ${data.message}`;
             
             formNuevaCita.reset();
+            const inputEditId = document.getElementById("cita-id-editar");
+            if (inputEditId) inputEditId.value = "";
+            setEditModeBadgeState("cita-id-editar", "cita-edit-mode-badge");
             const modalEl = document.getElementById("modal-nuevo-libro");
             if (modalEl) {
-              const modalInst = bootstrap.Modal.getInstance(modalEl);
-              if (modalInst) modalInst.hide();
+              hideModalSafe(modalEl);
             }
 
             // Reload current deck/cartridge if it's citas.html
@@ -509,7 +752,10 @@ document.addEventListener("DOMContentLoaded", () => {
     formNuevaEntrevista.addEventListener("submit", function (e) {
       e.preventDefault();
 
+      const editId = (document.getElementById("ent-id-editar")?.value || "").trim();
+
       const datosEntrevista = {
+        id: editId || undefined,
         nombre: document.getElementById("ent-nombre").value.trim(),
         colorNombre: document.getElementById("ent-color-nombre").value,
         obra: document.getElementById("ent-obra").value.trim(),
@@ -525,7 +771,9 @@ document.addEventListener("DOMContentLoaded", () => {
         password: document.getElementById("modal-password-entrevista").value
       };
 
-      fetch("/api/entrevistas/nuevo", {
+      const endpoint = editId ? "/api/entrevistas/editar" : "/api/entrevistas/nuevo";
+
+      fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(datosEntrevista)
@@ -542,10 +790,12 @@ document.addEventListener("DOMContentLoaded", () => {
             logTerminal.textContent = `> ${data.message}`;
             
             formNuevaEntrevista.reset();
+            const inputEditId = document.getElementById("ent-id-editar");
+            if (inputEditId) inputEditId.value = "";
+            setEditModeBadgeState("ent-id-editar", "ent-edit-mode-badge");
             const modalEl = document.getElementById("modal-nueva-entrevista");
             if (modalEl) {
-              const modalInst = bootstrap.Modal.getInstance(modalEl);
-              if (modalInst) modalInst.hide();
+              hideModalSafe(modalEl);
             }
 
             cargarEntrevistas();
@@ -566,87 +816,102 @@ document.addEventListener("DOMContentLoaded", () => {
     formNuevoJuego.addEventListener("submit", function (e) {
       e.preventDefault();
 
-      const datosJuego = {
-        titulo: document.getElementById("game-titulo").value.trim(),
-        tituloColor: document.getElementById("game-color-titulo").value,
-        badgeTexto: document.getElementById("game-badge-texto").value.trim(),
-        badgeColor: document.getElementById("game-color-badge").value,
-        descripcion: document.getElementById("game-descripcion").value.trim(),
-        vicio: parseInt(document.getElementById("game-vicio").value) || 80,
-        progressColor: document.getElementById("game-color-progress").value,
-        plataforma: document.getElementById("game-plataforma").value.trim(),
-        horas: document.getElementById("game-horas").value.trim(),
-        imagen: document.getElementById("game-imagen").value.trim(),
-        password: document.getElementById("modal-password-juego").value
+      const editId = (document.getElementById("game-id-editar")?.value || "").trim();
+
+      const gameImageFileInput = document.getElementById("game-imagen-file");
+      const gameCurrentImageInput = document.getElementById("game-imagen-actual");
+
+      const submitData = (uploadedImageData = "", uploadedImageName = "") => {
+        const datosJuego = {
+          id: editId || undefined,
+          titulo: document.getElementById("game-titulo").value.trim(),
+          tituloColor: document.getElementById("game-color-titulo").value,
+          badgeTexto: document.getElementById("game-badge-texto").value.trim(),
+          badgeColor: document.getElementById("game-color-badge").value,
+          descripcion: document.getElementById("game-descripcion").value.trim(),
+          vicio: parseInt(document.getElementById("game-vicio").value) || 80,
+          progressColor: document.getElementById("game-color-progress").value,
+          plataforma: document.getElementById("game-plataforma").value.trim(),
+          horas: document.getElementById("game-horas").value.trim(),
+          imagen: (uploadedImageData || gameCurrentImageInput?.value || "").trim(),
+          coverFileData: uploadedImageData || undefined,
+          coverFileName: uploadedImageName || undefined,
+          password: document.getElementById("modal-password-juego").value
+        };
+
+        const endpoint = editId ? "/api/juegos/editar" : "/api/juegos/nuevo";
+
+        fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(datosJuego)
+        })
+          .then((res) => {
+            if (!res.ok) {
+              return res.json().then(err => { throw new Error(err.error || "Http Error"); });
+            }
+            return res.json();
+          })
+          .then((data) => {
+            if (data.success) {
+              console.log(`[SYS]: ${data.message}`);
+              logTerminal.textContent = `> ${data.message}`;
+
+              formNuevoJuego.reset();
+              const inputEditId = document.getElementById("game-id-editar");
+              if (inputEditId) inputEditId.value = "";
+              if (gameCurrentImageInput) gameCurrentImageInput.value = "";
+              setEditModeBadgeState("game-id-editar", "game-edit-mode-badge");
+              const modalEl = document.getElementById("modal-nuevo-juego");
+              if (modalEl) {
+                hideModalSafe(modalEl);
+              }
+
+              cargarJuegos();
+              cargarLogsYVisores();
+            }
+          })
+          .catch((err) => {
+            console.error("Error adding game:", err);
+            alert(`ERROR: ${err.message}`);
+            logTerminal.textContent = `> ERR: Fail to write to gaming sector.`;
+          });
       };
 
-      fetch("/api/juegos/nuevo", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(datosJuego)
-      })
-        .then((res) => {
-          if (!res.ok) {
-            return res.json().then(err => { throw new Error(err.error || "Http Error"); });
-          }
-          return res.json();
-        })
-        .then((data) => {
-          if (data.success) {
-            console.log(`[SYS]: ${data.message}`);
-            logTerminal.textContent = `> ${data.message}`;
-            
-            formNuevoJuego.reset();
-            const modalEl = document.getElementById("modal-nuevo-juego");
-            if (modalEl) {
-              const modalInst = bootstrap.Modal.getInstance(modalEl);
-              if (modalInst) modalInst.hide();
-            }
-
-            cargarJuegos();
-            cargarLogsYVisores();
-          }
-        })
-        .catch((err) => {
-          console.error("Error adding game:", err);
-          alert(`ERROR: ${err.message}`);
-          logTerminal.textContent = `> ERR: Fail to write to gaming sector.`;
-        });
+      const selectedFile = gameImageFileInput?.files?.[0];
+      if (selectedFile) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          submitData(event.target?.result || "", selectedFile.name || "game-cover.png");
+        };
+        reader.onerror = () => {
+          alert("ERROR: No se pudo leer la imagen del juego.");
+        };
+        reader.readAsDataURL(selectedFile);
+      } else {
+        submitData("");
+      }
     });
   }
 
   // 4. Keyboard Shortcut: Ctrl + Shift + E to open interviews modal
   document.addEventListener("keydown", (e) => {
-    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "e") {
+    if (isTypingContext(e.target)) return;
+
+    if (matchesAdminShortcut(e, "e")) {
       e.preventDefault();
-      const code = prompt("INGRESE CÓDIGO DE ACCESO DE SEGURIDAD DEL BÚNKER:");
-      if (code === "bunker2026") {
-        const modalEl = document.getElementById("modal-nueva-entrevista");
-        if (modalEl) {
-          const modalInst = bootstrap.Modal.getOrCreateInstance(modalEl);
-          modalInst.show();
-          const passInput = document.getElementById("modal-password-entrevista");
-          if (passInput) passInput.value = code;
-        }
-      } else if (code !== null) {
-        alert("CÓDIGO DE ACCESO INCORRECTO. ACCESO DENEGADO.");
-      }
+      requestAdminAccess(
+        () => openAdminModal("modal-nueva-entrevista", "modal-password-entrevista"),
+        "INGRESE CÓDIGO DE ACCESO DE SEGURIDAD DEL BÚNKER:"
+      );
     }
 
-    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "g") {
+    if (matchesAdminShortcut(e, "g")) {
       e.preventDefault();
-      const code = prompt("INGRESE CÓDIGO DE ACCESO DE SEGURIDAD DEL BÚNKER (GAMING):");
-      if (code === "bunker2026") {
-        const modalEl = document.getElementById("modal-nuevo-juego");
-        if (modalEl) {
-          const modalInst = bootstrap.Modal.getOrCreateInstance(modalEl);
-          modalInst.show();
-          const passInput = document.getElementById("modal-password-juego");
-          if (passInput) passInput.value = code;
-        }
-      } else if (code !== null) {
-        alert("CÓDIGO DE ACCESO INCORRECTO. ACCESO DENEGADO.");
-      }
+      requestAdminAccess(
+        () => openAdminModal("modal-nuevo-juego", "modal-password-juego"),
+        "INGRESE CÓDIGO DE ACCESO DE SEGURIDAD DEL BÚNKER (GAMING):"
+      );
     }
   });
 
@@ -771,12 +1036,12 @@ document.addEventListener("DOMContentLoaded", () => {
             const titleClass = colorTitulo === 'white' ? 'text-white' : `text-neon-${colorTitulo}`;
 
             const colorAutor = libro.colorAutor || 'yellow';
-            const autorClass = ['cyan','magenta','green','yellow','purple','orange'].includes(colorAutor)
+            const autorClass = ['cyan','magenta','green','yellow','purple','orange','red','blue','gray','brown','black'].includes(colorAutor)
               ? `text-neon-${colorAutor}`
               : `text-${colorAutor}`;
 
             const colorGenero = libro.colorGenero || 'info';
-            const generoClass = ['cyan','magenta','green','yellow','purple','orange'].includes(colorGenero)
+            const generoClass = ['cyan','magenta','green','yellow','purple','orange','red','blue','gray','brown','black'].includes(colorGenero)
               ? `text-neon-${colorGenero}`
               : `text-${colorGenero}`;
 
@@ -798,7 +1063,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         <span class="${colorClass} font-monospace text-xs d-block mb-1">[ COMPLETED_RECORD // CORE_${String(index + 1).padStart(2, '0')} ]</span>
                         <h3 class="fw-bold ${titleClass} text-uppercase m-0 h4">${libro.titulo}</h3>
                         <div class="text-white-50 small mt-1 font-monospace">
-                          POR <span class="${autorClass}">${libro.autor}</span> // GÉNERO: <span class="${generoClass}">${libro.genero || 'CYBERPUNK'}</span>
+                          POR <span class="${autorClass}">${libro.autor}</span> // GÃ‰NERO: <span class="${generoClass}">${libro.genero || 'CYBERPUNK'}</span>
                         </div>
                       </div>
                       <div class="d-flex align-items-center gap-3">
@@ -807,6 +1072,7 @@ document.addEventListener("DOMContentLoaded", () => {
                           <span class="text-white ms-1" style="font-size: 14px;">${rating.toFixed(1)}</span>
                         </div>
                         ${isAdmin ? `
+                          <button type="button" class="btn btn-outline-info btn-sm rounded-0 text-uppercase font-monospace btn-edit-book" data-id="${libro.id}" style="font-size: 0.62rem; padding: 2px 6px;">[ EDITAR ]</button>
                           <button type="button" class="btn btn-outline-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-book" data-id="${libro.id}" style="font-size: 0.62rem; padding: 2px 6px;">[ ELIMINAR ]</button>
                         ` : ''}
                       </div>
@@ -836,10 +1102,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
           librosTbr.forEach((libro, index) => {
             const hype = parseInt(libro.hype) || 90;
-            let badgeText = "STANDBY_DECK 💾";
-            if (hype >= 90) badgeText = "CRITICAL_HYPE 🔥";
-            else if (hype >= 75) badgeText = "COZY_READ ☕";
-            else if (hype >= 60) badgeText = "STUDY_CORE 🌌";
+            let badgeText = "STANDBY_DECK ðŸ’¾";
+            if (hype >= 90) badgeText = "CRITICAL_HYPE ðŸ”¥";
+            else if (hype >= 75) badgeText = "COZY_READ â˜•";
+            else if (hype >= 60) badgeText = "STUDY_CORE ðŸŒŒ";
 
             const queueState = index === 0 ? 'NEXT_LOAD' : index === 1 ? 'ACTIVE_QUEUE' : 'BUFFER_STANDBY';
             const buyLink = `https://www.amazon.es/s?k=${encodeURIComponent(libro.titulo + ' ' + libro.autor)}`;
@@ -848,12 +1114,12 @@ document.addEventListener("DOMContentLoaded", () => {
             const titleClass = colorTitulo === 'white' ? 'text-white' : `text-neon-${colorTitulo}`;
 
             const colorAutor = libro.colorAutor || 'warning';
-            const autorClass = ['cyan','magenta','green','yellow','purple','orange'].includes(colorAutor)
+            const autorClass = ['cyan','magenta','green','yellow','purple','orange','red','blue','gray','brown','black'].includes(colorAutor)
               ? `text-neon-${colorAutor}`
               : `text-${colorAutor}`;
 
             const colorGenero = libro.colorGenero || 'white';
-            const generoClass = ['cyan','magenta','green','yellow','purple','orange'].includes(colorGenero)
+            const generoClass = ['cyan','magenta','green','yellow','purple','orange','red','blue','gray','brown','black'].includes(colorGenero)
               ? `text-neon-${colorGenero}`
               : `text-${colorGenero}`;
 
@@ -874,6 +1140,7 @@ document.addEventListener("DOMContentLoaded", () => {
                       </span>
                     </div>
                     ${isAdmin ? `
+                      <button type="button" class="btn btn-info btn-sm rounded-0 text-uppercase font-monospace btn-edit-book" data-id="${libro.id}" style="position: absolute; top: 10px; right: 90px; z-index: 10; font-size: 0.62rem; padding: 2px 6px; background: rgba(13,202,240,0.85); border: 1px solid rgba(13,202,240,0.5);">[ EDITAR ]</button>
                       <button type="button" class="btn btn-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-book" data-id="${libro.id}" style="position: absolute; top: 10px; right: 10px; z-index: 10; font-size: 0.62rem; padding: 2px 6px; background: rgba(220,53,69,0.85); border: 1px solid rgba(220,53,69,0.5);">[ ELIMINAR ]</button>
                     ` : ''}
                   </div>
@@ -918,10 +1185,10 @@ document.addEventListener("DOMContentLoaded", () => {
               const t2ColorTitulo = t2.colorTitulo || 'white';
               const t2TitleClass = t2ColorTitulo === 'white' ? 'text-white' : `text-neon-${t2ColorTitulo}`;
               const t2ColorAutor = t2.colorAutor || 'white';
-              const t2AutorClass = ['cyan','magenta','green','yellow','purple','orange'].includes(t2ColorAutor) ? `text-neon-${t2ColorAutor}` : `text-${t2ColorAutor}`;
+              const t2AutorClass = ['cyan','magenta','green','yellow','purple','orange','red','blue','gray','brown','black'].includes(t2ColorAutor) ? `text-neon-${t2ColorAutor}` : `text-${t2ColorAutor}`;
               const t2ColorGenero = t2.colorGenero || 'info';
-              const t2BadgeBorderColor = ['cyan','magenta','green','yellow','purple','orange'].includes(t2ColorGenero) ? `border-${t2ColorGenero}` : 'border-info';
-              const t2BadgeTextClass = ['cyan','magenta','green','yellow','purple','orange'].includes(t2ColorGenero) ? `text-neon-${t2ColorGenero}` : 'text-info';
+              const t2BadgeBorderColor = ['cyan','magenta','green','yellow','purple','orange','red','blue','gray','brown','black'].includes(t2ColorGenero) ? `border-${t2ColorGenero}` : 'border-info';
+              const t2BadgeTextClass = ['cyan','magenta','green','yellow','purple','orange','red','blue','gray','brown','black'].includes(t2ColorGenero) ? `text-neon-${t2ColorGenero}` : 'text-info';
               const t2ColorResena = t2.colorResena || 'white';
               const t2ResenaClass = t2ColorResena === 'white' ? 'text-white' : `text-neon-${t2ColorResena}`;
 
@@ -936,7 +1203,7 @@ document.addEventListener("DOMContentLoaded", () => {
                       <div>
                         <div class="d-flex justify-content-between align-items-center mb-1">
                           <i class="bi bi-award-fill text-info fs-4 d-block m-0"></i>
-                          ${isAdmin ? `<button type="button" class="btn btn-outline-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-book" data-id="${t2.id}" style="font-size: 0.55rem; padding: 1px 4px;">[ X ]</button>` : ''}
+                          ${isAdmin ? `<button type="button" class="btn btn-outline-info btn-sm rounded-0 text-uppercase font-monospace btn-edit-book" data-id="${t2.id}" style="font-size: 0.55rem; padding: 1px 4px;">[ E ]</button><button type="button" class="btn btn-outline-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-book" data-id="${t2.id}" style="font-size: 0.55rem; padding: 1px 4px;">[ X ]</button>` : ''}
                         </div>
                         <h5 class="fw-bold mb-1 ${t2TitleClass} text-uppercase" style="font-size: 15px;">${t2.titulo}</h5>
                         <p class="text-white small mb-2 font-monospace" style="font-size: 11px;">POR: <span class="${t2AutorClass}">${t2.autor}</span></p>
@@ -959,10 +1226,10 @@ document.addEventListener("DOMContentLoaded", () => {
               const t1ColorTitulo = t1.colorTitulo || 'white';
               const t1TitleClass = t1ColorTitulo === 'white' ? 'text-white' : `text-neon-${t1ColorTitulo}`;
               const t1ColorAutor = t1.colorAutor || 'white';
-              const t1AutorClass = ['cyan','magenta','green','yellow','purple','orange'].includes(t1ColorAutor) ? `text-neon-${t1ColorAutor}` : `text-${t1ColorAutor}`;
+              const t1AutorClass = ['cyan','magenta','green','yellow','purple','orange','red','blue','gray','brown','black'].includes(t1ColorAutor) ? `text-neon-${t1ColorAutor}` : `text-${t1ColorAutor}`;
               const t1ColorGenero = t1.colorGenero || 'warning';
-              const t1BadgeBorderColor = ['cyan','magenta','green','yellow','purple','orange'].includes(t1ColorGenero) ? `border-${t1ColorGenero}` : 'border-warning';
-              const t1BadgeTextClass = ['cyan','magenta','green','yellow','purple','orange'].includes(t1ColorGenero) ? `text-neon-${t1ColorGenero}` : 'text-warning';
+              const t1BadgeBorderColor = ['cyan','magenta','green','yellow','purple','orange','red','blue','gray','brown','black'].includes(t1ColorGenero) ? `border-${t1ColorGenero}` : 'border-warning';
+              const t1BadgeTextClass = ['cyan','magenta','green','yellow','purple','orange','red','blue','gray','brown','black'].includes(t1ColorGenero) ? `text-neon-${t1ColorGenero}` : 'text-warning';
               const t1ColorResena = t1.colorResena || 'white';
               const t1ResenaClass = t1ColorResena === 'white' ? 'text-white' : `text-neon-${t1ColorResena}`;
 
@@ -977,7 +1244,7 @@ document.addEventListener("DOMContentLoaded", () => {
                       <div>
                         <div class="d-flex justify-content-between align-items-center mb-1">
                           <i class="bi bi-crown-fill text-warning fs-3 d-block m-0"></i>
-                          ${isAdmin ? `<button type="button" class="btn btn-outline-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-book" data-id="${t1.id}" style="font-size: 0.55rem; padding: 1px 4px;">[ X ]</button>` : ''}
+                          ${isAdmin ? `<button type="button" class="btn btn-outline-info btn-sm rounded-0 text-uppercase font-monospace btn-edit-book" data-id="${t1.id}" style="font-size: 0.55rem; padding: 1px 4px;">[ E ]</button><button type="button" class="btn btn-outline-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-book" data-id="${t1.id}" style="font-size: 0.55rem; padding: 1px 4px;">[ X ]</button>` : ''}
                         </div>
                         <h5 class="fw-bold mb-1 ${t1TitleClass} text-uppercase" style="font-size: 17px;">${t1.titulo}</h5>
                         <p class="text-white small mb-2 font-monospace" style="font-size: 11px;">POR: <span class="${t1AutorClass}">${t1.autor}</span></p>
@@ -1000,10 +1267,10 @@ document.addEventListener("DOMContentLoaded", () => {
               const t3ColorTitulo = t3.colorTitulo || 'white';
               const t3TitleClass = t3ColorTitulo === 'white' ? 'text-white' : `text-neon-${t3ColorTitulo}`;
               const t3ColorAutor = t3.colorAutor || 'white';
-              const t3AutorClass = ['cyan','magenta','green','yellow','purple','orange'].includes(t3ColorAutor) ? `text-neon-${t3ColorAutor}` : `text-${t3ColorAutor}`;
+              const t3AutorClass = ['cyan','magenta','green','yellow','purple','orange','red','blue','gray','brown','black'].includes(t3ColorAutor) ? `text-neon-${t3ColorAutor}` : `text-${t3ColorAutor}`;
               const t3ColorGenero = t3.colorGenero || 'danger';
-              const t3BadgeBorderColor = ['cyan','magenta','green','yellow','purple','orange'].includes(t3ColorGenero) ? `border-${t3ColorGenero}` : 'border-danger';
-              const t3BadgeTextClass = ['cyan','magenta','green','yellow','purple','orange'].includes(t3ColorGenero) ? `text-neon-${t3ColorGenero}` : 'text-danger';
+              const t3BadgeBorderColor = ['cyan','magenta','green','yellow','purple','orange','red','blue','gray','brown','black'].includes(t3ColorGenero) ? `border-${t3ColorGenero}` : 'border-danger';
+              const t3BadgeTextClass = ['cyan','magenta','green','yellow','purple','orange','red','blue','gray','brown','black'].includes(t3ColorGenero) ? `text-neon-${t3ColorGenero}` : 'text-danger';
               const t3ColorResena = t3.colorResena || 'white';
               const t3ResenaClass = t3ColorResena === 'white' ? 'text-white' : `text-neon-${t3ColorResena}`;
 
@@ -1018,7 +1285,7 @@ document.addEventListener("DOMContentLoaded", () => {
                       <div>
                         <div class="d-flex justify-content-between align-items-center mb-1">
                           <i class="bi bi-award text-danger fs-4 d-block m-0"></i>
-                          ${isAdmin ? `<button type="button" class="btn btn-outline-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-book" data-id="${t3.id}" style="font-size: 0.55rem; padding: 1px 4px;">[ X ]</button>` : ''}
+                          ${isAdmin ? `<button type="button" class="btn btn-outline-info btn-sm rounded-0 text-uppercase font-monospace btn-edit-book" data-id="${t3.id}" style="font-size: 0.55rem; padding: 1px 4px;">[ E ]</button><button type="button" class="btn btn-outline-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-book" data-id="${t3.id}" style="font-size: 0.55rem; padding: 1px 4px;">[ X ]</button>` : ''}
                         </div>
                         <h5 class="fw-bold mb-1 ${t3TitleClass} text-uppercase" style="font-size: 15px;">${t3.titulo}</h5>
                         <p class="text-white small mb-2 font-monospace" style="font-size: 11px;">POR: <span class="${t3AutorClass}">${t3.autor}</span></p>
@@ -1056,6 +1323,7 @@ document.addEventListener("DOMContentLoaded", () => {
                   <div class="swiper-slide">
                     <div class="cyber-book-card d-flex flex-column align-items-center p-3 h-100 text-center position-relative">
                       ${isAdmin ? `
+                        <button type="button" class="btn btn-info btn-sm rounded-0 text-uppercase font-monospace btn-edit-book" data-id="${libro.id}" style="position: absolute; top: 10px; right: 55px; z-index: 10; font-size: 0.55rem; padding: 1px 4px; background: rgba(13,202,240,0.85); border: 1px solid rgba(13,202,240,0.5);">[ E ]</button>
                         <button type="button" class="btn btn-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-book" data-id="${libro.id}" style="position: absolute; top: 10px; right: 10px; z-index: 10; font-size: 0.55rem; padding: 1px 4px; background: rgba(220,53,69,0.85); border: 1px solid rgba(220,53,69,0.5);">[ X ]</button>
                       ` : ''}
                       <div class="cyber-cover-wrap mb-3">
@@ -1109,6 +1377,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="row align-items-center g-5 my-4 position-relative">
                   ${isAdmin ? `
                     <div class="position-absolute top-0 end-0 m-3 text-end" style="z-index: 100;">
+                      <button type="button" class="btn btn-info btn-sm rounded-0 text-uppercase font-monospace btn-edit-book" data-id="${libro.id}" style="font-size: 0.62rem; padding: 2px 6px; background: rgba(13,202,240,0.85); border: 1px solid rgba(13,202,240,0.5);">[ EDITAR ]</button>
                       <button type="button" class="btn btn-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-book" data-id="${libro.id}" style="font-size: 0.62rem; padding: 2px 6px; background: rgba(220,53,69,0.85); border: 1px solid rgba(220,53,69,0.5);">[ ELIMINAR ]</button>
                     </div>
                   ` : ''}
@@ -1135,7 +1404,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     </h2>
 
                     <h5 class="fw-medium mb-4 font-monospace ${autorClass}" style="font-size: 13px">
-                      // SAGA: CYBER_NETWORKS // POR: ${libro.autor} // GÉNERO: <span class="${generoClass}">${libro.genero || 'SCI-FI'}</span>
+                      // SAGA: CYBER_NETWORKS // POR: ${libro.autor} // GÃ‰NERO: <span class="${generoClass}">${libro.genero || 'SCI-FI'}</span>
                     </h5>
 
                     <!-- Caja de Sinopsis Cyber-Datapad -->
@@ -1145,7 +1414,7 @@ document.addEventListener("DOMContentLoaded", () => {
                       </p>
                     </div>
 
-                    <!-- Botones de Acción HUD -->
+                    <!-- Botones de AcciÃ³n HUD -->
                     <div class="d-flex flex-wrap gap-3 align-items-center">
                       ${wattpadBtn}
                       ${amazonBtn}
@@ -1188,6 +1457,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="col">
                   <div class="card h-100 border-0 quote-cyber-card p-4 text-white position-relative">
                     ${isAdmin ? `
+                      <button type="button" class="btn btn-outline-info btn-sm rounded-0 text-uppercase font-monospace btn-edit-quote" data-id="${cita.id}" style="position: absolute; top: 10px; right: 95px; z-index: 10; font-size: 0.62rem; padding: 2px 6px;">[ EDITAR ]</button>
                       <button type="button" class="btn btn-outline-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-quote" data-id="${cita.id}" style="position: absolute; top: 10px; right: 10px; z-index: 10; font-size: 0.62rem; padding: 2px 6px;">[ ELIMINAR ]</button>
                     ` : ''}
                     <div class="fs-1 mb-2" style="color: ${labelHex}; text-shadow: 0 0 10px ${labelHex};"><i class="bi bi-quote"></i></div>
@@ -1230,6 +1500,7 @@ document.addEventListener("DOMContentLoaded", () => {
                       <div class="d-flex align-items-center gap-2">
                         <span class="badge rounded-1 bg-dark font-monospace text-xs" style="background: rgba(0,0,0,0.85) !important; border: 1px solid ${labelHex} !important; color: ${labelHex} !important; text-shadow: 0 0 6px ${labelHex};">[ ${cita.label} ]</span>
                         ${isAdmin ? `
+                          <button type="button" class="btn btn-outline-info btn-sm rounded-0 text-uppercase font-monospace btn-edit-quote" data-id="${cita.id}" style="font-size: 0.62rem; padding: 2px 6px;">[ EDITAR ]</button>
                           <button type="button" class="btn btn-outline-danger btn-sm rounded-0 text-uppercase font-monospace btn-delete-quote" data-id="${cita.id}" style="font-size: 0.62rem; padding: 2px 6px;">[ ELIMINAR ]</button>
                         ` : ''}
                       </div>
@@ -1258,6 +1529,123 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Color preview system for library modal
+  const SECRET_MODAL_EXTRA_COLORS = [
+    { value: 'red', label: 'RED (POTENTE)' },
+    { value: 'blue', label: 'BLUE (FUERTE)' },
+    { value: 'gray', label: 'GRAY (LEGIBLE)' },
+    { value: 'brown', label: 'BROWN (MARRON)' },
+    { value: 'black', label: 'BLACK (NEGRO)' }
+  ];
+
+  function expandSecretModalColorOptions() {
+    const colorSelects = document.querySelectorAll('.modal select[id*="color"]');
+    colorSelects.forEach((select) => {
+      SECRET_MODAL_EXTRA_COLORS.forEach((opt) => {
+        const exists = Array.from(select.options).some((o) => o.value === opt.value);
+        if (!exists) {
+          select.add(new Option(opt.label, opt.value));
+        }
+      });
+    });
+  }
+
+  expandSecretModalColorOptions();
+
+  function isHexColor(value) {
+    return /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(String(value || '').trim());
+  }
+
+  function normalizeHex(value) {
+    const raw = String(value || '').trim();
+    if (!isHexColor(raw)) return '';
+    if (raw.length === 4) {
+      return `#${raw[1]}${raw[1]}${raw[2]}${raw[2]}${raw[3]}${raw[3]}`.toUpperCase();
+    }
+    return raw.toUpperCase();
+  }
+
+  function ensureCustomColorOption(select, hexValue) {
+    const hex = normalizeHex(hexValue);
+    if (!select || !hex) return;
+    const existing = Array.from(select.options).find((o) => o.value.toUpperCase() === hex);
+    if (!existing) {
+      select.add(new Option(`CUSTOM (${hex})`, hex));
+    }
+  }
+
+  function enhanceModalColorPickers() {
+    const colorSelects = document.querySelectorAll('.modal select[id*="color"]');
+    colorSelects.forEach((select) => {
+      if (select.dataset.paletteEnhanced === '1') return;
+      select.dataset.paletteEnhanced = '1';
+
+      if (isHexColor(select.value)) {
+        ensureCustomColorOption(select, select.value);
+      }
+
+      const paletteBtn = document.createElement('button');
+      paletteBtn.type = 'button';
+      paletteBtn.className = 'btn btn-outline-light btn-sm mt-2 rounded-0 font-monospace';
+      paletteBtn.style.fontSize = '0.65rem';
+      paletteBtn.innerHTML = '[ 🎨 PALETA ] <span class="palette-swatch" aria-hidden="true" style="display:inline-block;width:11px;height:11px;margin-left:6px;border:1px solid rgba(255,255,255,0.65);vertical-align:middle;"></span>';
+
+      const swatchEl = paletteBtn.querySelector('.palette-swatch');
+
+      const resolveSwatchColor = (value) => {
+        const key = String(value || '').trim().toLowerCase();
+        if (isHexColor(key)) return normalizeHex(key);
+        if (key === 'black' || key === 'brown') return '#FFFFFF';
+        const quickMap = {
+          white: '#FFFFFF',
+          cyan: '#00F0FF',
+          magenta: '#FF007F',
+          green: '#3AFC13',
+          yellow: '#FFEE00',
+          purple: '#A072FF',
+          orange: '#FF8C00',
+          red: '#FF2B2B',
+          blue: '#1F6FFF',
+          gray: '#B8BCC6',
+          info: '#00F0FF',
+          warning: '#FFEE00'
+        };
+        return quickMap[key] || '#00F0FF';
+      };
+
+      const syncSwatch = () => {
+        if (!swatchEl) return;
+        swatchEl.style.backgroundColor = resolveSwatchColor(select.value);
+      };
+
+      const nativePicker = document.createElement('input');
+      nativePicker.type = 'color';
+      nativePicker.className = 'd-none';
+      nativePicker.value = '#00f0ff';
+
+      paletteBtn.addEventListener('click', () => {
+        const current = isHexColor(select.value) ? normalizeHex(select.value) : '#00f0ff';
+        nativePicker.value = current;
+        nativePicker.click();
+      });
+
+      nativePicker.addEventListener('input', () => {
+        const picked = normalizeHex(nativePicker.value);
+        if (!picked) return;
+        ensureCustomColorOption(select, picked);
+        select.value = picked;
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+
+      select.addEventListener('change', syncSwatch);
+      syncSwatch();
+
+      select.insertAdjacentElement('afterend', paletteBtn);
+      paletteBtn.insertAdjacentElement('afterend', nativePicker);
+    });
+  }
+
+  enhanceModalColorPickers();
+
   const colorMap = {
     white: '#ffffff',
     cyan: '#00f0ff',
@@ -1266,16 +1654,28 @@ document.addEventListener("DOMContentLoaded", () => {
     yellow: '#ffee00',
     purple: '#a072ff',
     orange: '#ff8c00',
+    red: '#ff2b2b',
+    blue: '#1f6fff',
+    gray: '#b8bcc6',
+    brown: '#ffffff',
+    black: '#ffffff',
     info: '#00f0ff',
     warning: '#ffee00'
   };
+
+  function getReadablePreviewColor(colorValue) {
+    const value = String(colorValue || '').toLowerCase();
+    if (isHexColor(value)) return normalizeHex(value);
+    if (value === 'black' || value === 'brown') return '#ffffff';
+    return colorMap[value] || '#ffffff';
+  }
 
   function setupColorPreview(selectId, previewId) {
     const sel = document.getElementById(selectId);
     const prev = document.getElementById(previewId);
     if (!sel || !prev) return;
     const update = () => {
-      const c = colorMap[sel.value] || '#fff';
+      const c = getReadablePreviewColor(sel.value);
       prev.style.color = c;
       prev.style.borderColor = c;
       prev.style.textShadow = `0 0 8px ${c}`;
@@ -1320,12 +1720,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
       interviews.forEach(ent => {
         const colorNombre = ent.colorNombre || 'warning';
-        const nameColorClass = ['cyan','magenta','green','yellow','purple','orange'].includes(colorNombre)
+        const nameColorClass = ['cyan','magenta','green','yellow','purple','orange','red','blue','gray','brown','black'].includes(colorNombre)
           ? `text-neon-${colorNombre}`
           : `text-${colorNombre}`;
 
         const colorObra = ent.colorObra || 'primary';
-        const obraClass = ['cyan','magenta','green','yellow','purple','orange'].includes(colorObra)
+        const obraClass = ['cyan','magenta','green','yellow','purple','orange','red','blue','gray','brown','black'].includes(colorObra)
           ? `text-neon-${colorObra}`
           : `text-${colorObra}`;
 
@@ -1345,16 +1745,17 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="col-xl-11 my-5">
             <div class="card card-gaming-author border-0 h-100 overflow-hidden">
               <div class="row g-0 h-100">
-                <!-- Izquierda: Vídeo de YouTube Incrustado -->
+                <!-- Izquierda: VÃ­deo de YouTube Incrustado -->
                 <div class="col-md-6 video-gaming-container">
                   <div class="ratio ratio-16x9 h-100 min-h-video">
                     <iframe src="${embedUrl}" title="Entrevista ${ent.nombre}" allowfullscreen></iframe>
                   </div>
                 </div>
 
-                <!-- Derecha: Datos del Autor (Estilo Selección de Personaje) -->
+                <!-- Derecha: Datos del Autor (Estilo SelecciÃ³n de Personaje) -->
                 <div class="col-md-6 d-flex flex-column justify-content-between p-4 bg-black-card position-relative">
                   <div class="gaming-corner-top"></div>
+                  ${isAdmin ? `<button class="btn btn-outline-info btn-sm rounded-0 text-uppercase font-monospace btn-edit-interview" data-id="${ent.id}" style="position: absolute; top: 10px; right: 10px; z-index: 10; font-size: 0.62rem; padding: 2px 6px;">[ EDITAR ]</button>` : ''}
 
                   <div>
                     <div class="d-flex justify-content-between align-items-center mb-2">
@@ -1374,7 +1775,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     </p>
                   </div>
 
-                  <!-- Red Social / Enlace Estilo Botón de Acción Coaxial -->
+                  <!-- Red Social / Enlace Estilo BotÃ³n de AcciÃ³n Coaxial -->
                   <div class="mt-3 pt-3 border-top border-gaming-divider">
                     <a href="${ent.socialUrl}" target="_blank"
                       class="btn ${btnSocialClass} w-100 text-uppercase fw-bold rounded-0 d-flex justify-content-between align-items-center px-3">
@@ -1412,17 +1813,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
       games.forEach(juego => {
         const colorTitulo = juego.tituloColor || 'magenta';
-        const titleColorClass = ['cyan','magenta','green','yellow','purple','orange'].includes(colorTitulo)
+        const titleColorClass = ['cyan','magenta','green','yellow','purple','orange','red','blue','gray','brown','black'].includes(colorTitulo)
           ? `text-neon-${colorTitulo}`
           : `text-${colorTitulo}`;
 
         const colorBadge = juego.badgeColor || 'cyan';
-        const badgeColorClass = ['cyan','magenta','green','yellow','purple','orange'].includes(colorBadge)
+        const badgeColorClass = ['cyan','magenta','green','yellow','purple','orange','red','blue','gray','brown','black'].includes(colorBadge)
           ? `text-neon-${colorBadge}`
           : `text-${colorBadge}`;
 
         const colorProgress = juego.progressColor || 'magenta';
-        const progressColorClass = ['cyan','magenta','green','yellow','purple','orange'].includes(colorProgress)
+        const progressColorClass = ['cyan','magenta','green','yellow','purple','orange','red','blue','gray','brown','black'].includes(colorProgress)
           ? `bg-neon-${colorProgress}`
           : `bg-${colorProgress}`;
 
@@ -1433,6 +1834,11 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="col-md-6 col-xl-4">
             <div class="card card-gaming-hub h-100 border-0 overflow-hidden position-relative">
               ${isAdmin ? `
+                    <button class="btn btn-outline-info font-monospace btn-edit-game" 
+                      data-id="${juego.id}" 
+                      style="position: absolute; top: 10px; left: 110px; z-index: 10; background: rgba(0,0,0,0.85); border-radius: 0; font-size: 0.65rem; padding: 2px 5px; border-color: rgba(13,202,240,0.5);">
+                [ EDITAR ]
+                    </button>
               <button class="btn btn-outline-danger font-monospace btn-delete-game" 
                       data-id="${juego.id}" 
                       style="position: absolute; top: 10px; left: 10px; z-index: 10; background: rgba(0,0,0,0.85); border-radius: 0; font-size: 0.65rem; padding: 2px 5px; border-color: rgba(220,53,69,0.5);">
@@ -1481,12 +1887,12 @@ document.addEventListener("DOMContentLoaded", () => {
           e.preventDefault();
           if (!isAdmin) return;
           const gameId = this.getAttribute("data-id");
-          if (!confirm("¿Eliminar este juego del registro?")) return;
-          const code = prompt("INGRESE CÓDIGO DE ACCESO DE SEGURIDAD PARA ELIMINAR EL JUEGO:");
+          if (!confirm("Â¿Eliminar este juego del registro?")) return;
+          const code = prompt("INGRESE CÃ“DIGO DE ACCESO DE SEGURIDAD PARA ELIMINAR EL JUEGO:");
           if (code === "bunker2026") {
             eliminarJuego(gameId, code);
           } else if (code !== null) {
-            alert("CÓDIGO DE ACCESO INCORRECTO. ACCESO DENEGADO.");
+            alert("CÃ“DIGO DE ACCESO INCORRECTO. ACCESO DENEGADO.");
           }
         });
       });
@@ -1536,9 +1942,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const bookId = btn.getAttribute("data-id");
     if (!bookId) return;
 
-    if (!confirm("¿Está seguro de que desea eliminar este libro del registro?")) return;
+    if (!confirm("Â¿EstÃ¡ seguro de que desea eliminar este libro del registro?")) return;
 
-    const code = prompt("INGRESE CÓDIGO DE ACCESO DE SEGURIDAD PARA ELIMINAR EL LIBRO:");
+    const code = prompt("INGRESE CÃ“DIGO DE ACCESO DE SEGURIDAD PARA ELIMINAR EL LIBRO:");
     if (code === "bunker2026") {
       try {
         const response = await fetch("/api/biblioteca/eliminar", {
@@ -1570,7 +1976,7 @@ document.addEventListener("DOMContentLoaded", () => {
         logTerminal.textContent = `> ERR: Purge operation failed on library register.`;
       }
     } else if (code !== null) {
-      alert("CÓDIGO DE ACCESO INCORRECTO. ACCESO DENEGADO.");
+      alert("CÃ“DIGO DE ACCESO INCORRECTO. ACCESO DENEGADO.");
     }
   });
 
@@ -1584,9 +1990,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const quoteId = btn.getAttribute("data-id");
     if (!quoteId) return;
 
-    if (!confirm("¿Está seguro de que desea eliminar esta cita del registro?")) return;
+    if (!confirm("Â¿EstÃ¡ seguro de que desea eliminar esta cita del registro?")) return;
 
-    const code = prompt("INGRESE CÓDIGO DE ACCESO DE SEGURIDAD PARA ELIMINAR LA CITA:");
+    const code = prompt("INGRESE CÃ“DIGO DE ACCESO DE SEGURIDAD PARA ELIMINAR LA CITA:");
     if (code === "bunker2026") {
       try {
         const response = await fetch("/api/citas/eliminar", {
@@ -1618,12 +2024,248 @@ document.addEventListener("DOMContentLoaded", () => {
         logTerminal.textContent = `> ERR: Purge operation failed on quote register.`;
       }
     } else if (code !== null) {
-      alert("CÓDIGO DE ACCESO INCORRECTO. ACCESO DENEGADO.");
+      alert("CÃ“DIGO DE ACCESO INCORRECTO. ACCESO DENEGADO.");
+    }
+  });
+
+  async function cargarLibroParaEditar(bookId) {
+    const response = await fetch("/api/biblioteca");
+    if (!response.ok) throw new Error("No se pudo leer biblioteca");
+    const libros = await response.json();
+    const libro = libros.find(item => item.id === bookId);
+    if (!libro) throw new Error("Libro no encontrado");
+
+    const setVal = (id, value) => {
+      const el = document.getElementById(id);
+      if (el) el.value = value ?? "";
+    };
+
+    setVal("lib-id-editar", libro.id);
+    setEditModeBadgeState("lib-id-editar", "lib-edit-mode-badge");
+    setVal("lib-titulo", libro.titulo || "");
+    setVal("lib-color-titulo", libro.colorTitulo || "white");
+    setVal("lib-autor", libro.autor || "");
+    setVal("lib-color-autor", libro.colorAutor || "yellow");
+    setVal("lib-genero", libro.genero || "");
+    setVal("lib-color-genero", libro.colorGenero || "info");
+    setVal("lib-estado", libro.estado || "leido");
+    setVal("lib-puntuacion", libro.puntuacion ?? 5);
+    setVal("lib-color-puntuacion", libro.colorPuntuacion || "yellow");
+    setVal("lib-hype", libro.hype ?? 90);
+    setVal("lib-color-hype", libro.colorHype || "yellow");
+    setVal("lib-resena", libro.resena || "");
+    setVal("lib-color-resena", libro.colorResena || "white");
+    setVal("lib-cover", libro.cover || "");
+    setVal("lib-link-wattpad", libro.linkWattpad || "");
+    setVal("lib-link-amazon", libro.linkAmazon || "");
+    setVal("lib-podio", libro.podio ?? "");
+
+    const fav = document.getElementById("lib-favorito");
+    if (fav) {
+      fav.checked = !!libro.favorito;
+      fav.dispatchEvent(new Event("change"));
+    }
+
+    const estado = document.getElementById("lib-estado");
+    if (estado) {
+      estado.dispatchEvent(new Event("change"));
+    }
+
+    const modalEl = document.getElementById("modal-nuevo-libro");
+    if (modalEl) {
+      showModalSafe(modalEl);
+      document.getElementById("book-tab-btn")?.click();
+    }
+  }
+
+  async function cargarCitaParaEditar(citaId) {
+    const response = await fetch("/api/citas");
+    if (!response.ok) throw new Error("No se pudo leer citas");
+    const citas = await response.json();
+    const cita = citas.find(item => item.id === citaId);
+    if (!cita) throw new Error("Cita no encontrada");
+
+    const setVal = (id, value) => {
+      const el = document.getElementById(id);
+      if (el) el.value = value ?? "";
+    };
+
+    setVal("cita-id-editar", cita.id);
+    setEditModeBadgeState("cita-id-editar", "cita-edit-mode-badge");
+    setVal("cita-texto", cita.texto || "");
+    setVal("cita-color-texto", cita.colorTexto || "white");
+    setVal("cita-autor", cita.autor || "");
+    setVal("cita-color-autor", cita.colorAutor || "cyan");
+    setVal("cita-tipo", cita.tipo || "literaria");
+    setVal("cita-label", cita.label || "");
+    setVal("cita-color-label", cita.colorLabel || "cyan");
+    setVal("cita-nota", cita.nota || "");
+    setVal("cita-color-nota", cita.colorNota || "white");
+
+    const modalEl = document.getElementById("modal-nuevo-libro");
+    if (modalEl) {
+      showModalSafe(modalEl);
+      document.getElementById("quote-tab-btn")?.click();
+    }
+  }
+
+  async function cargarEntrevistaParaEditar(id) {
+    const response = await fetch("/api/entrevistas");
+    if (!response.ok) throw new Error("No se pudo leer entrevistas");
+    const entrevistas = await response.json();
+    const ent = entrevistas.find(item => item.id === id);
+    if (!ent) throw new Error("Entrevista no encontrada");
+
+    const setVal = (elId, value) => {
+      const el = document.getElementById(elId);
+      if (el) el.value = value ?? "";
+    };
+
+    setVal("ent-id-editar", ent.id);
+    setEditModeBadgeState("ent-id-editar", "ent-edit-mode-badge");
+    setVal("ent-nombre", ent.nombre || "");
+    setVal("ent-color-nombre", ent.colorNombre || "warning");
+    setVal("ent-obra", ent.obra || "");
+    setVal("ent-color-obra", ent.colorObra || "primary");
+    setVal("ent-squad", ent.squad || "WRITER");
+    setVal("ent-level", ent.level || 99);
+    setVal("ent-resumen", ent.resumen || "");
+    setVal("ent-color-resena", ent.colorResena || "white");
+    setVal("ent-social-user", ent.socialUser || "");
+    setVal("ent-social-url", ent.socialUrl || "");
+    setVal("ent-color-social", ent.colorSocial || "cyan");
+    setVal("ent-video", ent.videoUrl || "");
+
+    const modalEl = document.getElementById("modal-nueva-entrevista");
+    if (modalEl) {
+      showModalSafe(modalEl);
+    }
+  }
+
+  async function cargarJuegoParaEditar(id) {
+    const response = await fetch("/api/juegos");
+    if (!response.ok) throw new Error("No se pudo leer juegos");
+    const juegos = await response.json();
+    const juego = juegos.find(item => item.id === id);
+    if (!juego) throw new Error("Juego no encontrado");
+
+    const setVal = (elId, value) => {
+      const el = document.getElementById(elId);
+      if (el) el.value = value ?? "";
+    };
+
+    setVal("game-id-editar", juego.id);
+    setEditModeBadgeState("game-id-editar", "game-edit-mode-badge");
+    setVal("game-titulo", juego.titulo || "");
+    setVal("game-color-titulo", juego.tituloColor || "magenta");
+    setVal("game-badge-texto", juego.badgeTexto || "");
+    setVal("game-color-badge", juego.badgeColor || "cyan");
+    setVal("game-descripcion", juego.descripcion || "");
+    setVal("game-vicio", juego.vicio || 80);
+    setVal("game-color-progress", juego.progressColor || "magenta");
+    setVal("game-plataforma", juego.plataforma || "");
+    setVal("game-horas", juego.horas || "");
+    setVal("game-imagen-actual", juego.imagen || "");
+    setVal("game-imagen-file", "");
+
+    const modalEl = document.getElementById("modal-nuevo-juego");
+    if (modalEl) {
+      showModalSafe(modalEl);
+    }
+  }
+
+  async function cargarPostSocialParaEditar(red, id) {
+    const response = await fetch("/api/redes");
+    if (!response.ok) throw new Error("No se pudo leer redes");
+    const data = await response.json();
+    const post = (data[red] || []).find(item => item.id === id);
+    if (!post) throw new Error("Post no encontrado");
+
+    const redTipo = document.getElementById("red-tipo");
+    if (redTipo) redTipo.value = red;
+    const editInput = document.getElementById("red-id-editar");
+    if (editInput) editInput.value = id;
+    setEditModeBadgeState("red-id-editar", "red-edit-mode-badge");
+
+    document.getElementById("ct-embed")?.click();
+    const embedInput = document.getElementById("red-embed-html");
+    if (embedInput) embedInput.value = post.embedHtml || "";
+
+    const modalEl = document.getElementById("modal-nueva-red");
+    if (modalEl) {
+      showModalSafe(modalEl);
+      cargarPreviewPosts();
+    }
+  }
+
+  document.addEventListener("click", async (e) => {
+    const btn = e.target.closest(".btn-edit-book");
+    if (!btn || !isAdmin) return;
+    e.preventDefault();
+    const id = btn.getAttribute("data-id");
+    if (!id) return;
+    try {
+      await cargarLibroParaEditar(id);
+    } catch (error) {
+      alert(`ERROR AL CARGAR LIBRO: ${error.message}`);
+    }
+  });
+
+  document.addEventListener("click", async (e) => {
+    const btn = e.target.closest(".btn-edit-quote");
+    if (!btn || !isAdmin) return;
+    e.preventDefault();
+    const id = btn.getAttribute("data-id");
+    if (!id) return;
+    try {
+      await cargarCitaParaEditar(id);
+    } catch (error) {
+      alert(`ERROR AL CARGAR CITA: ${error.message}`);
+    }
+  });
+
+  document.addEventListener("click", async (e) => {
+    const btn = e.target.closest(".btn-edit-interview");
+    if (!btn || !isAdmin) return;
+    e.preventDefault();
+    const id = btn.getAttribute("data-id");
+    if (!id) return;
+    try {
+      await cargarEntrevistaParaEditar(id);
+    } catch (error) {
+      alert(`ERROR AL CARGAR ENTREVISTA: ${error.message}`);
+    }
+  });
+
+  document.addEventListener("click", async (e) => {
+    const btn = e.target.closest(".btn-edit-social");
+    if (!btn || !isAdmin) return;
+    e.preventDefault();
+    const red = btn.getAttribute("data-red");
+    const id = btn.getAttribute("data-id");
+    if (!red || !id) return;
+    try {
+      await cargarPostSocialParaEditar(red, id);
+    } catch (error) {
+      alert(`ERROR AL CARGAR POST: ${error.message}`);
+    }
+  });
+
+  document.addEventListener("click", async (e) => {
+    const btn = e.target.closest(".btn-edit-game");
+    if (!btn || !isAdmin) return;
+    e.preventDefault();
+    const id = btn.getAttribute("data-id");
+    if (!id) return;
+    try {
+      await cargarJuegoParaEditar(id);
+    } catch (error) {
+      alert(`ERROR AL CARGAR JUEGO: ${error.message}`);
     }
   });
 
   // ============================================================
-  // 📡 SOCIAL FEEDS - Embed/iframe rendering with bouncy badge
+  // ðŸ“¡ SOCIAL FEEDS - Embed/iframe rendering with bouncy badge
   // ============================================================
 
   async function cargarRedes() {
@@ -1638,18 +2280,21 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!response.ok) throw new Error("API_ERROR");
       const data = await response.json();
 
-      const renderFeed = (container, items, networkClass) => {
+      const renderFeed = (container, items, networkClass, redKey) => {
         container.innerHTML = "";
         if (items && items.length > 0) {
           items.slice(0, 2).forEach((item, index) => {
             const wrapper = document.createElement("div");
             wrapper.className = "social-embed-wrapper position-relative mb-3";
+            if (isAdmin) {
+              wrapper.innerHTML += `<button type="button" class="btn btn-outline-info btn-sm rounded-0 text-uppercase font-monospace btn-edit-social" data-id="${item.id}" data-red="${redKey}" style="position:absolute; top: 8px; right: 8px; z-index: 20; font-size: 0.6rem; padding: 2px 5px;">[ EDITAR ]</button>`;
+            }
             
-            // Badge "¡NUEVO POST!" on the first (newest) item
+            // Badge "Â¡NUEVO POST!" on the first (newest) item
             if (index === 0) {
               wrapper.innerHTML += `
                 <span class="badge-nuevo-post">
-                  <i class="bi bi-stars me-1"></i>¡NUEVO POST!
+                  <i class="bi bi-stars me-1"></i>Â¡NUEVO POST!
                 </span>
               `;
             }
@@ -1692,9 +2337,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       };
 
-      renderFeed(instagramContainer, data.instagram, "url-card-instagram");
-      renderFeed(tiktokContainer, data.tiktok, "url-card-tiktok");
-      renderFeed(wattpadContainer, data.wattpad, "url-card-wattpad");
+      renderFeed(instagramContainer, data.instagram, "url-card-instagram", "instagram");
+      renderFeed(tiktokContainer, data.tiktok, "url-card-tiktok", "tiktok");
+      renderFeed(wattpadContainer, data.wattpad, "url-card-wattpad", "wattpad");
 
       // Process embed scripts after DOM injection
       procesarEmbedsExternos();
@@ -1737,26 +2382,18 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ============================================================
-  // 🔐 MODAL REDES SOCIALES - Ctrl + Shift + R
+  // ðŸ” MODAL REDES SOCIALES - Ctrl + Shift + R
   // ============================================================
 
   // Keyboard shortcut
   document.addEventListener("keydown", (e) => {
-    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "r") {
+    if (isTypingContext(e.target)) return;
+    if (matchesAdminShortcut(e, "r")) {
       e.preventDefault();
-      const code = prompt("INGRESE CÓDIGO DE ACCESO DE SEGURIDAD DEL BÚNKER (REDES):");
-      if (code === "bunker2026") {
-        const modalEl = document.getElementById("modal-nueva-red");
-        if (modalEl) {
-          const modalInst = bootstrap.Modal.getOrCreateInstance(modalEl);
-          modalInst.show();
-          const passInput = document.getElementById("modal-password-red");
-          if (passInput) passInput.value = code;
-          cargarPreviewPosts();
-        }
-      } else if (code !== null) {
-        alert("CÓDIGO DE ACCESO INCORRECTO. ACCESO DENEGADO.");
-      }
+      requestAdminAccess(
+        () => openAdminModal("modal-nueva-red", "modal-password-red", () => cargarPreviewPosts()),
+        "INGRESE CÓDIGO DE ACCESO DE SEGURIDAD DEL BÚNKER (REDES):"
+      );
     }
   });
 
@@ -1807,7 +2444,7 @@ document.addEventListener("DOMContentLoaded", () => {
             html += `
               <div class="d-flex justify-content-between align-items-start ps-4 mb-2 py-1 border-start border-secondary border-opacity-25">
                 <div style="font-size: 0.7rem; max-width: 80%;">
-                  <div class="text-white">${idx === 0 ? '<span class="badge bg-info bg-opacity-25 text-info me-1" style="font-size: 0.6rem;">ÚLTIMO</span>' : ''}${fecha}</div>
+                  <div class="text-white">${idx === 0 ? '<span class="badge bg-info bg-opacity-25 text-info me-1" style="font-size: 0.6rem;">ÃšLTIMO</span>' : ''}${fecha}</div>
                   <div class="text-white-50 text-truncate" style="max-width: 350px;">${preview.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
                 </div>
                 <button class="btn btn-outline-danger btn-sm px-2 py-0 border-0 delete-post-btn" data-red="${red}" data-id="${post.id}" style="font-size: 0.65rem;">
@@ -1829,11 +2466,11 @@ document.addEventListener("DOMContentLoaded", () => {
           const password = document.getElementById('modal-password-red').value;
 
           if (!password) {
-            alert('⚠ Introduce el código de acceso primero.');
+            alert('âš  Introduce el cÃ³digo de acceso primero.');
             return;
           }
 
-          if (!confirm(`¿Eliminar este post de ${red.toUpperCase()}?`)) return;
+          if (!confirm(`Â¿Eliminar este post de ${red.toUpperCase()}?`)) return;
 
           try {
             const res = await fetch(`/api/redes/eliminar/${red}/${id}`, {
@@ -1846,10 +2483,10 @@ document.addEventListener("DOMContentLoaded", () => {
               cargarPreviewPosts();
               cargarRedes();
             } else {
-              alert('❌ ' + (result.error || 'Error desconocido.'));
+              alert('âŒ ' + (result.error || 'Error desconocido.'));
             }
           } catch (err) {
-            alert('❌ Error de conexión.');
+            alert('âŒ Error de conexiÃ³n.');
           }
         });
       });
@@ -1867,6 +2504,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const password = document.getElementById("modal-password-red").value;
       const red = document.getElementById("red-tipo").value;
+      const editId = (document.getElementById("red-id-editar")?.value || "").trim();
       const contentType = document.querySelector('input[name="content-type-red"]:checked').value;
 
       const fileInput = document.getElementById("red-image-file");
@@ -1878,7 +2516,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (contentType === 'embed') {
           embedHtml = document.getElementById("red-embed-html").value.trim();
           if (!embedHtml) {
-            alert('⚠ Pega el código embed/HTML.');
+            alert('âš  Pega el cÃ³digo embed/HTML.');
             return;
           }
         } else {
@@ -1886,7 +2524,7 @@ document.addEventListener("DOMContentLoaded", () => {
           const imageUrlText = document.getElementById("red-image-url").value.trim();
           
           if (!url) {
-            alert('⚠ Introduce la URL del post.');
+            alert('âš  Introduce la URL del post.');
             return;
           }
 
@@ -1913,17 +2551,18 @@ document.addEventListener("DOMContentLoaded", () => {
               <i class="bi bi-box-arrow-up-right text-neon-cyan"></i>
               <span class="small font-monospace text-truncate text-white-50">${url}</span>
             </div>
-            <div class="mt-2 text-xs text-neon-cyan">Haz click para ver el post →</div>
+            <div class="mt-2 text-xs text-neon-cyan">Haz click para ver el post â†’</div>
           </a>`;
         }
 
         if (!password) {
-          alert('⚠ Introduce el código de acceso.');
+          alert('âš  Introduce el cÃ³digo de acceso.');
           return;
         }
 
         try {
-          const res = await fetch('/api/redes/nuevo', {
+          const endpoint = editId ? `/api/redes/editar/${red}/${editId}` : '/api/redes/nuevo';
+          const res = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
@@ -1941,21 +2580,23 @@ document.addEventListener("DOMContentLoaded", () => {
             document.getElementById("red-url").value = '';
             if (fileInput) fileInput.value = '';
             document.getElementById("red-image-url").value = '';
+            const inputEditId = document.getElementById("red-id-editar");
+            if (inputEditId) inputEditId.value = '';
+            setEditModeBadgeState("red-id-editar", "red-edit-mode-badge");
 
             // Refresh preview and feed
             cargarPreviewPosts();
             cargarRedes();
             const modalEl = document.getElementById("modal-nueva-red");
             if (modalEl) {
-              const modalInst = bootstrap.Modal.getInstance(modalEl);
-              if (modalInst) modalInst.hide();
+              hideModalSafe(modalEl);
             }
-            alert('✅ ' + result.message);
+            alert('âœ… ' + result.message);
           } else {
-            alert('❌ ' + (result.error || 'Error desconocido.'));
+            alert('âŒ ' + (result.error || 'Error desconocido.'));
           }
         } catch (err) {
-          alert('❌ Error de conexión con el servidor.');
+          alert('âŒ Error de conexiÃ³n con el servidor.');
         }
       };
 
@@ -1975,10 +2616,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Inicialización de logs en carga
+  // InicializaciÃ³n de logs en carga
   cargarLogsYVisores(true);
 
-  // Auto-sync del monitor de estado para reflejar cambios hechos en cualquier pestaña/sesión.
+  // Auto-sync del monitor de estado para reflejar cambios hechos en cualquier pestaÃ±a/sesiÃ³n.
   setInterval(() => {
     cargarLogsYVisores();
   }, 8000);
@@ -1995,12 +2636,12 @@ document.addEventListener("DOMContentLoaded", () => {
   // Ejecutamos la carga inicial
   inicializarMarquesinaEmotes();
 
-  // 🍪 Gestión del Banner de Cookies Cyberpunk
+  // ðŸª GestiÃ³n del Banner de Cookies Cyberpunk
   const cookieBanner = document.getElementById("cookie-banner");
   const acceptCookiesBtn = document.getElementById("accept-cookies");
   if (cookieBanner && acceptCookiesBtn) {
     if (!localStorage.getItem("cookieConsent")) {
-      // Retrasar la aparición del banner 1.5s para que no interrumpa el efecto de carga inicial
+      // Retrasar la apariciÃ³n del banner 1.5s para que no interrumpa el efecto de carga inicial
       setTimeout(() => {
         cookieBanner.classList.remove("d-none");
       }, 1500);
