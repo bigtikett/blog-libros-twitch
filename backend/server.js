@@ -21,12 +21,36 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, '..');
 const FRONTEND_DIR = path.join(ROOT_DIR, 'frontend');
+const BACKEND_PACKAGE_PATH = path.join(__dirname, 'package.json');
 const DATA_DIR = path.join(__dirname, 'data');
 const AUDIO_DIR = path.join(FRONTEND_DIR, 'audio');
 const IMG_BIBLIOTECA_DIR = path.join(FRONTEND_DIR, 'img', 'biblioteca');
 const IMG_FAVORITOS_DIR = path.join(FRONTEND_DIR, 'img', 'favoritos');
 
 fs.mkdirSync(DATA_DIR, { recursive: true });
+
+let APP_PACKAGE_VERSION = '1.0.0';
+try {
+  const pkgRaw = fs.readFileSync(BACKEND_PACKAGE_PATH, 'utf-8');
+  const pkgJson = JSON.parse(pkgRaw);
+  APP_PACKAGE_VERSION = String(pkgJson.version || APP_PACKAGE_VERSION);
+} catch (error) {
+  console.warn('No se pudo leer la version de package.json del backend:', error?.message || error);
+}
+
+const DEPLOY_COMMIT_SHA = (
+  process.env.RENDER_GIT_COMMIT ||
+  process.env.VERCEL_GIT_COMMIT_SHA ||
+  process.env.COMMIT_SHA ||
+  process.env.GIT_COMMIT ||
+  ''
+).trim();
+const DEPLOY_COMMIT_SHORT = DEPLOY_COMMIT_SHA ? DEPLOY_COMMIT_SHA.slice(0, 7) : '';
+const DEPLOY_PLATFORM = DEPLOY_COMMIT_SHA
+  ? (process.env.RENDER_GIT_COMMIT ? 'render' : process.env.VERCEL_GIT_COMMIT_SHA ? 'vercel' : 'git')
+  : 'local';
+const SERVER_BOOTED_AT = new Date().toISOString();
+const DEPLOY_VERSION_LABEL = [APP_PACKAGE_VERSION, DEPLOY_COMMIT_SHORT ? `build.${DEPLOY_COMMIT_SHORT}` : 'runtime'].join(' / ');
 
 const RUTA_BIBLIOTECA = path.join(DATA_DIR, 'biblioteca.json');
 const RUTA_CITAS = path.join(DATA_DIR, 'citas.json');
@@ -707,7 +731,18 @@ app.use(express.json({ limit: '10mb' }));
 const BIBLIOTECA_PASSWORD = 'bunker2026';
 
 app.get('/api/health', (req, res) => {
-  res.json({ ok: true, service: 'bunker-backend' });
+  res.json({
+    ok: true,
+    service: 'bunker-backend',
+    version: {
+      label: DEPLOY_VERSION_LABEL,
+      packageVersion: APP_PACKAGE_VERSION,
+      commitSha: DEPLOY_COMMIT_SHA,
+      commitShort: DEPLOY_COMMIT_SHORT,
+      platform: DEPLOY_PLATFORM,
+      bootedAt: SERVER_BOOTED_AT
+    }
+  });
 });
 
 // 1. ENDPOINT PARA LEER LOS LIBROS (FETCH GET)

@@ -142,6 +142,26 @@
       color: var(--hud-cyan);
     }
 
+    .ship-id-meta {
+      margin-top: 6px;
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 9px;
+      border: 1px solid rgba(0, 240, 255, 0.24);
+      background: rgba(0, 0, 0, 0.18);
+      color: #bdeeff;
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.58rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border-radius: 999px;
+    }
+
+    .ship-id-meta[data-build-ready="true"] {
+      border-color: rgba(0, 240, 255, 0.36);
+      color: #9ee9ff;
+    }
+
     .ship-actions {
       display: flex;
       gap: 8px;
@@ -662,7 +682,10 @@
 <body>
   <main class="ship-shell">
     <div class="ship-topbar">
-      <div class="ship-id">NAVE YAI-01 // CUADERNO DE BITACORA</div>
+      <div>
+        <div class="ship-id">NAVE YAI-01 // CUADERNO DE BITACORA</div>
+        <div class="ship-id-meta" data-deploy-version>[ BUILD: CARGANDO ]</div>
+      </div>
       <div class="ship-actions">
         <button type="button" id="open-bitacora-admin"><i class="bi bi-shield-lock"></i> Acceso admin</button>
         <a href="/index.html"><i class="bi bi-arrow-left"></i> Volver al bunker</a>
@@ -1481,5 +1504,6 @@
       setInterval(loadMonitorUpdates, 15000);
     });
   </script>
+  <script src="../deploy-version.js"></script>
 </body>
 </html>
